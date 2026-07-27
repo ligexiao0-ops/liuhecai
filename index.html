@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">184</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">180</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0727.03</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">180</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0727.04</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -908,7 +908,7 @@ function saveCopyHistToLocal(){
 }
 // 导出复制记录为JSON文件
 function exportCopyHistory(){
-  var d={ver:'v10.0727.03',ts:new Date().toISOString(),lot:CUR_LOT,records:COPY_HISTORY.slice()};
+  var d={ver:'v10.0727.04',ts:new Date().toISOString(),lot:CUR_LOT,records:COPY_HISTORY.slice()};
   var blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);
   var lbl=LOTTERIES[CUR_LOT].name;
@@ -2453,8 +2453,8 @@ function scoreZhengAI(){
     // 6. 生肖6期冷热
     var z=gz(n);
     var zzc=zc6[z]||0;
-    if(zzc===zc6Max&&zzc>=5){s-=2;rs.push("6期最热肖(降权)");}
-    if(zzc===zc6Min){s+=2;rs.push("6期最冷肖");}
+    if(zzc===zc6Max&&zzc>=5){s-=1;rs.push("6期最热肖(降权)");} // 【v10.0727.04】-2→-1
+    if(zzc===zc6Min){s+=1;rs.push("6期最冷肖");} // 【v10.0727.04】+2→+1
     // 7. 特码15期冷热
     if((t15c[z]||0)>=3){s-=2;rs.push("特码15期过热");}
     // 8. 庄家连庄
@@ -2508,10 +2508,22 @@ function scoreZhengAI(){
     // 13. 五行平衡（上期缺失的五行加分）
     var wxC={};["金","木","水","火","土"].forEach(function(w){wxC[w]=lastN.filter(function(nn){return gwx(nn)===w;}).length;});
     var zeroWx=Object.keys(wxC).filter(function(w){return wxC[w]===0;});
-    if(zeroWx.includes(gwx(n))){s+=2;rs.push("缺行"+gwx(n));}
+    if(zeroWx.includes(gwx(n))){s+=1;rs.push("缺行"+gwx(n)+"(弱化)");} // 【v10.0727.04】+2→+1，五行弱化
+    // 【v10.0727.04新增】五行最多行轻微降权（不强行排除）
+    var maxWx2=Object.keys(wxC).sort(function(a,b){return wxC[b]-wxC[a];})[0];
+    if(gwx(n)===maxWx2){s-=0.3;}
     // 14. 尾数延续（上期正码尾数中有此尾数则加分——这不是依赖上期号码，而是尾数惯性）
     var prevTails=Array.from(new Set(lastN.map(gtl)));
-    if(prevTails.includes(gtl(n))&&!prevSet.has(n)){s+=1;}
+    if(prevTails.includes(gtl(n))&&!prevSet.has(n)){s+=0.5;} // 【v10.0727.04】+1→+0.5，弱化
+    // 【v10.0727.04新增】±3尾数统计：该号码尾数与上期正码尾数差≤3时，历史共现频率加分
+    var myTailAI=gtl(n);
+    var hasNearTailAI=false;
+    for(var _nti2=0;_nti2<lastN.length;_nti2++){
+      var tdAI=Math.abs(myTailAI-gtl(lastN[_nti2]));
+      if(tdAI>5)tdAI=10-tdAI;
+      if(tdAI<=3&&tdAI>0){hasNearTailAI=true;break;}
+    }
+    if(hasNearTailAI){s+=0.8;rs.push("±3尾数近邻");}
     // 一肖两码标记（近6期同一生肖出现2码的→常见模式标记）
     var isOzt=!!oztZ[gz(n)];
     // 常出搭配标记
@@ -3609,12 +3621,12 @@ function scoreZheng(extraPrefs){
     if(eWxMulti.length>0&&eWxMulti.includes(gwx(n))){s-=8;rs.push("排除五行"+gwx(n));}
     if(eZ.includes(gz(n))){s-=10;rs.push("排除肖");}
     if(pZ.includes(gz(n))&&!twoZod2&&!oneZod2){s+=5;rs.push("用户指定");}
-    if(lastZ.includes(gz(n))){s+=2;rs.push("留肖");}
+    if(lastZ.includes(gz(n))){s+=0.5;rs.push("留肖(弱化)");} // 【v10.0727.04】+2→+0.5，同肖意义不大
     const zc=(Z100[n]||0);
     if(zc>=14){s+=3;rs.push("正热"+zc);}else if(zc>=10){s+=2;}else if(zc>=7){s+=1;}
     if(zc<=1){s+=0.5;rs.push("百期遗漏"+zc);} // 【v10.0727.01】1→0.5，进一步降低冷号加分
     if(zc>=2&&zc<=5){s+=0.3;rs.push("偏冷"+zc);} // 【v10.0727.01】0.5→0.3
-    if(gwx(n)===maxWx){s-=1;}if(zeroWx.includes(gwx(n))){s+=2;rs.push("缺行"+gwx(n));}
+    if(gwx(n)===maxWx){s-=0.3;}if(zeroWx.includes(gwx(n))){s+=1;rs.push("缺行"+gwx(n)+"(弱化)");} // 【v10.0727.04】五行降权弱化-1→-0.3，缺行+2→+1
     if(prevTails.includes(gtl(n))&&!lastN.includes(n)){s+=1;rs.push("延尾"+gtl(n));}
     const zMxOm=Math.min.apply(null,(ZM[gz(n)]||[]).map(x=>Z100[x]||0));
     if((Z100[n]||0)===zMxOm&&zMxOm<=1){s+=2;rs.push("肖内最冷");}
@@ -3642,8 +3654,8 @@ function scoreZheng(extraPrefs){
     });
     if(oneZodTwoZ[gz(n)]){s+=2;rs.push("一肖两码模式🔥");}
     // 常见规律：下期正码常与上期号码存在同号/同肖异号/同尾（默认加分）
-    if(prevN.includes(n)){s+=3;rs.push("与上期同号🔥");} // 与上期完全相同号码→很可能延续
-    else if(pZods.includes(gz(n))&&!prevN.includes(n)){s+=2;rs.push("同肖异号");} // 同生肖但不同号码→换码不换肖
+    if(prevN.includes(n)){s+=2;rs.push("与上期同号🔥");} // 【v10.0727.04】+3→+2
+    else if(pZods.includes(gz(n))&&!prevN.includes(n)){s+=1;rs.push("同肖异号(弱化)");} // 【v10.0727.04】+2→+1，同肖意义不大
     if(prevTails.includes(gtl(n))){s+=1;rs.push("与上期同尾");} // 与上期同尾数→常见延续
     // 【v10.0725.14新增】正码来源规律：上期特码的邻居号码（±1）→正码常见来源
     var lastTe=LAST.t;
@@ -3664,6 +3676,34 @@ function scoreZheng(extraPrefs){
     var avgTailFreq=totalDraws*6/10; // 平均每个尾数出现次数
     var curTailFreq=tailFreq[gtl(n)]||0;
     if(curTailFreq>=avgTailFreq*0.8&&curTailFreq<=avgTailFreq*1.3){s+=0.5;rs.push("尾数频率适中");}
+    // 【v10.0727.04新增】±3尾数统计：该号码尾数与上期6个正码尾数差值在±3内(含跨10环形)，统计历史共现频率
+    var myTail=gtl(n);
+    var hasNearTail=false;
+    for(var _nti=0;_nti<lastN.length;_nti++){
+      var td=Math.abs(myTail-gtl(lastN[_nti]));
+      if(td>5)td=10-td; // 环形取最小差值
+      if(td<=3&&td>0){hasNearTail=true;break;}
+    }
+    if(hasNearTail){
+      // 统计历史中该号码与上期正码尾数差≤3的共现频率
+      var _coOccur=0,_totalPairs=0;
+      for(var _ci=0;_ci<DR.length-1;_ci++){
+        var _cn=DR[_ci].n;
+        if(_cn.indexOf(n)>=0){
+          for(var _cj=0;_cj<_cn.length;_cj++){
+            for(var _ck=0;_ck<lastN.length;_ck++){
+              var _td2=Math.abs(gtl(_cn[_cj])-gtl(lastN[_ck]));
+              if(_td2>5)_td2=10-_td2;
+              if(_td2<=3&&_td2>0){_coOccur++;break;}
+            }
+            _totalPairs++;
+          }
+        }
+      }
+      if(_totalPairs>0&&_coOccur/_totalPairs>=0.3){
+        s+=0.8;rs.push("±3尾数共现("+(_coOccur/_totalPairs*100).toFixed(0)+"%)");
+      }
+    }
     // 100期正码热门/冷门筛选（Top 10排名）
     var zHot10=A49.map(x=>({n:x,m:Z100[x]||0})).sort((a,b)=>b.m-a.m).slice(0,10).map(x=>x.n);
     var zCold10=A49.map(x=>({n:x,m:Z100[x]||0})).sort((a,b)=>a.m-b.m).slice(0,10).map(x=>x.n);
@@ -3707,7 +3747,7 @@ function scoreZheng(extraPrefs){
     // 策略：0次号码需看全局正码频率来平衡
     var d6c2=d6Cnt2[n]||0;
     var zmFreq2=Z100[n]||0;
-    if(d6c2>=3){s-=2;rs.push("6期出"+d6c2+"次(过热⚠️)");}       // -3→-2（降低过热惩罚，4.7%的正码也来自3+次）
+    if(d6c2>=3){s-=1;rs.push("6期出"+d6c2+"次(过热⚠️)");}       // 【v10.0727.04】-2→-1，弱化过热惩罚
     else if(d6c2===2){s+=1;rs.push("6期出2次(活跃)");}            // 保持+1
     else if(d6c2===1){s+=1.5;}                                     // 保持+1.5
     else{
@@ -7160,7 +7200,7 @@ var VF_MATH_FORMULAS=[
   {id:'M7',cat:'尾数',desc:'平1×平2×平5尾数=下期某码尾数',fn:function(prev){return ((prev.n[0]%10)*(prev.n[1]%10)*(prev.n[4]%10))%10;},predict:'tail'},
   {id:'M8',cat:'尾数',desc:'平4+平6尾数=下期某码尾数',fn:function(prev){return ((prev.n[3]%10)+(prev.n[5]%10))%10;},predict:'tail'},
   {id:'M9',cat:'尾数',desc:'平2-平4尾数=下期某码尾数',fn:function(prev){var d=(prev.n[1]%10)-(prev.n[3]%10);return d<0?d+10:d;},predict:'tail'},
-  // === 【v10.0727.03新增】尾数替代运算类（不同数字替代加减法） ===
+  // === 【v10.0727.04新增】尾数替代运算类（不同数字替代加减法） ===
   {id:'M21',cat:'尾数',desc:'特码尾数+2→下期平码尾数(替代)',fn:function(prev){return (prev.t%10+2)%10;},predict:'tail'},
   {id:'M22',cat:'尾数',desc:'特码尾数+6→下期平码尾数(替代)',fn:function(prev){return (prev.t%10+6)%10;},predict:'tail'},
   {id:'M23',cat:'尾数',desc:'特码尾数+8→下期平码尾数(替代)',fn:function(prev){return (prev.t%10+8)%10;},predict:'tail'},
@@ -7210,7 +7250,25 @@ var ZOD_ORDER=['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗'
     if(f.num_rules) VF_NUM_RULES=f.num_rules;
     if(f.zod_to_tezod) VF_ZOD_TO_TEZOD=f.zod_to_tezod;
     if(f.day_zod_wx) VF_DAY_ZOD_WX=f.day_zod_wx;
-    if(f.kill_zod_formulas) VF_KILL_ZOD_FORMULAS=f.kill_zod_formulas;
+    if(f.kill_zod_formulas){
+      // 合并：JSON提供desc更新，但保留硬编码的fn函数（与math_formulas相同逻辑）
+      var kfnMap={};
+      VF_KILL_ZOD_FORMULAS.forEach(function(kf){kfnMap[kf.id]=kf;});
+      var mergedKill=[];
+      f.kill_zod_formulas.forEach(function(jk){
+        var hc=kfnMap[jk.id];
+        if(hc){
+          mergedKill.push({id:jk.id,desc:jk.desc||hc.desc,fn:hc.fn});
+        }
+      });
+      // 添加硬编码中有但JSON没有的
+      VF_KILL_ZOD_FORMULAS.forEach(function(kf){
+        if(!mergedKill.find(function(k){return k.id===kf.id;})){
+          mergedKill.push(kf);
+        }
+      });
+      VF_KILL_ZOD_FORMULAS=mergedKill;
+    }
     if(f.math_formulas){
       // 合并：JSON提供desc/cat更新，但保留硬编码的fn/predict/needsHistory
       var fnMap={};
@@ -10728,7 +10786,7 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
   var sc4=(uniqTails.length===3?2:uniqTails.length===2?0:-1);
   s+=sc4;
   b.push({label:'尾数',raw:uniqTails.length+'尾('+uniqTails.join(',')+')',score:(sc4>=0?'+':'')+sc4.toFixed(1)});
-  // 4b. 【v10.0727.03新增】±3尾数统计：号码对尾数差值在±3内(含跨10)，统计历史共现频率
+  // 4b. 【v10.0727.04新增】±3尾数统计：号码对尾数差值在±3内(含跨10)，统计历史共现频率
   var tailPairBonus=0;
   for(var tpi=0;tpi<combo.length;tpi++){
     for(var tpj=tpi+1;tpj<combo.length;tpj++){
@@ -10810,14 +10868,14 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
   else if(appInCombo===2){sc11=+1;b.push({label:'来源',raw:'2已出1未出',score:'+1'});}
   else if(appInCombo===3){sc11=+0.5;b.push({label:'来源',raw:'全已出',score:'+0.5'});}
   s+=sc11;
-  // 12. 【v10.0727.03新增】波色多样性：避免结果几乎只有两种波色
+  // 12. 【v10.0727.04新增】波色多样性：避免结果几乎只有两种波色
   var wvs=Array.from(new Set(combo.map(gwv)));
   var sc12=0;
   if(wvs.length===1){sc12=-1.5;b.push({label:'波色',raw:'单色('+wvs[0]+')⚠️',score:'-1.5'});}
   else if(wvs.length===2){sc12=-0.3;b.push({label:'波色',raw:'双色('+wvs.join('/')+')',score:'-0.3'});}
   else{sc12=+1;b.push({label:'波色',raw:'三色('+wvs.join('/')+')',score:'+1'});}
   s+=sc12;
-  // 13. 【v10.0727.03新增】特肖排除降权：组合中号码所属生肖若在te_excl_zods中，轻微降分（非绝不选）
+  // 13. 【v10.0727.04新增】特肖排除降权：组合中号码所属生肖若在te_excl_zods中，轻微降分（非绝不选）
   if(UP.te_excl_zods&&UP.te_excl_zods.length>0){
     var exZodHit=combo.filter(function(n){return UP.te_excl_zods.indexOf(gz(n))>=0;}).length;
     if(exZodHit>0){var sc13=exZodHit*(-1.2);s+=sc13;b.push({label:'特肖排除',raw:exZodHit+'号属排除肖(降权非排除)',score:sc13.toFixed(1)});}
@@ -11063,7 +11121,7 @@ function scoreLXCombo(combo,zSc){
       b.push({label:'上下期重合',raw:'重合0个(罕见)',score:'0'});
     }
   }
-  // 16. 【v10.0727.03新增】特肖排除降权：特肖被杀/排除时，选该生肖的机率降低（非绝不选）
+  // 16. 【v10.0727.04新增】特肖排除降权：特肖被杀/排除时，选该生肖的机率降低（非绝不选）
   if(UP.te_excl_zods&&UP.te_excl_zods.length>0){
     var teExHit=combo.filter(function(item){return UP.te_excl_zods.indexOf(item.z)>=0;}).length;
     if(teExHit>0){
@@ -11072,7 +11130,7 @@ function scoreLXCombo(combo,zSc){
       b.push({label:'特肖排除',raw:teExHit+'肖属排除(降权非排除)',score:sc16.toFixed(1)});
     }
   }
-  // 17. 【v10.0727.03新增】九肖映射位置约束：连肖位置不可能与上期九肖映射完全一样
+  // 17. 【v10.0727.04新增】九肖映射位置约束：连肖位置不可能与上期九肖映射完全一样
   var lx9s1check=UP.lx9_seq1||[];
   if(lx9s1check.length>=9){
     var comboZSet=new Set(combo.map(function(item){return item.z;}));
