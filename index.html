@@ -9,7 +9,7 @@
 <title>三彩合一分析工具</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#f4f6fb;font-size:13px;}
+body{font-family:'PingFang SC','Microsoft YaHei','Hiragino Sans GB','WenQuanYi Micro Hei',sans-serif;background:#f4f6fb;font-size:13px;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
 .header{background:linear-gradient(135deg,#1a1a2e,#16213e);padding:10px 16px;color:#fff;text-align:center;}
 .header h1{font-size:15px;font-weight:bold;}
 .header p{font-size:10px;color:#aed6f1;margin-top:2px;}
@@ -7281,7 +7281,19 @@ function buildVerifiedFormulaBlock(){
   var dropVF=verifyDropOrderFormulas();
   if(dropVF){
     h+='<div style="margin-top:8px;padding:8px;border-radius:6px;background:#fff8e1;border:1px solid #ffcc02">';
-    h+='<b style="font-size:12px;color:#e65100">🎱 落球顺序公式验证</b> <span style="font-size:9px;color:#888">(基于录入时的落球顺序)</span>';
+    h+='<b style="font-size:12px;color:#e65100">🎱 落球顺序公式验证</b> <span style="font-size:9px;color:#888">(基于录入时的落球顺序，仅针对特码生肖)</span>';
+    // 上期准否
+    var dropLastHit=null;
+    if(DR.length>=2&&df1.details){
+      var lastDet=df1.details[df1.details.length-1];
+      if(lastDet)dropLastHit={b6Fail:lastDet.fail};
+    }
+    if(dropLastHit!==null){
+      var dlhBg=dropLastHit.b6Fail?'#f8d7da':'#d4edda';
+      var dlhIcon=dropLastHit.b6Fail?'❌ 上期未命中':'✅ 上期命中';
+      var dlhColor=dropLastHit.b6Fail?'#c0392b':'#27ae60';
+      h+=' <span style="font-size:10px;background:'+dlhBg+';color:'+dlhColor+';padding:2px 6px;border-radius:4px;font-weight:bold">'+dlhIcon+'</span>';
+    }
     h+='<div style="margin-top:6px">';
     // 公式1: 第6位→杀肖
     h+='<div style="margin-bottom:6px;padding:6px;border-radius:4px;background:#fff">';
@@ -7385,10 +7397,16 @@ function buildVerifiedFormulaBlock(){
     h+='<details style="margin-top:6px;font-size:10px"><summary style="cursor:pointer;color:#999">📋 全部规则命中率一览</summary>';
     h+='<div style="max-height:200px;overflow-y:auto;margin-top:4px">';
     h+='<table style="width:100%;font-size:10px;border-collapse:collapse">';
-    h+='<tr style="background:#f5f5f5"><th style="padding:2px 4px;border:1px solid #ddd">#</th><th style="padding:2px 4px;border:1px solid #ddd">规则</th><th style="padding:2px 4px;border:1px solid #ddd">命中/总</th><th style="padding:2px 4px;border:1px solid #ddd">率</th></tr>';
+    h+='<tr style="background:#f5f5f5"><th style="padding:2px 4px;border:1px solid #ddd">#</th><th style="padding:2px 4px;border:1px solid #ddd">规则</th><th style="padding:2px 4px;border:1px solid #ddd">命中/总</th><th style="padding:2px 4px;border:1px solid #ddd">率</th><th style="padding:2px 4px;border:1px solid #ddd">上期</th></tr>';
     numRuleVF.forEach(function(vf){
       var rc=vf.rate>=60?'#27ae60':vf.rate>=40?'#f39c12':'#c0392b';
-      h+='<tr><td style="padding:2px 4px;border:1px solid #eee">'+vf.rule.id+'</td><td style="padding:2px 4px;border:1px solid #eee;font-size:9px">'+vf.rule.desc+'</td><td style="padding:2px 4px;border:1px solid #eee">'+vf.hit+'/'+vf.total+'</td><td style="padding:2px 4px;border:1px solid #eee;color:'+rc+'"><b>'+vf.rate+'%</b></td></tr>';
+      // 上期准否
+      var nrLast='-';
+      if(vf.details&&vf.details.length>0){
+        var nrLastDet=vf.details[vf.details.length-1];
+        nrLast=nrLastDet.hit?'✅':'❌';
+      }
+      h+='<tr><td style="padding:2px 4px;border:1px solid #eee">'+vf.rule.id+'</td><td style="padding:2px 4px;border:1px solid #eee;font-size:9px">'+vf.rule.desc+'</td><td style="padding:2px 4px;border:1px solid #eee">'+vf.hit+'/'+vf.total+'</td><td style="padding:2px 4px;border:1px solid #eee;color:'+rc+'"><b>'+vf.rate+'%</b></td><td style="padding:2px 4px;border:1px solid #eee">'+nrLast+'</td></tr>';
     });
     h+='</table></div></details>';
     h+='</div>';
@@ -7424,7 +7442,7 @@ function buildVerifiedFormulaBlock(){
   var meihua=calcMeihua();
   if(meihua){
     h+='<div style="margin-top:8px;padding:8px;border-radius:6px;background:#fff3e0;border:1px solid #ff9800">';
-    h+='<b style="font-size:12px;color:#e65100">🔮 梅花易数预测法</b> <span style="font-size:10px;color:#888">（以开奖时间起卦）</span><br>';
+    h+='<b style="font-size:12px;color:#e65100">🔮 梅花易数预测法</b> <span style="font-size:10px;color:#888">（以开奖时间起卦，历史命中率参考下方回测）</span><br>';
     h+='<div style="font-size:10px;margin-top:4px;color:#555">';
     h+='上卦: '+meihua.upperName+'('+meihua.upper+') 下卦: '+meihua.lowerName+'('+meihua.lower+') 动爻: 第'+meihua.moving+'爻<br>';
     h+='本卦: '+meihua.origGua+' → 变卦: '+meihua.changedGua+'<br>';
@@ -7470,9 +7488,26 @@ function buildVerifiedFormulaBlock(){
       var z2zVF=verifyZodToTeZod();
       var z2zRate=z2zVF&&z2zVF.byZod[zod]?Math.round(z2zVF.byZod[zod].hit/z2zVF.byZod[zod].total*100):null;
       var z2zBg=z2zRate!==null?(z2zRate>=70?'#d4edda':z2zRate<40?'#f8d7da':'#fff3cd'):'#fff3cd';
+      // 上期准否
+      var z2zLastHit=null;
+      if(DR.length>=2){
+        var prevPrevZod=gz(DR[DR.length-2].t);
+        var prevLatestZod=gz(DR[DR.length-1].t);
+        var prevPreds=VF_ZOD_TO_TEZOD[prevPrevZod];
+        if(prevPreds){
+          z2zLastHit={fromZod:prevPrevZod,preds:prevPreds,actual:prevLatestZod,ok:prevPreds.indexOf(prevLatestZod)>=0};
+        }
+      }
       h+='<div style="margin-top:8px;padding:8px;border-radius:6px;background:'+z2zBg+';border:1px solid #e91e63">';
-      h+='<b style="font-size:12px;color:#c2185b">🔄 特肖→必出特肖（绝顶规律）</b>';
+      h+='<b style="font-size:12px;color:#c2185b">🔄 特肖→必出特肖（绝顶规律，仅针对特码生肖）</b>';
       if(z2zRate!==null)h+=' <span style="font-size:10px;color:#666">历史命中率'+z2zRate+'%</span>';
+      // 上期准否标注
+      if(z2zLastHit){
+        var z2zlhBg=z2zLastHit.ok?'#d4edda':'#f8d7da';
+        var z2zlhIcon=z2zLastHit.ok?'✅ 上期命中':'❌ 上期未命中';
+        var z2zlhColor=z2zLastHit.ok?'#27ae60':'#c0392b';
+        h+=' <span style="font-size:10px;background:'+z2zlhBg+';color:'+z2zlhColor+';padding:2px 6px;border-radius:4px;font-weight:bold">'+z2zlhIcon+' ('+z2zLastHit.fromZod+'→'+z2zLastHit.preds.join('/')+' 实际:'+z2zLastHit.actual+')</span>';
+      }
       h+='<br><span style="font-size:10px;color:#333">上期特肖='+zod+' → 下期必出特肖: '+z2zPred.join('、')+'</span>';
       // 列出这些生肖对应的所有号码
       var z2zNums=[];
@@ -7491,8 +7526,28 @@ function buildVerifiedFormulaBlock(){
       h+='</div>';
     }
   }
-  // ===== 9. 十大杀肖公式 =====
+  // ===== 9. 十大杀肖公式（仅针对特码生肖）=====
   var killZodVF=verifyKillZodFormulas();
+  // 上期准否检测
+  var lastKillHit=null;
+  if(DR.length>=2){
+    var prevPrev=DR[DR.length-2];
+    var prevLatest=DR[DR.length-1];
+    if(prevPrev&&prevLatest&&prevPrev.t&&prevLatest.t){
+      var prevKillZods=[];
+      VF_KILL_ZOD_FORMULAS.forEach(function(kf){
+        try{
+          var kzNum=kf.fn(prevPrev);
+          if(kzNum!==null&&kzNum!==undefined){
+            var kz=ZOD_ORDER[(kzNum-1)%12];
+            if(prevKillZods.indexOf(kz)<0)prevKillZods.push(kz);
+          }
+        }catch(e){}
+      });
+      var prevTeZod=gz(prevLatest.t);
+      lastKillHit={zods:prevKillZods,teZod:prevTeZod,ok:prevKillZods.indexOf(prevTeZod)<0};
+    }
+  }
   if(killZodVF&&killZodVF.length>0){
     // 筛选高命中率（≥70%）或当前期推荐的杀肖
     var highKill=killZodVF.filter(function(k){return k.rate>=70;});
@@ -7511,7 +7566,17 @@ function buildVerifiedFormulaBlock(){
     });
     if(highKill.length>0||currentKill.length>0){
       h+='<div style="margin-top:8px;padding:8px;border-radius:6px;background:#fce4ec;border:1px solid #e91e63">';
-      h+='<b style="font-size:12px;color:#c2185b">🗡️ 十大杀肖公式</b> <span style="font-size:10px;color:#888">（预测下期不出的生肖）</span>';
+      h+='<b style="font-size:12px;color:#c2185b">🗡️ 十大杀肖公式</b> <span style="font-size:10px;color:#888">（仅针对特码生肖）</span>';
+      // 上期准否标注
+      if(lastKillHit){
+        var lkhBg=lastKillHit.ok?'#d4edda':'#f8d7da';
+        var lkhIcon=lastKillHit.ok?'✅ 上期命中':'❌ 上期未命中';
+        var lkhColor=lastKillHit.ok?'#27ae60':'#c0392b';
+        h+=' <span style="font-size:10px;background:'+lkhBg+';color:'+lkhColor+';padding:2px 6px;border-radius:4px;font-weight:bold">'+lkhIcon+' (杀:'+lastKillHit.zods.join('/')+' → 特肖:'+lastKillHit.teZod+')</span>';
+      }
+      // 整体命中率
+      var overallRate=killZodVF.reduce(function(s,k){return s+k.hit;},0)/Math.max(1,killZodVF.reduce(function(s,k){return s+k.total;},0))*100;
+      h+=' <span style="font-size:10px;color:#666">整体命中率 '+overallRate.toFixed(0)+'%</span>';
       // 当前上期应用
       if(currentKill.length>0){
         h+='<div style="margin-top:4px;font-size:10px">';
@@ -7524,18 +7589,33 @@ function buildVerifiedFormulaBlock(){
         var killZodCount={};
         killZodsAll.forEach(function(z){killZodCount[z]=(killZodCount[z]||0)+1;});
         var topKill=Object.keys(killZodCount).sort(function(a,b){return killZodCount[b]-killZodCount[a];});
-        h+='<br><b style="color:#c2185b">综合建议排除生肖: '+topKill.join('、')+'</b>';
-        h+=' <button class="btn btn-gray" style="font-size:9px;padding:2px 6px" onclick="applyVfZodExcl(\''+topKill.join(',')+'\')">⚡ 排除</button>';
+        h+='<br><b style="color:#c2185b">综合建议排除特码生肖: '+topKill.join('、')+'</b>';
+        h+=' <button class="btn btn-gray" style="font-size:9px;padding:2px 6px" onclick="applyVfZodExcl(\''+topKill.join(',')+'\')">⚡ 排除特码</button>';
         h+='</div>';
       }
       // 高命中率公式一览（可折叠）
       h+='<details style="margin-top:6px;font-size:10px"><summary style="cursor:pointer;color:#999">📋 全部杀肖公式命中率一览</summary>';
       h+='<div style="max-height:150px;overflow-y:auto;margin-top:4px">';
       h+='<table style="width:100%;font-size:10px;border-collapse:collapse">';
-      h+='<tr style="background:#f5f5f5"><th style="padding:2px 4px;border:1px solid #ddd">#</th><th style="padding:2px 4px;border:1px solid #ddd">公式</th><th style="padding:2px 4px;border:1px solid #ddd">命中/总</th><th style="padding:2px 4px;border:1px solid #ddd">率</th></tr>';
+      h+='<tr style="background:#f5f5f5"><th style="padding:2px 4px;border:1px solid #ddd">#</th><th style="padding:2px 4px;border:1px solid #ddd">公式</th><th style="padding:2px 4px;border:1px solid #ddd">命中/总</th><th style="padding:2px 4px;border:1px solid #ddd">率</th><th style="padding:2px 4px;border:1px solid #ddd">上期</th></tr>';
       killZodVF.forEach(function(k){
         var kc=k.rate>=70?'#27ae60':k.rate>=50?'#f39c12':'#c0392b';
-        h+='<tr><td style="padding:2px 4px;border:1px solid #eee">'+k.id+'</td><td style="padding:2px 4px;border:1px solid #eee;font-size:9px">'+k.desc+'</td><td style="padding:2px 4px;border:1px solid #eee">'+k.hit+'/'+k.total+'</td><td style="padding:2px 4px;border:1px solid #eee;color:'+kc+'"><b>'+k.rate+'%</b></td></tr>';
+        // 上期准否
+        var lastStatus='-';
+        if(lastKillHit&&lastKillHit.zods){
+          var kf2=VF_KILL_ZOD_FORMULAS.find(function(f){return f.id===k.id;});
+          if(kf2&&prevPrev){
+            try{
+              var lkzNum=kf2.fn(prevPrev);
+              if(lkzNum!==null&&lkzNum!==undefined){
+                var lkz=ZOD_ORDER[(lkzNum-1)%12];
+                var lkhit2=(gz(prevLatest.t)!==lkz);
+                lastStatus=lkhit2?'✅':'❌';
+              }
+            }catch(e){}
+          }
+        }
+        h+='<tr><td style="padding:2px 4px;border:1px solid #eee">'+k.id+'</td><td style="padding:2px 4px;border:1px solid #eee;font-size:9px">'+k.desc+'</td><td style="padding:2px 4px;border:1px solid #eee">'+k.hit+'/'+k.total+'</td><td style="padding:2px 4px;border:1px solid #eee;color:'+kc+'"><b>'+k.rate+'%</b></td><td style="padding:2px 4px;border:1px solid #eee">'+lastStatus+'</td></tr>';
       });
       h+='</table></div></details>';
       h+='</div>';
@@ -7557,8 +7637,39 @@ function buildVerifiedFormulaBlock(){
       }catch(e){}
     });
     if(currentMath.length>0){
+      // 上期准否检测
+      var mathLastHit=null;
+      if(DR.length>=2){
+        var mPrev=DR[DR.length-2], mLatest=DR[DR.length-1];
+        if(mPrev&&mLatest&&mPrev.t&&mLatest.t&&mPrev.n){
+          var mlhItems=[];
+          VF_MATH_FORMULAS.forEach(function(mf){
+            if(mf.needsHistory)return;
+            try{
+              var mpv=mf.fn(mPrev);
+              if(mpv===null||mpv===undefined)return;
+              var mav;
+              if(mf.predict==='tail')mav=mLatest.t%10;
+              else if(mf.predict==='zodiac')mav=gz(mLatest.t);
+              else if(mf.predict==='family')mav=gfam(mLatest.t);
+              else if(mf.predict==='he')mav=ghe(mLatest.t);
+              else if(mf.predict==='head')mav=Math.floor(mLatest.t/10);
+              if(mav!==undefined)mlhItems.push({id:mf.id,pred:mpv,actual:mav,ok:mpv===mav,cat:mf.cat,predict:mf.predict});
+            }catch(e){}
+          });
+          if(mlhItems.length>0){
+            var mlhOk=mlhItems.filter(function(x){return x.ok;}).length;
+            mathLastHit={total:mlhItems.length,ok:mlhOk,rate:Math.round(mlhOk/mlhItems.length*100)};
+          }
+        }
+      }
       h+='<div style="margin-top:8px;padding:8px;border-radius:6px;background:#e8eaf6;border:1px solid #3f51b5">';
       h+='<b style="font-size:12px;color:#1a237e">🧮 尾数/生肖运算公式</b> <span style="font-size:10px;color:#888">（上期运算→下期预测）</span>';
+      if(mathLastHit){
+        var mlhBg=mathLastHit.rate>=60?'#d4edda':mathLastHit.rate>=40?'#fff3cd':'#f8d7da';
+        var mlhColor=mathLastHit.rate>=60?'#27ae60':mathLastHit.rate>=40?'#f39c12':'#c0392b';
+        h+=' <span style="font-size:10px;background:'+mlhBg+';color:'+mlhColor+';padding:2px 6px;border-radius:4px;font-weight:bold">上期命中 '+mathLastHit.ok+'/'+mathLastHit.total+'='+mathLastHit.rate+'%</span>';
+      }
       h+='<div style="margin-top:4px;font-size:10px">';
       // 按类别分组
       var catGroups={};
@@ -7596,10 +7707,30 @@ function buildVerifiedFormulaBlock(){
       h+='<details style="margin-top:6px;font-size:10px"><summary style="cursor:pointer;color:#999">📋 全部运算公式命中率一览</summary>';
       h+='<div style="max-height:200px;overflow-y:auto;margin-top:4px">';
       h+='<table style="width:100%;font-size:10px;border-collapse:collapse">';
-      h+='<tr style="background:#f5f5f5"><th style="padding:2px 4px;border:1px solid #ddd">ID</th><th style="padding:2px 4px;border:1px solid #ddd">类别</th><th style="padding:2px 4px;border:1px solid #ddd">公式</th><th style="padding:2px 4px;border:1px solid #ddd">命中/总</th><th style="padding:2px 4px;border:1px solid #ddd">率</th></tr>';
+      h+='<tr style="background:#f5f5f5"><th style="padding:2px 4px;border:1px solid #ddd">ID</th><th style="padding:2px 4px;border:1px solid #ddd">类别</th><th style="padding:2px 4px;border:1px solid #ddd">公式</th><th style="padding:2px 4px;border:1px solid #ddd">命中/总</th><th style="padding:2px 4px;border:1px solid #ddd">率</th><th style="padding:2px 4px;border:1px solid #ddd">上期</th></tr>';
       mathVF.forEach(function(m){
         var mc=m.rate>=60?'#27ae60':m.rate>=40?'#f39c12':'#c0392b';
-        h+='<tr><td style="padding:2px 4px;border:1px solid #eee">'+m.id+'</td><td style="padding:2px 4px;border:1px solid #eee">'+m.cat+'</td><td style="padding:2px 4px;border:1px solid #eee;font-size:9px">'+m.desc+'</td><td style="padding:2px 4px;border:1px solid #eee">'+m.hit+'/'+m.total+'</td><td style="padding:2px 4px;border:1px solid #eee;color:'+mc+'"><b>'+m.rate+'%</b></td></tr>';
+        // 上期准否
+        var mLast='-';
+        if(mathLastHit&&DR.length>=2){
+          var mPrev2=DR[DR.length-2], mLatest2=DR[DR.length-1];
+          var mf2=VF_MATH_FORMULAS.find(function(x){return x.id===m.id;});
+          if(mf2&&!mf2.needsHistory&&mPrev2&&mLatest2&&mPrev2.t&&mLatest2.t){
+            try{
+              var mpv2=mf2.fn(mPrev2);
+              if(mpv2!==null&&mpv2!==undefined){
+                var mav2;
+                if(mf2.predict==='tail')mav2=mLatest2.t%10;
+                else if(mf2.predict==='zodiac')mav2=gz(mLatest2.t);
+                else if(mf2.predict==='family')mav2=gfam(mLatest2.t);
+                else if(mf2.predict==='he')mav2=ghe(mLatest2.t);
+                else if(mf2.predict==='head')mav2=Math.floor(mLatest2.t/10);
+                if(mav2!==undefined)mLast=(mpv2===mav2)?'✅':'❌';
+              }
+            }catch(e){}
+          }
+        }
+        h+='<tr><td style="padding:2px 4px;border:1px solid #eee">'+m.id+'</td><td style="padding:2px 4px;border:1px solid #eee">'+m.cat+'</td><td style="padding:2px 4px;border:1px solid #eee;font-size:9px">'+m.desc+'</td><td style="padding:2px 4px;border:1px solid #eee">'+m.hit+'/'+m.total+'</td><td style="padding:2px 4px;border:1px solid #eee;color:'+mc+'"><b>'+m.rate+'%</b></td><td style="padding:2px 4px;border:1px solid #eee">'+mLast+'</td></tr>';
       });
       h+='</table></div></details>';
       h+='</div>';
@@ -7686,19 +7817,16 @@ function verifyDropOrderFormulas(){
   }
   return{ball6KillZod:ball6KillZod,maxMinKillZod:maxMinKillZod};
 }
+// 杀肖/必出生肖排除：仅针对特码生肖，不自动排除正码生肖
 function applyVfZodExcl(zodsStr){
   var zods=zodsStr.split(',');
   if(!UP.te_excl_zods)UP.te_excl_zods=[];
-  if(!UP.zm3_excl_zods)UP.zm3_excl_zods=[];
-  if(!UP.lx_excl_zods)UP.lx_excl_zods=[];
   var added=0;
   zods.forEach(function(z){
     if(UP.te_excl_zods.indexOf(z)<0){UP.te_excl_zods.push(z);added++;}
-    if(UP.zm3_excl_zods.indexOf(z)<0)UP.zm3_excl_zods.push(z);
-    if(UP.lx_excl_zods.indexOf(z)<0)UP.lx_excl_zods.push(z);
   });
   saveData();render();
-  showClickFeedback('已排除生肖: '+zods.join(' ')+' (新增'+added+'个到特码/三中三/连肖排除)');
+  showClickFeedback('已排除特码生肖: '+zods.join(' ')+' (新增'+added+'个) — 仅特码，不影响正码');
 }
 // ===== 统一反推理回测（录入开奖后自动调用）=====
 function backtestAllFormulas(newDraw){
