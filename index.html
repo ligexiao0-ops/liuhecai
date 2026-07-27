@@ -7374,9 +7374,11 @@ function buildVerifiedFormulaBlock(){
   if(dropVF){
     h+='<div style="margin-top:8px;padding:8px;border-radius:6px;background:#fff8e1;border:1px solid #ffcc02">';
     h+='<b style="font-size:12px;color:#e65100">🎱 落球顺序公式验证</b> <span style="font-size:9px;color:#888">(基于录入时的落球顺序，仅针对特码生肖)</span>';
+    // 先获取落球公式1数据，后续多处使用
+    var df1=dropVF.ball6KillZod;
     // 上期准否
     var dropLastHit=null;
-    if(DR.length>=2&&df1.details){
+    if(DR.length>=2&&df1&&df1.details){
       var lastDet=df1.details[df1.details.length-1];
       if(lastDet)dropLastHit={b6Fail:lastDet.fail};
     }
@@ -7391,8 +7393,7 @@ function buildVerifiedFormulaBlock(){
     h+='<div style="margin-bottom:6px;padding:6px;border-radius:4px;background:#fff">';
     h+='<b>📌 公式1：第6位落球号码生肖 = 下期杀肖</b><br>';
     h+='<span style="font-size:11px;color:#555">含义：第6位号码的生肖在下期排除 | 验证:</span> ';
-    var df1=dropVF.ball6KillZod;
-    if(df1.total>0){
+    if(df1&&df1.total>0){
       h+='<span style="font-size:11px">'+(df1.total-df1.fail)+'/'+df1.total+'期验证通过';
       var df1Rate=Math.round((df1.total-df1.fail)/df1.total*100);
       h+=' (<b style="color:'+(df1Rate>=70?'#27ae60':df1Rate>=50?'#f39c12':'#c0392b')+'">'+df1Rate+'%</b>)</span>';
