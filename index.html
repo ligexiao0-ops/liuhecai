@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">184</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">180</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0728.04</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">180</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0728.05</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -908,7 +908,7 @@ function saveCopyHistToLocal(){
 }
 // 导出复制记录为JSON文件
 function exportCopyHistory(){
-  var d={ver:'v10.0728.04',ts:new Date().toISOString(),lot:CUR_LOT,records:COPY_HISTORY.slice()};
+  var d={ver:'v10.0728.05',ts:new Date().toISOString(),lot:CUR_LOT,records:COPY_HISTORY.slice()};
   var blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);
   var lbl=LOTTERIES[CUR_LOT].name;
@@ -2408,7 +2408,7 @@ function scoreZhengAI(){
   // 特码15期
   var t15c=te15();
 
-  // ===== v10.0728.04 上期7码属性比（新增核心维度）=====
+  // ===== v10.0728.05 上期7码属性比（新增核心维度）=====
   var lastAll7=[].concat(lastN,[LAST.t]);
   function attrRatio(arr,fn,vals){
     var cnt={};vals.forEach(function(v){cnt[v]=0;});
@@ -3696,7 +3696,7 @@ function scoreZheng(extraPrefs){
   const oneZod2=extraPrefs.one_zod_2||false;
   const twoZod2=extraPrefs.two_zod_2||false;
 
-  // ===== v10.0728.04 重写：核心思路 =====
+  // ===== v10.0728.05 重写：核心思路 =====
   // 统计事实：60.1%正码来自已出(APP)，39.9%来自未出(NOT)
   // 所以已出号码应有基础加分，未出号码应有基础减分
   // 遗漏只是参考之一，不是主要加分项
@@ -3872,7 +3872,7 @@ function scoreZheng(extraPrefs){
     // ===== 常出搭配 =====
     if(freqPairNums.has(n)){s+=0.5;rs.push("常搭配");}
 
-    // ===== 【v10.0728.04新增】正态分布z-score评分 =====
+    // ===== 【v10.0728.05新增】正态分布z-score评分 =====
     // 基于统计分析：间隔均值=6.1期，标准差=5.4
     // z=(当前间隔-6.1)/5.4 → z>2超长遗漏加分，z<-1过热减分
     var curOm=ZM2[n]||0;
@@ -3884,7 +3884,7 @@ function scoreZheng(extraPrefs){
     else if(zScore<-1.5){s-=2;rs.push("z-score超低("+zScore.toFixed(1)+",过热-2)");}
     else if(zScore<-1){s-=1;rs.push("z-score低("+zScore.toFixed(1)+",过热-1)");}
 
-    // ===== 【v10.0728.04新增】回归分析：30期内频率→命中率映射 =====
+    // ===== 【v10.0728.05新增】回归分析：30期内频率→命中率映射 =====
     // 统计结论：30期内0-1次→下期命中率17.7%（最高），8-9次→9.2%（最低）
     var d30Cnt=0;
     DR.slice(-30).forEach(function(d){
@@ -3897,13 +3897,13 @@ function scoreZheng(extraPrefs){
     else if(d30Cnt>=6){s-=0.8;rs.push("30期高频("+d30Cnt+"次,微降)");}
     else if(d30Cnt>=4){s-=0.2;}
 
-    // ===== 【v10.0728.04新增】频率标准差评级（Z100维度）=====
+    // ===== 【v10.0728.05新增】频率标准差评级（Z100维度）=====
     // 均值=6.6，标准差=2.6。高频(z>1.5)微降，低频(z<-1.5)微加
     var freqZ=(zc-6.6)/2.6;
     if(freqZ<-1.5){s+=1;rs.push("超低频(z"+freqZ.toFixed(1)+",潜力+1)");}
     else if(freqZ>1.5){s-=0.5;rs.push("超高频(z"+freqZ.toFixed(1)+",微降)");}
 
-    // ===== 【v10.0728.04剔除】属性延续率（大小49.4%/单双50.0%→基本随机，无预测价值）=====
+    // ===== 【v10.0728.05剔除】属性延续率（大小49.4%/单双50.0%→基本随机，无预测价值）=====
     // 原属性延续逻辑已移除，保留上期7码属性比失衡回调逻辑
 
     // ===== 100期热门/冷门 用户筛选（保持原有逻辑）=====
@@ -7518,7 +7518,7 @@ var VF_MATH_FORMULAS=[
   {id:'M7',cat:'尾数',desc:'平1×平2×平5尾数=下期某码尾数',fn:function(prev){return ((prev.n[0]%10)*(prev.n[1]%10)*(prev.n[4]%10))%10;},predict:'tail'},
   {id:'M8',cat:'尾数',desc:'平4+平6尾数=下期某码尾数',fn:function(prev){return ((prev.n[3]%10)+(prev.n[5]%10))%10;},predict:'tail'},
   {id:'M9',cat:'尾数',desc:'平2-平4尾数=下期某码尾数',fn:function(prev){var d=(prev.n[1]%10)-(prev.n[3]%10);return d<0?d+10:d;},predict:'tail'},
-  // === 【v10.0728.04新增】尾数替代运算类（不同数字替代加减法） ===
+  // === 【v10.0728.05新增】尾数替代运算类（不同数字替代加减法） ===
   {id:'M21',cat:'尾数',desc:'特码尾数+2→下期平码尾数(替代)',fn:function(prev){return (prev.t%10+2)%10;},predict:'tail'},
   {id:'M22',cat:'尾数',desc:'特码尾数+6→下期平码尾数(替代)',fn:function(prev){return (prev.t%10+6)%10;},predict:'tail'},
   {id:'M23',cat:'尾数',desc:'特码尾数+8→下期平码尾数(替代)',fn:function(prev){return (prev.t%10+8)%10;},predict:'tail'},
@@ -7546,7 +7546,7 @@ var VF_MATH_FORMULAS=[
   // === 冲肖运算类 ===
   {id:'M19',cat:'冲肖',desc:'特码生肖冲→下期平码生肖',fn:function(prev){var idx=ZOD_ORDER.indexOf(gz(prev.t));return ZOD_ORDER[(idx+6)%12];},predict:'zodiac'},
   {id:'M20',cat:'冲肖',desc:'平5码生肖冲→下期平码生肖',fn:function(prev){var idx=ZOD_ORDER.indexOf(gz(prev.n[4]));return ZOD_ORDER[(idx+6)%12];},predict:'zodiac'},
-  // === 【v10.0728.04新增】系统性尾数/头数/生肖高命中率公式 ===
+  // === 【v10.0728.05新增】系统性尾数/头数/生肖高命中率公式 ===
   // 来源：对154-207期新奥彩全遍历1-10数字运算回测，筛选出显著优于随机命中率的公式
   // 特码尾数随机命中率≈10%，筛选阈值≥18.9%；头数随机≈20%，筛选阈值≥30%；生肖随机≈8.3%，筛选阈值≥17%
   {id:'M50',cat:'尾数',desc:'平2码尾数×3→下期特码尾数',fn:function(prev){return ((prev.n[1]%10)*3)%10;},predict:'tail'},
@@ -7572,7 +7572,7 @@ var VF_MATH_FORMULAS=[
   {id:'M70',cat:'生肖',desc:'特码生肖+11→下期特码生肖',fn:function(prev){var idx=ZOD_ORDER.indexOf(gz(prev.t));return ZOD_ORDER[(idx+11)%12];},predict:'zodiac'},
   {id:'M71',cat:'生肖',desc:'平1码生肖+5→下期特码生肖',fn:function(prev){var idx=ZOD_ORDER.indexOf(gz(prev.n[0]));return ZOD_ORDER[(idx+5)%12];},predict:'zodiac'},
   {id:'M72',cat:'生肖',desc:'平2码生肖+4→下期特码生肖',fn:function(prev){var idx=ZOD_ORDER.indexOf(gz(prev.n[1]));return ZOD_ORDER[(idx+4)%12];},predict:'zodiac'},
-  // === 【v10.0728.04新增】平码尾数预测公式（6个平码任一尾数命中即算成功，随机基线≈47%）===
+  // === 【v10.0728.05新增】平码尾数预测公式（6个平码任一尾数命中即算成功，随机基线≈47%）===
   {id:'M73',cat:'尾数',desc:'平4码尾数-3→下期平码尾数',fn:function(prev){var d=(prev.n[3]%10)-3;return d<0?d+10:d;},predict:'ping_tail'}, // 67.9%
   {id:'M74',cat:'尾数',desc:'平4码尾数+7→下期平码尾数',fn:function(prev){return ((prev.n[3]%10)+7)%10;},predict:'ping_tail'}, // 67.9%
   {id:'M75',cat:'尾数',desc:'平2码尾数-3→下期平码尾数',fn:function(prev){var d=(prev.n[1]%10)-3;return d<0?d+10:d;},predict:'ping_tail'}, // 64.2%
@@ -11226,7 +11226,7 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
   var sc4=(uniqTails.length===3?2:uniqTails.length===2?0:-1);
   s+=sc4;
   b.push({label:'尾数',raw:uniqTails.length+'尾('+uniqTails.join(',')+')',score:(sc4>=0?'+':'')+sc4.toFixed(1)});
-  // 4b. 【v10.0728.04新增】±3尾数统计：号码对尾数差值在±3内(含跨10)，统计历史共现频率
+  // 4b. 【v10.0728.05新增】±3尾数统计：号码对尾数差值在±3内(含跨10)，统计历史共现频率
   var tailPairBonus=0;
   for(var tpi=0;tpi<combo.length;tpi++){
     for(var tpj=tpi+1;tpj<combo.length;tpj++){
@@ -11244,7 +11244,7 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
     }
   }
   if(tailPairBonus>0){s+=tailPairBonus;b.push({label:'±3尾',raw:'尾近对共现',score:'+'+tailPairBonus.toFixed(1)});}
-  // 4c. 【v10.0728.04新增】平码尾数公式预测：统计ping_tail公式预测的尾数，组合中号码尾数命中越多加分越高
+  // 4c. 【v10.0728.05新增】平码尾数公式预测：统计ping_tail公式预测的尾数，组合中号码尾数命中越多加分越高
   var pingTailPreds=[];
   VF_MATH_FORMULAS.forEach(function(mf){
     if(mf.predict!=='ping_tail'||mf.needsHistory)return;
@@ -11258,23 +11258,31 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
     // 一个都没命中则轻微扣分
     else if(ptHitCnt===0&&pingTailPreds.length>=3){s-=1.5;b.push({label:'平尾公式',raw:'0命中(预测尾:'+pingTailPreds.slice(0,5).join(',')+')',score:'-1.5'});}
   }
-  // 5. 当前遗漏（适中遗漏轻微加分，不惩罚长冷）
-  var maxOm=Math.max.apply(null,combo.map(function(n){return ZM2[n]||0;}));
+  // 5. 当前遗漏（综合评分：适中遗漏加分，极端遗漏降分）
+  var omVals=combo.map(function(n){return ZM2[n]||0;});
+  var maxOm=Math.max.apply(null,omVals);
+  var avgOm=omVals.reduce(function(a,b){return a+b;},0)/omVals.length;
   var sc5=0;
-  if(maxOm>=5&&maxOm<=12)sc5=0.8;
-  else if(maxOm>=20)sc5=0;
+  // 平均遗漏在3-8之间（正常回补窗口）加分
+  if(avgOm>=3&&avgOm<=8){sc5+=1;b.push({label:'遗漏均值',raw:avgOm.toFixed(1)+'期(回补窗口)',score:'+1'});}
+  else if(avgOm>=9&&avgOm<=14){sc5+=0.3;b.push({label:'遗漏均值',raw:avgOm.toFixed(1)+'期(偏长)',score:'+0.3'});}
+  // 存在超长遗漏(>=20)降分（庄家反向）
+  if(maxOm>=20){sc5-=1;b.push({label:'超长遗漏',raw:'max='+maxOm+'期(庄家反向)',score:'-1'});}
   s+=sc5;
-  b.push({label:'遗漏',raw:'最缺'+maxOm,score:(sc5>=0?'+':'')+sc5.toFixed(1)});
-  // 6. 冷热分布（弱化：降权不代表绝不选，热号轻微减分）
+  // 6. 冷热分布（仅对极热降分，与scoreZheng保持一致）
+  // scoreZheng对zc>=14加分、zc>=10加分，所以这些号码会自然进入poolTop
+  // 这里只对近6期重复出现3+次的"过热"号码降分
   var hotCnt=0,coldCnt=0;
   combo.forEach(function(n){
     var zc=(typeof Z100!=='undefined'&&Z100[n])||0;
     if(userPoolSet&&userPoolSet.has(n)){return;}
-    if(zc>=7)hotCnt++;else if(zc===0)coldCnt++;
+    // 近6期出现3+次=过热，每号-1.5
+    if((d6Cnt[n]||0)>=3){hotCnt++;}
+    else if(zc===0){coldCnt++;}
   });
-  var sc6=hotCnt*(-0.8); // 热号每号-0.8（弱化，从-1.5降低）
+  var sc6=hotCnt*(-1.5); // 过热每号-1.5（针对近6期重复，而非100期频率）
+  if(sc6!==0)b.push({label:'过热',raw:hotCnt+'号近6期重3+',score:sc6.toFixed(1)});
   s+=sc6;
-  b.push({label:'冷热',raw:'热'+hotCnt+'·冷'+coldCnt,score:sc6.toFixed(1)});
   // 7. 号码对共现频率（硬统计，加强）
   var pairScore=0;
   for(var pi=0;pi<combo.length;pi++){
@@ -11314,25 +11322,28 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
     else if(poolMatchCnt===2){s+=3;b.push({label:'自选池',raw:'2号匹配',score:'+2'});}
     else if(poolMatchCnt===1){s+=1;b.push({label:'自选池',raw:'1号匹配',score:'+1'});}
   }
-  // 11. 来源平衡（弱化：正码几乎都在候选池中，不严重惩罚全未出）
+  // 11. 来源平衡（基于统计事实：60%正码来自APP，40%来自NOT）
+  // 因此2已出1未出是最自然的状态，应获最高加分
   var appInCombo=combo.filter(function(n){return APP.includes(n);}).length;
   var sc11=0;
-  if(appInCombo===0){sc11=-0.5;b.push({label:'来源',raw:'全未出',score:'-0.5'});}
-  else if(appInCombo===1){sc11=0;b.push({label:'来源',raw:'1已出2未出',score:'0'});}
-  else if(appInCombo===2){sc11=+1;b.push({label:'来源',raw:'2已出1未出',score:'+1'});}
+  if(appInCombo===0){sc11=-1.5;b.push({label:'来源',raw:'全未出⚠️',score:'-1.5'});}
+  else if(appInCombo===1){sc11=-0.5;b.push({label:'来源',raw:'1已出2未出',score:'-0.5'});}
+  else if(appInCombo===2){sc11=+1.5;b.push({label:'来源',raw:'2已出1未出✅',score:'+1.5'});}
   else if(appInCombo===3){sc11=+0.5;b.push({label:'来源',raw:'全已出',score:'+0.5'});}
   s+=sc11;
-  // 12. 【v10.0728.04新增】波色多样性：避免结果几乎只有两种波色
+  // 12. 【v10.0728.05新增】波色多样性：避免结果几乎只有两种波色
   var wvs=Array.from(new Set(combo.map(gwv)));
   var sc12=0;
   if(wvs.length===1){sc12=-1.5;b.push({label:'波色',raw:'单色('+wvs[0]+')⚠️',score:'-1.5'});}
   else if(wvs.length===2){sc12=-0.3;b.push({label:'波色',raw:'双色('+wvs.join('/')+')',score:'-0.3'});}
   else{sc12=+1;b.push({label:'波色',raw:'三色('+wvs.join('/')+')',score:'+1'});}
   s+=sc12;
-  // 13. 【v10.0728.04新增】特肖排除降权：组合中号码所属生肖若在te_excl_zods中，轻微降分（非绝不选）
+  // 13. 【v10.0728.05】特肖排除降权：scoreZheng已大幅降分，这里仅做组合级弱提示
+  // 能进入poolTop的号码通常不会来自排除生肖（已被scoreZheng扣-10），但保留此维度作为安全网
   if(UP.te_excl_zods&&UP.te_excl_zods.length>0){
     var exZodHit=combo.filter(function(n){return UP.te_excl_zods.indexOf(gz(n))>=0;}).length;
-    if(exZodHit>0){var sc13=exZodHit*(-1.2);s+=sc13;b.push({label:'特肖排除',raw:exZodHit+'号属排除肖(降权非排除)',score:sc13.toFixed(1)});}
+    if(exZodHit>=2){var sc13=-1; s+=sc13;b.push({label:'特肖排除',raw:exZodHit+'号属排除肖',score:sc13.toFixed(1)});}
+    else if(exZodHit===1){var sc13=-0.3; s+=sc13;b.push({label:'特肖排除',raw:'1号属排除肖',score:sc13.toFixed(1)});}
   }
   return {s:Math.round(s*10)/10,breakdown:b,details:b.map(function(x){return x.label+x.raw+'('+x.score+')';}).join(' · ')};
 }
@@ -11576,7 +11587,7 @@ function scoreLXCombo(combo,zSc){
       b.push({label:'上下期重合',raw:'重合0个(罕见)',score:'0'});
     }
   }
-  // 16. 【v10.0728.04新增】特肖排除降权：特肖被杀/排除时，选该生肖的机率降低（非绝不选）
+  // 16. 【v10.0728.05新增】特肖排除降权：特肖被杀/排除时，选该生肖的机率降低（非绝不选）
   if(UP.te_excl_zods&&UP.te_excl_zods.length>0){
     var teExHit=combo.filter(function(item){return UP.te_excl_zods.indexOf(item.z)>=0;}).length;
     if(teExHit>0){
@@ -11585,7 +11596,7 @@ function scoreLXCombo(combo,zSc){
       b.push({label:'特肖排除',raw:teExHit+'肖属排除(降权非排除)',score:sc16.toFixed(1)});
     }
   }
-  // 17. 【v10.0728.04增强】相同位置生肖映射排除：位置完全相同时大幅降分
+  // 17. 【v10.0728.05增强】相同位置生肖映射排除：位置完全相同时大幅降分
   // 统计分析：相同位置生肖映射仅8.4%(31/371)，下期再次相同概率更低(1/7≈14%)
   var lx9s1check=UP.lx9_seq1||[];
   if(lx9s1check.length>=9){
@@ -11688,16 +11699,17 @@ function renderZ3(){
     poolTop=userPool.sort(function(a,b){return a-b;});
     usingUserPool=true;
   }else{
-    // 【核心修复v2】poolTop从scoreZheng中取，按APP/NOT比例平衡（~40%已出/~60%未出）
+    // 【核心修复v3】poolTop从scoreZheng中取，按APP/NOT比例平衡
     // 正码来源统计：~60%来自已出(APP)，~40%来自未出(NOT)
+    // 候选池应反映这个事实：60%来自APP高分，40%来自NOT高分
     // scoreZheng中已包含：排除号码/尾数/生肖/五行/属性 + 已出/未出 + 同尾 + 冷热 + 指定等
     var topSc=sc.filter(function(x){return x.s>-5;}); // 排除极低分（被明确排除的号码）
     // 按APP/NOT分组，各自取高分
     var appCand=topSc.filter(function(x){return APP.includes(x.n);});
     var notCand=topSc.filter(function(x){return !APP.includes(x.n);});
     var poolSize=12;
-    // 动态计算比例：APP目标占比40%（约5/12），但根据实际可用数量调整
-    var targetAppCnt=Math.min(Math.max(3,Math.round(poolSize*0.4)),appCand.length);
+    // 动态计算比例：APP目标占比60%（~7/12，匹配60%正码来自APP的统计事实）
+    var targetAppCnt=Math.min(Math.max(4,Math.round(poolSize*0.6)),appCand.length);
     var targetNotCnt=Math.min(poolSize-targetAppCnt,notCand.length);
     // 如果某一边不够，另一边补足
     if(appCand.length<targetAppCnt){
@@ -11711,17 +11723,23 @@ function renderZ3(){
     poolTop=appCand.slice(0,targetAppCnt).concat(notCand.slice(0,targetNotCnt)).map(function(x){return x.n;});
     // 最终确保不超过12个
     poolTop=poolTop.slice(0,poolSize);
-    // 如果过滤后不足3个，说明用户筛选太严格，提示但不强行回退
+    // 如果过滤后不足3个，说明用户筛选太严格，逐步放宽回退
     if(poolTop.length<3){
-      // 放宽：取所有非负分号码（不限制APP/NOT比例）
+      // 第1轮回退：放宽APP/NOT比例限制，取所有非负分号码（仍保留排除条件）
       var relaxed=sc.filter(function(x){return x.s>=0;}).map(function(x){return x.n;});
       poolTop=relaxed.slice(0,Math.min(poolSize,relaxed.length));
-      // 如果还是不够，最终回退到AI评分（至少保证有推荐）
+      // 第2轮回退：放宽到分数>=-5的号码（仅排除用户明确排除的）
+      if(poolTop.length<3){
+        var relaxed2=sc.filter(function(x){return x.s>=-5;}).map(function(x){return x.n;});
+        poolTop=relaxed2.slice(0,Math.min(poolSize,relaxed2.length));
+      }
+      // 第3轮回退：最终回退到AI评分（但始终尊重用户明确排除的号码和生肖）
       if(poolTop.length<3){
         var aiFallback=aiSc.filter(function(x){
           var n=x.n;
           if((UP.zm3_excl_nums||[]).indexOf(n)>=0)return false;
           if((UP.zm3_excl_zods||[]).indexOf(gz(n))>=0)return false;
+          if((UP.zm3_excl_tails||[]).indexOf(gtl(n))>=0)return false;
           return true;
         }).map(function(x){return x.n;});
         poolTop=aiFallback.slice(0,Math.min(poolSize,aiFallback.length));
