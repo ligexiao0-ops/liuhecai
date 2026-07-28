@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">184</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">180</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0727.07</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">180</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0728.02</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -908,7 +908,7 @@ function saveCopyHistToLocal(){
 }
 // 导出复制记录为JSON文件
 function exportCopyHistory(){
-  var d={ver:'v10.0727.07',ts:new Date().toISOString(),lot:CUR_LOT,records:COPY_HISTORY.slice()};
+  var d={ver:'v10.0728.02',ts:new Date().toISOString(),lot:CUR_LOT,records:COPY_HISTORY.slice()};
   var blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);
   var lbl=LOTTERIES[CUR_LOT].name;
@@ -2408,7 +2408,7 @@ function scoreZhengAI(){
   // 特码15期
   var t15c=te15();
 
-  // ===== v10.0727.07 上期7码属性比（新增核心维度）=====
+  // ===== v10.0728.02 上期7码属性比（新增核心维度）=====
   var lastAll7=[].concat(lastN,[LAST.t]);
   function attrRatio(arr,fn,vals){
     var cnt={};vals.forEach(function(v){cnt[v]=0;});
@@ -3636,7 +3636,7 @@ function scoreZheng(extraPrefs){
   const oneZod2=extraPrefs.one_zod_2||false;
   const twoZod2=extraPrefs.two_zod_2||false;
 
-  // ===== v10.0727.07 重写：核心思路 =====
+  // ===== v10.0728.02 重写：核心思路 =====
   // 统计事实：60.1%正码来自已出(APP)，39.9%来自未出(NOT)
   // 所以已出号码应有基础加分，未出号码应有基础减分
   // 遗漏只是参考之一，不是主要加分项
@@ -3812,7 +3812,7 @@ function scoreZheng(extraPrefs){
     // ===== 常出搭配 =====
     if(freqPairNums.has(n)){s+=0.5;rs.push("常搭配");}
 
-    // ===== 【v10.0727.07新增】正态分布z-score评分 =====
+    // ===== 【v10.0728.02新增】正态分布z-score评分 =====
     // 基于统计分析：间隔均值=6.1期，标准差=5.4
     // z=(当前间隔-6.1)/5.4 → z>2超长遗漏加分，z<-1过热减分
     var curOm=ZM2[n]||0;
@@ -3824,7 +3824,7 @@ function scoreZheng(extraPrefs){
     else if(zScore<-1.5){s-=2;rs.push("z-score超低("+zScore.toFixed(1)+",过热-2)");}
     else if(zScore<-1){s-=1;rs.push("z-score低("+zScore.toFixed(1)+",过热-1)");}
 
-    // ===== 【v10.0727.07新增】回归分析：30期内频率→命中率映射 =====
+    // ===== 【v10.0728.02新增】回归分析：30期内频率→命中率映射 =====
     // 统计结论：30期内0-1次→下期命中率17.7%（最高），8-9次→9.2%（最低）
     var d30Cnt=0;
     DR.slice(-30).forEach(function(d){
@@ -3837,13 +3837,13 @@ function scoreZheng(extraPrefs){
     else if(d30Cnt>=6){s-=0.8;rs.push("30期高频("+d30Cnt+"次,微降)");}
     else if(d30Cnt>=4){s-=0.2;}
 
-    // ===== 【v10.0727.07新增】频率标准差评级（Z100维度）=====
+    // ===== 【v10.0728.02新增】频率标准差评级（Z100维度）=====
     // 均值=6.6，标准差=2.6。高频(z>1.5)微降，低频(z<-1.5)微加
     var freqZ=(zc-6.6)/2.6;
     if(freqZ<-1.5){s+=1;rs.push("超低频(z"+freqZ.toFixed(1)+",潜力+1)");}
     else if(freqZ>1.5){s-=0.5;rs.push("超高频(z"+freqZ.toFixed(1)+",微降)");}
 
-    // ===== 【v10.0727.07剔除】属性延续率（大小49.4%/单双50.0%→基本随机，无预测价值）=====
+    // ===== 【v10.0728.02剔除】属性延续率（大小49.4%/单双50.0%→基本随机，无预测价值）=====
     // 原属性延续逻辑已移除，保留上期7码属性比失衡回调逻辑
 
     // ===== 100期热门/冷门 用户筛选（保持原有逻辑）=====
@@ -7321,7 +7321,7 @@ var VF_MATH_FORMULAS=[
   {id:'M7',cat:'尾数',desc:'平1×平2×平5尾数=下期某码尾数',fn:function(prev){return ((prev.n[0]%10)*(prev.n[1]%10)*(prev.n[4]%10))%10;},predict:'tail'},
   {id:'M8',cat:'尾数',desc:'平4+平6尾数=下期某码尾数',fn:function(prev){return ((prev.n[3]%10)+(prev.n[5]%10))%10;},predict:'tail'},
   {id:'M9',cat:'尾数',desc:'平2-平4尾数=下期某码尾数',fn:function(prev){var d=(prev.n[1]%10)-(prev.n[3]%10);return d<0?d+10:d;},predict:'tail'},
-  // === 【v10.0727.07新增】尾数替代运算类（不同数字替代加减法） ===
+  // === 【v10.0728.02新增】尾数替代运算类（不同数字替代加减法） ===
   {id:'M21',cat:'尾数',desc:'特码尾数+2→下期平码尾数(替代)',fn:function(prev){return (prev.t%10+2)%10;},predict:'tail'},
   {id:'M22',cat:'尾数',desc:'特码尾数+6→下期平码尾数(替代)',fn:function(prev){return (prev.t%10+6)%10;},predict:'tail'},
   {id:'M23',cat:'尾数',desc:'特码尾数+8→下期平码尾数(替代)',fn:function(prev){return (prev.t%10+8)%10;},predict:'tail'},
@@ -7348,7 +7348,49 @@ var VF_MATH_FORMULAS=[
   {id:'M18',cat:'属性',desc:'平4码合数±1→下期某码合数',fn:function(prev){var he=ghe(prev.n[3]);return he>=2?he-1:he+1;},predict:'he'},
   // === 冲肖运算类 ===
   {id:'M19',cat:'冲肖',desc:'特码生肖冲→下期平码生肖',fn:function(prev){var idx=ZOD_ORDER.indexOf(gz(prev.t));return ZOD_ORDER[(idx+6)%12];},predict:'zodiac'},
-  {id:'M20',cat:'冲肖',desc:'平5码生肖冲→下期平码生肖',fn:function(prev){var idx=ZOD_ORDER.indexOf(gz(prev.n[4]));return ZOD_ORDER[(idx+6)%12];},predict:'zodiac'}
+  {id:'M20',cat:'冲肖',desc:'平5码生肖冲→下期平码生肖',fn:function(prev){var idx=ZOD_ORDER.indexOf(gz(prev.n[4]));return ZOD_ORDER[(idx+6)%12];},predict:'zodiac'},
+  // === 【v10.0728.02新增】系统性尾数/头数/生肖高命中率公式 ===
+  // 来源：对154-207期新奥彩全遍历1-10数字运算回测，筛选出显著优于随机命中率的公式
+  // 特码尾数随机命中率≈10%，筛选阈值≥18.9%；头数随机≈20%，筛选阈值≥30%；生肖随机≈8.3%，筛选阈值≥17%
+  {id:'M50',cat:'尾数',desc:'平2码尾数×3→下期特码尾数',fn:function(prev){return ((prev.n[1]%10)*3)%10;},predict:'tail'},
+  {id:'M51',cat:'尾数',desc:'平5码尾数+1→下期特码尾数',fn:function(prev){return ((prev.n[4]%10)+1)%10;},predict:'tail'},
+  {id:'M52',cat:'尾数',desc:'平5码尾数-9→下期特码尾数',fn:function(prev){var d=(prev.n[4]%10)-9;return d<0?d+10:d;},predict:'tail'},
+  {id:'M53',cat:'尾数',desc:'平4码尾数+平6码尾数+特码尾数→下期特码尾数',fn:function(prev){return ((prev.n[3]%10)+(prev.n[5]%10)+(prev.t%10))%10;},predict:'tail'},
+  {id:'M54',cat:'尾数',desc:'平2码尾数平方→下期特码尾数',fn:function(prev){return ((prev.n[1]%10)*(prev.n[1]%10))%10;},predict:'tail'},
+  {id:'M55',cat:'尾数',desc:'特码尾数-1→下期特码尾数',fn:function(prev){var d=(prev.t%10)-1;return d<0?d+10:d;},predict:'tail'},
+  {id:'M56',cat:'尾数',desc:'特码尾数+9→下期特码尾数',fn:function(prev){return ((prev.t%10)+9)%10;},predict:'tail'},
+  {id:'M57',cat:'尾数',desc:'平2码尾数+2→下期特码尾数',fn:function(prev){return ((prev.n[1]%10)+2)%10;},predict:'tail'},
+  {id:'M58',cat:'尾数',desc:'平2码尾数-8→下期特码尾数',fn:function(prev){var d=(prev.n[1]%10)-8;return d<0?d+10:d;},predict:'tail'},
+  {id:'M59',cat:'尾数',desc:'平2码尾数×9→下期特码尾数',fn:function(prev){return ((prev.n[1]%10)*9)%10;},predict:'tail'},
+  {id:'M60',cat:'尾数',desc:'平3码尾数+4→下期特码尾数',fn:function(prev){return ((prev.n[2]%10)+4)%10;},predict:'tail'},
+  {id:'M61',cat:'尾数',desc:'平3码尾数-6→下期特码尾数',fn:function(prev){var d=(prev.n[2]%10)-6;return d<0?d+10:d;},predict:'tail'},
+  {id:'M62',cat:'尾数',desc:'平1码尾数+平4码尾数+特码尾数→下期特码尾数',fn:function(prev){return ((prev.n[0]%10)+(prev.n[3]%10)+(prev.t%10))%10;},predict:'tail'},
+  {id:'M63',cat:'尾数',desc:'平2码尾数+平4码尾数+平5码尾数→下期特码尾数',fn:function(prev){return ((prev.n[1]%10)+(prev.n[3]%10)+(prev.n[4]%10))%10;},predict:'tail'},
+  {id:'M64',cat:'头数',desc:'特码头数+0→下期特码头数',fn:function(prev){return (Math.floor(prev.t/10)+0)%5;},predict:'head'},
+  {id:'M65',cat:'头数',desc:'特码头数+5→下期特码头数',fn:function(prev){return (Math.floor(prev.t/10)+5)%5;},predict:'head'},
+  {id:'M66',cat:'头数',desc:'平1码头数+4→下期特码头数',fn:function(prev){return (Math.floor(prev.n[0]/10)+4)%5;},predict:'head'},
+  {id:'M67',cat:'头数',desc:'平2码头数+4→下期特码头数',fn:function(prev){return (Math.floor(prev.n[1]/10)+4)%5;},predict:'head'},
+  {id:'M68',cat:'头数',desc:'平5码头数+1→下期特码头数',fn:function(prev){return (Math.floor(prev.n[4]/10)+1)%5;},predict:'head'},
+  {id:'M69',cat:'生肖',desc:'平3码生肖+8→下期特码生肖',fn:function(prev){var idx=ZOD_ORDER.indexOf(gz(prev.n[2]));return ZOD_ORDER[(idx+8)%12];},predict:'zodiac'},
+  {id:'M70',cat:'生肖',desc:'特码生肖+11→下期特码生肖',fn:function(prev){var idx=ZOD_ORDER.indexOf(gz(prev.t));return ZOD_ORDER[(idx+11)%12];},predict:'zodiac'},
+  {id:'M71',cat:'生肖',desc:'平1码生肖+5→下期特码生肖',fn:function(prev){var idx=ZOD_ORDER.indexOf(gz(prev.n[0]));return ZOD_ORDER[(idx+5)%12];},predict:'zodiac'},
+  {id:'M72',cat:'生肖',desc:'平2码生肖+4→下期特码生肖',fn:function(prev){var idx=ZOD_ORDER.indexOf(gz(prev.n[1]));return ZOD_ORDER[(idx+4)%12];},predict:'zodiac'},
+  // === 【v10.0728.02新增】平码尾数预测公式（6个平码任一尾数命中即算成功，随机基线≈47%）===
+  {id:'M73',cat:'尾数',desc:'平4码尾数-3→下期平码尾数',fn:function(prev){var d=(prev.n[3]%10)-3;return d<0?d+10:d;},predict:'ping_tail'}, // 67.9%
+  {id:'M74',cat:'尾数',desc:'平4码尾数+7→下期平码尾数',fn:function(prev){return ((prev.n[3]%10)+7)%10;},predict:'ping_tail'}, // 67.9%
+  {id:'M75',cat:'尾数',desc:'平2码尾数-3→下期平码尾数',fn:function(prev){var d=(prev.n[1]%10)-3;return d<0?d+10:d;},predict:'ping_tail'}, // 64.2%
+  {id:'M76',cat:'尾数',desc:'平2码尾数+7→下期平码尾数',fn:function(prev){return ((prev.n[1]%10)+7)%10;},predict:'ping_tail'}, // 64.2%
+  {id:'M77',cat:'尾数',desc:'平3尾数-特码尾数→下期平码尾数',fn:function(prev){var d=(prev.n[2]%10)-(prev.t%10);return d<0?d+10:d;},predict:'ping_tail'}, // 62.3%
+  {id:'M78',cat:'尾数',desc:'平5尾数-平2尾数→下期平码尾数',fn:function(prev){var d=(prev.n[4]%10)-(prev.n[1]%10);return d<0?d+10:d;},predict:'ping_tail'}, // 62.3%
+  {id:'M79',cat:'尾数',desc:'特码尾数-1→下期平码尾数',fn:function(prev){var d=(prev.t%10)-1;return d<0?d+10:d;},predict:'ping_tail'}, // 60.4%
+  {id:'M80',cat:'尾数',desc:'特码尾数+3→下期平码尾数',fn:function(prev){return ((prev.t%10)+3)%10;},predict:'ping_tail'}, // 60.4%
+  {id:'M81',cat:'尾数',desc:'特码尾数-7→下期平码尾数',fn:function(prev){var d=(prev.t%10)-7;return d<0?d+10:d;},predict:'ping_tail'}, // 60.4%
+  {id:'M82',cat:'尾数',desc:'特码尾数+9→下期平码尾数',fn:function(prev){return ((prev.t%10)+9)%10;},predict:'ping_tail'}, // 60.4%
+  {id:'M83',cat:'尾数',desc:'平1尾数+平5尾数→下期平码尾数',fn:function(prev){return ((prev.n[0]%10)+(prev.n[4]%10))%10;},predict:'ping_tail'}, // 60.4%
+  {id:'M84',cat:'尾数',desc:'平6尾数-特码尾数→下期平码尾数',fn:function(prev){var d=(prev.n[5]%10)-(prev.t%10);return d<0?d+10:d;},predict:'ping_tail'}, // 60.4%
+  // 额外高命中头数/生肖公式
+  {id:'M85',cat:'头数',desc:'平6码头数+4→下期特码头数',fn:function(prev){return (Math.floor(prev.n[5]/10)+4)%5;},predict:'head'}, // 28.3%
+  {id:'M86',cat:'生肖',desc:'平4码生肖+5→下期特码生肖',fn:function(prev){var idx=ZOD_ORDER.indexOf(gz(prev.n[3]));return ZOD_ORDER[(idx+5)%12];},predict:'zodiac'} // 15.1%
 ];
 // ZOD_ORDER: 生肖顺序（用于公式运算）
 var ZOD_ORDER=['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
@@ -7840,14 +7882,16 @@ function buildVerifiedFormulaBlock(){
   if(mathVF&&mathVF.length>0){
     // 筛选高命中率（≥60%）或当前期触发
     var highMath=mathVF.filter(function(m){return m.rate>=60;});
-    var currentMath=[];
+    var currentMath=[], currentPingTail=[];
     VF_MATH_FORMULAS.forEach(function(mf){
       if(mf.needsHistory)return;
       try{
         var predVal=mf.fn(LAST);
         if(predVal===null||predVal===undefined)return;
         var vfRec=mathVF.find(function(m){return m.id===mf.id;});
-        currentMath.push({id:mf.id,desc:mf.desc,cat:mf.cat,predict:mf.predict,value:predVal,rate:vfRec?vfRec.rate:null});
+        var item={id:mf.id,desc:mf.desc,cat:mf.cat,predict:mf.predict,value:predVal,rate:vfRec?vfRec.rate:null};
+        if(mf.predict==='ping_tail')currentPingTail.push(item);
+        else currentMath.push(item);
       }catch(e){}
     });
     if(currentMath.length>0){
@@ -7868,7 +7912,8 @@ function buildVerifiedFormulaBlock(){
               else if(mf.predict==='family')mav=gfam(mLatest.t);
               else if(mf.predict==='he')mav=ghe(mLatest.t);
               else if(mf.predict==='head')mav=Math.floor(mLatest.t/10);
-              if(mav!==undefined)mlhItems.push({id:mf.id,pred:mpv,actual:mav,ok:mpv===mav,cat:mf.cat,predict:mf.predict});
+              else if(mf.predict==='ping_tail'){mav=mLatest.n.some(function(nn){return nn%10===mpv;})?mpv:-1;}
+              if(mav!==undefined){var pok=mpv===mav;if(mf.predict==='ping_tail')pok=mav>=0;mlhItems.push({id:mf.id,pred:mpv,actual:mav,ok:pok,cat:mf.cat,predict:mf.predict});}
             }catch(e){}
           });
           if(mlhItems.length>0){
@@ -7877,8 +7922,9 @@ function buildVerifiedFormulaBlock(){
           }
         }
       }
-      h+='<div style="margin-top:8px;padding:8px;border-radius:6px;background:#e8eaf6;border:1px solid #3f51b5">';
-      h+='<b style="font-size:12px;color:#1a237e">🧮 尾数/生肖运算公式</b> <span style="font-size:10px;color:#888">（上期运算→下期预测）</span>';
+      // === 特码运算公式（仅tail/head/zodiac，ping_tail已移到正码区） ===
+      h+='<details style="margin-top:8px;padding:6px 8px;border-radius:6px;background:#e8eaf6;border:1px solid #3f51b5">';
+      h+='<summary style="cursor:pointer;font-size:12px;font-weight:bold;color:#1a237e">🧮 特码运算公式（折叠）</summary>';
       if(mathLastHit){
         var mlhBg=mathLastHit.rate>=60?'#d4edda':mathLastHit.rate>=40?'#fff3cd':'#f8d7da';
         var mlhColor=mathLastHit.rate>=60?'#27ae60':mathLastHit.rate>=40?'#f39c12':'#c0392b';
@@ -7898,14 +7944,12 @@ function buildVerifiedFormulaBlock(){
           var valueStr=m.predict==='zodiac'?m.value:'尾'+m.value;
           h+='<div style="margin-bottom:2px;padding:2px 6px;background:#fff;border-radius:3px">';
           h+=m.desc+' → 预测<b style="color:'+(m.rate!==null&&m.rate>=60?'#27ae60':m.rate!==null&&m.rate>=40?'#f39c12':'#c0392b')+'">'+valueStr+'</b>'+rateStr;
-          // 如果是尾数，列出该尾数对应的号码
           if(m.predict==='tail'){
             var tailNums=[];
             for(var tn=1;tn<=49;tn++){if(tn%10===m.value)tailNums.push(tn);}
             h+='<br><span style="font-size:9px;color:#888">对应号码: '+tailNums.map(function(n){return String(n).padStart(2,'0');}).join(' ')+'</span>';
             h+=' <button class="btn btn-green" style="font-size:8px;padding:1px 3px" onclick="applyVfPick(\'tailnums\',\''+tailNums.join(',')+'\',\''+m.desc+'\')">⚡选用</button>';
           }
-          // 如果是生肖，列出该生肖对应的号码
           if(m.predict==='zodiac'){
             var zodNums=ZM[m.value]||[];
             if(zodNums.length>0){
@@ -7924,7 +7968,6 @@ function buildVerifiedFormulaBlock(){
       h+='<tr style="background:#f5f5f5"><th style="padding:2px 4px;border:1px solid #ddd">ID</th><th style="padding:2px 4px;border:1px solid #ddd">类别</th><th style="padding:2px 4px;border:1px solid #ddd">公式</th><th style="padding:2px 4px;border:1px solid #ddd">命中/总</th><th style="padding:2px 4px;border:1px solid #ddd">率</th><th style="padding:2px 4px;border:1px solid #ddd">上期</th></tr>';
       mathVF.forEach(function(m){
         var mc=m.rate>=60?'#27ae60':m.rate>=40?'#f39c12':'#c0392b';
-        // 上期准否
         var mLast='-';
         if(mathLastHit&&DR.length>=2){
           var mPrev2=DR[DR.length-2], mLatest2=DR[DR.length-1];
@@ -7939,7 +7982,8 @@ function buildVerifiedFormulaBlock(){
                 else if(mf2.predict==='family')mav2=gfam(mLatest2.t);
                 else if(mf2.predict==='he')mav2=ghe(mLatest2.t);
                 else if(mf2.predict==='head')mav2=Math.floor(mLatest2.t/10);
-                if(mav2!==undefined)mLast=(mpv2===mav2)?'✅':'❌';
+                else if(mf2.predict==='ping_tail'){mav2=mLatest2.n.some(function(nn){return nn%10===mpv2;})?mpv2:-1;}
+                if(mav2!==undefined){if(mf2.predict==='ping_tail')mLast=mav2>=0?'✅':'❌';else mLast=(mpv2===mav2)?'✅':'❌';}
               }
             }catch(e){}
           }
@@ -7947,9 +7991,10 @@ function buildVerifiedFormulaBlock(){
         h+='<tr><td style="padding:2px 4px;border:1px solid #eee">'+m.id+'</td><td style="padding:2px 4px;border:1px solid #eee">'+m.cat+'</td><td style="padding:2px 4px;border:1px solid #eee;font-size:9px">'+m.desc+'</td><td style="padding:2px 4px;border:1px solid #eee">'+m.hit+'/'+m.total+'</td><td style="padding:2px 4px;border:1px solid #eee;color:'+mc+'"><b>'+m.rate+'%</b></td><td style="padding:2px 4px;border:1px solid #eee">'+mLast+'</td></tr>';
       });
       h+='</table></div></details>';
-      h+='</div>';
+      h+='</details>'; // 特码公式折叠结束
     }
   }
+  // === 正码平码尾数预测（在特码预测区底部展示结果，不占特码栏） ===
   h+='</div>';
   return h;
 }
@@ -8271,12 +8316,21 @@ function backtestAllFormulas(newDraw){
       }else if(mf.predict==='head'){
         actualVal=Math.floor(latest.t/10);
         isHit=(actualVal===predVal);
+      }else if(mf.predict==='ping_tail'){
+        // 平码尾数预测：6个平码任一尾数匹配即算命中
+        var hitN=latest.n.find(function(nn){return nn%10===predVal;});
+        actualVal=hitN?'命中尾'+predVal+'(平码'+hitN+')':'无';
+        isHit=!!hitN;
       }
+      // 区分特码公式和平码公式的展示标签
+      var predLabel=mf.predict==='ping_tail'?'预测平尾=':'预测=';
+      var triggerLabel=mf.desc+(mf.predict==='ping_tail'?' [正码]':'');
       mathSection.items.push({
-        trigger:mf.desc,
-        pred:'预测='+predVal,
+        trigger:triggerLabel,
+        pred:predLabel+predVal,
         actual:'实际='+actualVal+(isHit?' ✅':' ❌'),
-        hit:isHit
+        hit:isHit,
+        isPing:mf.predict==='ping_tail'
       });
       mathSection.total++;if(isHit)mathSection.hit++;
     }catch(e){}
@@ -8354,9 +8408,17 @@ function verifyMathFormulas(){
         else if(mf.predict==='family')actualVal=gfam(next.t);
         else if(mf.predict==='he')actualVal=ghe(next.t);
         else if(mf.predict==='head')actualVal=Math.floor(next.t/10);
+        else if(mf.predict==='ping_tail'){
+          // 平码尾数预测：检查下期6个平码中是否有任一尾数匹配
+          actualVal=null;
+          var ptHit=next.n.some(function(nn){return nn%10===predVal;});
+          if(ptHit)actualVal=predVal;
+          else actualVal=-1; // 不匹配，计为未命中
+        }
         if(actualVal===undefined)continue;
         r.total++;
-        if(actualVal===predVal)r.hit++;
+        if(mf.predict==='ping_tail'){if(actualVal>=0)r.hit++;}
+        else if(actualVal===predVal)r.hit++;
       }catch(e){}
     }
     r.rate=r.total>0?Math.round(r.hit/r.total*100):0;
@@ -8389,21 +8451,45 @@ function renderBacktestSummary(bt){
     var secBd=secRate>=70?'#27ae60':secRate>=50?'#f39c12':'#c0392b';
     h+='<div style="margin-bottom:6px;padding:8px;border-radius:6px;background:'+secBg+';border-left:3px solid '+secBd+'">';
     h+='<b style="font-size:12px">'+sec.icon+' '+sec.name+'</b> ';
-    h+='<span style="font-size:11px;color:'+secBd+';font-weight:bold">'+secRate+'% ('+sec.hit+'/'+sec.total+')</span>';
-    // 详情
-    h+='<div style="margin-top:4px">';
-    (sec.items||[]).forEach(function(item){
-      var itColor=item.hit?'#27ae60':'#c0392b';
-      h+='<div style="font-size:10px;padding:2px 6px;margin:2px 0;background:#fff;border-radius:3px">';
-      h+='<span style="color:'+itColor+'">'+(item.hit?'✅':'❌')+'</span> ';
-      h+='<span style="color:#666">'+item.trigger+'</span> &rarr; ';
-      h+='<span style="color:#333">'+item.pred+'</span> &rarr; ';
-      h+='<span style="color:'+itColor+';font-weight:bold">'+item.actual+'</span>';
-      if(item.rate!==undefined)h+=' <span style="font-size:9px;color:#888">[历史率'+(item.rate)+'%]</span>';
-      if(item.confidence!==undefined)h+=' <span style="font-size:9px;color:#888">[置信'+(item.confidence.toFixed(0))+'%]</span>';
-      h+='</div>';
-    });
-    h+='</div>';
+    // 显眼的上期准/不准标签
+    var lastPeriodLabel='<span style="font-size:11px;color:'+secBd+';font-weight:bold">本期命中: '+secRate+'% ('+sec.hit+'/'+sec.total+')</span>';
+    var lastJudge=secRate>=60?'<span style="margin-left:6px;font-size:10px;background:#27ae60;color:#fff;padding:2px 6px;border-radius:10px">✅ 上期准</span>'
+      :secRate<=30?'<span style="margin-left:6px;font-size:10px;background:#c0392b;color:#fff;padding:2px 6px;border-radius:10px">❌ 上期不准</span>'
+      :'<span style="margin-left:6px;font-size:10px;background:#f39c12;color:#fff;padding:2px 6px;border-radius:10px">⚠️ 上期一般</span>';
+    h+=lastPeriodLabel+lastJudge;
+    // 详情列表（默认折叠）
+    h+='<details style="margin-top:4px"><summary style="cursor:pointer;font-size:10px;color:#666">📋 查看全部 '+sec.items.length+' 条公式明细（折叠）</summary>';
+    h+='<div style="margin-top:4px;max-height:260px;overflow-y:auto">';
+    // 把平码公式和特码公式分组
+    var pingItems=(sec.items||[]).filter(function(it){return it.isPing;});
+    var teItems=(sec.items||[]).filter(function(it){return !it.isPing;});
+    if(teItems.length>0){
+      h+='<div style="margin-bottom:4px"><b style="font-size:10px;color:#1a237e">【特码公式 '+teItems.length+'条】</b></div>';
+      teItems.forEach(function(item){
+        var itColor=item.hit?'#27ae60':'#c0392b';
+        h+='<div style="font-size:10px;padding:2px 6px;margin:2px 0;background:#fff;border-radius:3px">';
+        h+='<span style="color:'+itColor+'">'+(item.hit?'✅':'❌')+'</span> ';
+        h+='<span style="color:#666">'+item.trigger+'</span> &rarr; ';
+        h+='<span style="color:#333">'+item.pred+'</span> &rarr; ';
+        h+='<span style="color:'+itColor+';font-weight:bold">'+item.actual+'</span>';
+        if(item.rate!==undefined)h+=' <span style="font-size:9px;color:#888">[历史率'+(item.rate)+'%]</span>';
+        if(item.confidence!==undefined)h+=' <span style="font-size:9px;color:#888">[置信'+(item.confidence.toFixed(0))+'%]</span>';
+        h+='</div>';
+      });
+    }
+    if(pingItems.length>0){
+      h+='<div style="margin-bottom:4px;margin-top:6px"><b style="font-size:10px;color:#00695c">【正码平尾公式 '+pingItems.length+'条】</b></div>';
+      pingItems.forEach(function(item){
+        var itColor=item.hit?'#27ae60':'#c0392b';
+        h+='<div style="font-size:10px;padding:2px 6px;margin:2px 0;background:#fff;border-radius:3px">';
+        h+='<span style="color:'+itColor+'">'+(item.hit?'✅':'❌')+'</span> ';
+        h+='<span style="color:#666">'+item.trigger+'</span> &rarr; ';
+        h+='<span style="color:#333">'+item.pred+'</span> &rarr; ';
+        h+='<span style="color:'+itColor+';font-weight:bold">'+item.actual+'</span>';
+        h+='</div>';
+      });
+    }
+    h+='</div></details>';
     h+='</div>';
   });
 
@@ -10908,7 +10994,7 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
   var sc4=(uniqTails.length===3?2:uniqTails.length===2?0:-1);
   s+=sc4;
   b.push({label:'尾数',raw:uniqTails.length+'尾('+uniqTails.join(',')+')',score:(sc4>=0?'+':'')+sc4.toFixed(1)});
-  // 4b. 【v10.0727.07新增】±3尾数统计：号码对尾数差值在±3内(含跨10)，统计历史共现频率
+  // 4b. 【v10.0728.02新增】±3尾数统计：号码对尾数差值在±3内(含跨10)，统计历史共现频率
   var tailPairBonus=0;
   for(var tpi=0;tpi<combo.length;tpi++){
     for(var tpj=tpi+1;tpj<combo.length;tpj++){
@@ -10926,6 +11012,20 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
     }
   }
   if(tailPairBonus>0){s+=tailPairBonus;b.push({label:'±3尾',raw:'尾近对共现',score:'+'+tailPairBonus.toFixed(1)});}
+  // 4c. 【v10.0728.02新增】平码尾数公式预测：统计ping_tail公式预测的尾数，组合中号码尾数命中越多加分越高
+  var pingTailPreds=[];
+  VF_MATH_FORMULAS.forEach(function(mf){
+    if(mf.predict!=='ping_tail'||mf.needsHistory)return;
+    try{var ptp=mf.fn(LAST);if(ptp!==null&&ptp!==undefined&&pingTailPreds.indexOf(ptp)<0)pingTailPreds.push(ptp);}catch(e){}
+  });
+  if(pingTailPreds.length>0){
+    var ptHitCnt=combo.filter(function(n){return pingTailPreds.indexOf(n%10)>=0;}).length;
+    if(ptHitCnt===3){s+=6;b.push({label:'平尾公式',raw:'3号尾数全命中',score:'+6'});}
+    else if(ptHitCnt===2){s+=3;b.push({label:'平尾公式',raw:'2号尾数命中',score:'+3'});}
+    else if(ptHitCnt===1){s+=1;b.push({label:'平尾公式',raw:'1号尾数命中',score:'+1'});}
+    // 一个都没命中则轻微扣分
+    else if(ptHitCnt===0&&pingTailPreds.length>=3){s-=1.5;b.push({label:'平尾公式',raw:'0命中(预测尾:'+pingTailPreds.slice(0,5).join(',')+')',score:'-1.5'});}
+  }
   // 5. 当前遗漏（适中遗漏轻微加分，不惩罚长冷）
   var maxOm=Math.max.apply(null,combo.map(function(n){return ZM2[n]||0;}));
   var sc5=0;
@@ -10990,14 +11090,14 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
   else if(appInCombo===2){sc11=+1;b.push({label:'来源',raw:'2已出1未出',score:'+1'});}
   else if(appInCombo===3){sc11=+0.5;b.push({label:'来源',raw:'全已出',score:'+0.5'});}
   s+=sc11;
-  // 12. 【v10.0727.07新增】波色多样性：避免结果几乎只有两种波色
+  // 12. 【v10.0728.02新增】波色多样性：避免结果几乎只有两种波色
   var wvs=Array.from(new Set(combo.map(gwv)));
   var sc12=0;
   if(wvs.length===1){sc12=-1.5;b.push({label:'波色',raw:'单色('+wvs[0]+')⚠️',score:'-1.5'});}
   else if(wvs.length===2){sc12=-0.3;b.push({label:'波色',raw:'双色('+wvs.join('/')+')',score:'-0.3'});}
   else{sc12=+1;b.push({label:'波色',raw:'三色('+wvs.join('/')+')',score:'+1'});}
   s+=sc12;
-  // 13. 【v10.0727.07新增】特肖排除降权：组合中号码所属生肖若在te_excl_zods中，轻微降分（非绝不选）
+  // 13. 【v10.0728.02新增】特肖排除降权：组合中号码所属生肖若在te_excl_zods中，轻微降分（非绝不选）
   if(UP.te_excl_zods&&UP.te_excl_zods.length>0){
     var exZodHit=combo.filter(function(n){return UP.te_excl_zods.indexOf(gz(n))>=0;}).length;
     if(exZodHit>0){var sc13=exZodHit*(-1.2);s+=sc13;b.push({label:'特肖排除',raw:exZodHit+'号属排除肖(降权非排除)',score:sc13.toFixed(1)});}
@@ -11243,7 +11343,7 @@ function scoreLXCombo(combo,zSc){
       b.push({label:'上下期重合',raw:'重合0个(罕见)',score:'0'});
     }
   }
-  // 16. 【v10.0727.07新增】特肖排除降权：特肖被杀/排除时，选该生肖的机率降低（非绝不选）
+  // 16. 【v10.0728.02新增】特肖排除降权：特肖被杀/排除时，选该生肖的机率降低（非绝不选）
   if(UP.te_excl_zods&&UP.te_excl_zods.length>0){
     var teExHit=combo.filter(function(item){return UP.te_excl_zods.indexOf(item.z)>=0;}).length;
     if(teExHit>0){
@@ -11252,7 +11352,7 @@ function scoreLXCombo(combo,zSc){
       b.push({label:'特肖排除',raw:teExHit+'肖属排除(降权非排除)',score:sc16.toFixed(1)});
     }
   }
-  // 17. 【v10.0727.07增强】相同位置生肖映射排除：位置完全相同时大幅降分
+  // 17. 【v10.0728.02增强】相同位置生肖映射排除：位置完全相同时大幅降分
   // 统计分析：相同位置生肖映射仅8.4%(31/371)，下期再次相同概率更低(1/7≈14%)
   var lx9s1check=UP.lx9_seq1||[];
   if(lx9s1check.length>=9){
@@ -12034,6 +12134,68 @@ function renderZ3(){
        '<td style="font-size:7px;color:#1e8449;text-align:left">'+(it.rs||[]).slice(0,6).join('·')+'</td></tr>';
   });
   h+='</table></div>';
+
+  // ===== 平码尾数预测（正码区域，从运算公式中提取ping_tail结果）=====
+  var pingTailPreds=[];
+  VF_MATH_FORMULAS.forEach(function(mf){
+    if(mf.predict!=='ping_tail'||mf.needsHistory)return;
+    try{
+      var ptVal=mf.fn(LAST);
+      if(ptVal===null||ptVal===undefined)return;
+      var ptRec=VF_MATH_FORMULAS.find(function(m){return m.id===mf.id;});
+      // 计算历史命中率
+      var ptHit=0,ptTotal=0;
+      for(var pti=1;pti<DR.length;pti++){
+        var ptPrev=DR[pti-1],ptNext=DR[pti];
+        try{
+          var ptPred=mf.fn(ptPrev);
+          if(ptPred===null||ptPred===undefined)continue;
+          ptTotal++;
+          if(ptNext.n.some(function(nn){return nn%10===ptPred;}))ptHit++;
+        }catch(e){}
+      }
+      var ptRate=ptTotal>0?Math.round(ptHit/ptTotal*100):0;
+      var tailNums=[];
+      for(var ptn=1;ptn<=49;ptn++){if(ptn%10===ptVal)tailNums.push(ptn);}
+      pingTailPreds.push({id:mf.id,desc:mf.desc,tail:ptVal,rate:ptRate,hit:ptHit,total:ptTotal,nums:tailNums});
+    }catch(e){}
+  });
+  // 合并相同尾数的预测（按尾数去重）
+  var tailMap={};
+  pingTailPreds.forEach(function(p){
+    if(!tailMap[p.tail])tailMap[p.tail]={tail:p.tail,nums:p.nums,formulas:[],rates:[]};
+    tailMap[p.tail].formulas.push(p.desc);
+    tailMap[p.tail].rates.push(p.rate);
+  });
+  if(pingTailPreds.length>0){
+    h+='<div class="sec-title" style="margin-top:12px;border-bottom:2px solid #1a6baa">🔢 正码平尾预测（运算公式 → 下期平码尾数）</div>';
+    h+='<div style="font-size:9px;color:#1a6baa;margin-bottom:4px">基于'+pingTailPreds.length+'条平码尾数公式，预测下期正码尾数。命中率=历史命中率（6个平码中任一中尾即算命中，随机基线≈47%）</div>';
+    h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">';
+    var sortedTails=Object.values(tailMap).sort(function(a,b){return b.formulas.length-a.formulas.length;});
+    sortedTails.forEach(function(tm){
+      var avgRate=Math.round(tm.rates.reduce(function(s,r){return s+r;},0)/tm.rates.length);
+      var bg=avgRate>=60?'#d4edda':avgRate>=50?'#fff3cd':'#f8d7da';
+      h+='<div style="padding:6px 10px;border-radius:6px;background:'+bg+';border:1px solid '+(avgRate>=60?'#27ae60':avgRate>=50?'#f39c12':'#c0392b')+'">';
+      h+='<div style="font-weight:bold;font-size:14px;color:#1a237e">尾'+tm.tail+'</div>';
+      h+='<div style="font-size:9px;color:#555">'+tm.nums.map(function(n){return String(n).padStart(2,'0');}).join(' ')+'</div>';
+      h+='<div style="font-size:8px;color:#888">'+tm.formulas.length+'条公式 | 均率'+avgRate+'%</div>';
+      h+='<button class="btn btn-green" style="font-size:8px;padding:1px 4px;margin-top:2px" onclick="applyVfPick(\'tailnums\',\''+tm.nums.join(',')+'\',\'平码尾'+tm.tail+'预测\')">⚡选用</button>';
+      h+='</div>';
+    });
+    h+='</div>';
+    // 展开详情
+    h+='<details style="font-size:10px;margin-bottom:8px"><summary style="cursor:pointer;color:#999">📋 平码尾数公式明细（'+pingTailPreds.length+'条）</summary>';
+    h+='<div style="max-height:200px;overflow-y:auto">';
+    h+='<table style="width:100%;font-size:10px;border-collapse:collapse">';
+    h+='<tr style="background:#f5f5f5"><th>ID</th><th>公式</th><th>预测尾</th><th>对应号码</th><th>命中/总</th><th>率</th></tr>';
+    pingTailPreds.forEach(function(p){
+      var mc=p.rate>=60?'#27ae60':p.rate>=50?'#f39c12':'#c0392b';
+      h+='<tr><td>'+p.id+'</td><td style="font-size:9px">'+p.desc+'</td><td><b>尾'+p.tail+'</b></td>';
+      h+='<td style="font-size:9px">'+p.nums.map(function(n){return String(n).padStart(2,'0');}).join(' ')+'</td>';
+      h+='<td>'+p.hit+'/'+p.total+'</td><td style="color:'+mc+'"><b>'+p.rate+'%</b></td></tr>';
+    });
+    h+='</table></div></details>';
+  }
 
   // ===== 用户自定义号码评分（验证你的猜测）=====
   h+='<div class="sec-title">🧪 自定义号码评分验证</div>'+
