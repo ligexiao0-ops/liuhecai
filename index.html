@@ -2318,6 +2318,9 @@ let UP={
   // 九肖模式序列（必须在默认UP中定义，否则loadData无法恢复）
   lx9_seq1:[],lx9_seq2:[],lx9_seq0:[],
   lx9_seq1_period:0,lx9_seq2_period:0,lx9_seq0_period:0,
+  lx9_history:[], // 【v10.0803.02】九肖历史记录 [{p,d,seq1,seq1_period,seq2,seq2_period,seq0,seq0_period,drawZ,newZ,s1Hit,s1HitPos,posMapHitCnt}] 每期开奖自动记录
+  te_pred_snapshot:null, // 【v10.0803.02】特码预测快照 {period, scores:{n:s}} 首次预测该期时锁定，开奖后用于排名复盘
+  te_pred_result:null, // 【v10.0803.02】特码预测复盘结果 {period,teNum,rank,predTop3,predTop10,hitTop3,hitTop10,teScore}
   // 图片识别文字笔记和自定义规则
   img_notes:[], // 保存的文字描述列表 [{text, time, fields}]
   img_custom_rules:[], // 自定义识别规则 [{name, pattern, field}]
@@ -3628,16 +3631,25 @@ function scoreZod(useUserPrefs){
   // 九肖序列
   const seq1=UP.lx9_seq1||[],seq2=UP.lx9_seq2||[],seq0=UP.lx9_seq0||[];
   const hasSeq1=seq1.length===9,hasSeq2=seq2.length===9,hasSeq0=seq0.length===9;
-  // 九肖位置映射：②序列上期命中位置→①同位置
+  // 九肖位置映射：②序列上期命中位置→①同位置（完全映射）
   var posMap={};
+  // 【v10.0803.02新增】邻近映射：②命中位置±1→①对应位置（不完全照搬完全映射，容忍位置偏差）
+  var posMapNear={};
+  // 【v10.0803.02新增】九肖内任意位置命中：②命中过的位置→①同位置候选（位置完全映射少见，九肖内5个概率大）
+  var seq1AnyHit={};
   if(hasSeq1&&hasSeq2&&LAST){
     seq2.forEach(function(z,idx){
       if(cur7Z.includes(z)){
         var mz=seq1[idx];
-        if(mz)posMap[mz]=true;
+        if(mz){posMap[mz]=true;seq1AnyHit[mz]=true;}
+        [idx-1,idx,idx+1].forEach(function(pi){
+          if(pi>=0&&pi<9&&seq1[pi])posMapNear[seq1[pi]]=true;
+        });
       }
     });
   }
+  // 【v10.0803.02新增】本期新出现生肖（上期未出→本期出），连肖延续信号
+  const newCurZ=cur7Z.filter(function(z){return !prev7Z.includes(z);});
   return ZODS.map(z=>{
     let s=0;const rs=[];
     const hot6=zc6[z],no=notByZ[z],str=stks[z]||0,ab=abs[z]||0,mxSt=mxs[z]||0,mxAb=mxAbs[z]||0,czN=cz[z]||{cold:0,hot:0,score:0};
@@ -3689,8 +3701,12 @@ function scoreZod(useUserPrefs){
       else{s-=2;rs.push("①九肖外(-2)");}
     }
     if(posMap[z]){s+=3;rs.push("②→①映射(+3)");}
+    else if(posMapNear[z]){s+=1.5;rs.push("②→①邻近映射(+1.5)");}
+    if(seq1AnyHit[z]){s+=1;rs.push("九肖内任意位命中(+1)");}
     if(hasSeq0&&seq0.includes(z)){s+=1;rs.push("③基线(+1)");}
-    return{z:z,s:s,rs:rs,hot6:hot6,no:no,sameLastZ:sameLastZ,wild:WILD.includes(z),str:str,ab:ab,mxSt:mxSt,czN:czN,mxAb:mxAb,zwx:zodWx(z),crossZ:crossZ.includes(z),inSeq1:hasSeq1?seq1.includes(z):null,inSeq2:hasSeq2?seq2.includes(z):null,inSeq0:hasSeq0?seq0.includes(z):null,posMap:!!posMap[z],teHot6:teZod6[z]||0,teHot15:teZod15[z]||0};
+    // 【v10.0803.02新增】本期新出现生肖（上期未出→本期出）→连肖延续
+    if(newCurZ.includes(z)){s+=2;rs.push("新出延续(+2)");}
+    return{z:z,s:s,rs:rs,hot6:hot6,no:no,sameLastZ:sameLastZ,wild:WILD.includes(z),str:str,ab:ab,mxSt:mxSt,czN:czN,mxAb:mxAb,zwx:zodWx(z),crossZ:crossZ.includes(z),inSeq1:hasSeq1?seq1.includes(z):null,inSeq2:hasSeq2?seq2.includes(z):null,inSeq0:hasSeq0?seq0.includes(z):null,posMap:!!posMap[z],posMapNear:!!posMapNear[z],seq1AnyHit:!!seq1AnyHit[z],newCurZ:newCurZ.includes(z),teHot6:teZod6[z]||0,teHot15:teZod15[z]||0};
   }).sort((a,b)=>b.s-a.s);
 }
 
@@ -4517,8 +4533,27 @@ function addRecord(){
   const msg=document.getElementById('add-msg');
   if(ns.some(n=>isNaN(n)||n<1||n>49)||isNaN(t)||t<1||t>49){msg.innerHTML='<span class="warn">❌ 请检查7个号码（1-49）</span>';return;}
   const np=LAST.p+1,nd=pToDate(np);
+  const histPrevDraw=DR[DR.length-1]||null; // np-1期（push前的最新期，用于计算"新出现生肖"）
   DR.push({p:np,d:nd,n:ns,t:t,drop:ns.slice()}); // drop保存落球顺序(原始录入顺序)
+  // 【v10.0803.02新增】记录九肖历史（每期开奖后自动记录，供发现"位置完全映射少见/九肖内5个概率大/新出现生肖"规律）
+  try{
+    var recDrawZ=Array.from(new Set(ns.concat([t]).map(gz)));
+    var recPrevZ=histPrevDraw?Array.from(new Set(histPrevDraw.n.concat(histPrevDraw.t).map(gz))):[];
+    var recNewZ=recDrawZ.filter(function(z){return recPrevZ.indexOf(z)<0;});
+    var recS1=UP.lx9_seq1||[],recS2=UP.lx9_seq2||[],recS0=UP.lx9_seq0||[];
+    var recS1Hit=recS1.length===9?recDrawZ.filter(function(z){return recS1.indexOf(z)>=0;}).length:null;
+    var recS1HitPos=recS1.length===9?recS1.map(function(z,i){return recDrawZ.indexOf(z)>=0?i+1:0;}).filter(function(x){return x>0;}):[];
+    var recPosMapHit=0;
+    if(recS1.length===9&&recS2.length===9){
+      for(var pmhi=0;pmhi<9;pmhi++){
+        if(recDrawZ.indexOf(recS2[pmhi])>=0&&recDrawZ.indexOf(recS1[pmhi])>=0)recPosMapHit++;
+      }
+    }
+    var recHist={p:np,d:nd,seq1:recS1,seq1_period:UP.lx9_seq1_period||0,seq2:recS2,seq2_period:UP.lx9_seq2_period||0,seq0:recS0,seq0_period:UP.lx9_seq0_period||0,drawZ:recDrawZ,newZ:recNewZ,s1Hit:recS1Hit,s1HitPos:recS1HitPos,posMapHitCnt:recPosMapHit};
+    UP.lx9_history=(UP.lx9_history||[]).concat([recHist]).slice(-80);
+  }catch(e){console.warn('lx9_history record fail',e);}
   saveData();
+  var teSnapForReview=UP.te_pred_snapshot; // 【v10.0803.02】必须在render(会把快照滚动到新期)之前捕获本期预测快照，供下方复盘对比
   calcDerived();render();
   // 检查复制记录命中（只显示当期开奖的记录）
   var hits=checkCopyHits();
@@ -4625,6 +4660,27 @@ function addRecord(){
     summary+='　<b>与上期生肖</b>：重复'+sameZ.length+'个('+sameZ.join('')+')'+(sameZ.length===0?' <span style="color:#2e7d32">✅全换</span>':'')+'<br>';
   }
   summary+='</div>';
+  // 【v10.0803.02】特码预测排名复盘（对比该期预测快照：当时排名第几、是否命中TOP3/TOP10，命中前3高亮提醒）
+  var teSnap=teSnapForReview;
+  if(teSnap&&teSnap.period===np&&teSnap.scores){
+    var teRankArr=Object.keys(teSnap.scores).map(function(k){return {n:parseInt(k),s:teSnap.scores[k]};}).sort(function(a,b){return b.s-a.s;});
+    var teRankIdx=teRankArr.findIndex(function(x){return x.n===t;});
+    var teRank=teRankIdx>=0?teRankIdx+1:49;
+    var teScoreV=teSnap.scores[t]!==undefined?teSnap.scores[t]:null;
+    var hitTop3=teRank<=3,hitTop10=teRank<=10;
+    UP.te_pred_result={period:np,teNum:t,rank:teRank,predTop3:hitTop3,predTop10:hitTop10,teScore:teScoreV};
+    summary+='<div style="margin-top:6px;padding:6px;background:'+(hitTop3?'#fff3cd':'#fdf2f2')+';border-radius:4px;border-left:3px solid '+(hitTop3?'#ff9800':'#c0392b')+'">'+
+      '<b style="color:'+(hitTop3?'#e65100':'#c0392b')+'">🔮 特码预测排名复盘（第'+np+'期预测快照）：</b><br>'+
+      '　该期预测时特码'+String(t).padStart(2,'0')+'('+gz(t)+')评分排名 <b>第'+teRank+'/49位</b>'+(teScoreV!==null?'（评分'+teScoreV+'）':'')+
+      (hitTop3?' <span style="color:#d32f2f;font-weight:bold;font-size:12px">🔥 命中预测TOP3！预测准确！</span>':
+       teRank<=5?' <span style="color:#e67e22;font-weight:bold">✅ 命中预测TOP5，接近前3</span>':
+       hitTop10?' <span style="color:#1e8449;font-weight:bold">✅ 命中预测TOP10</span>':
+       ' <span style="color:#c0392b">⚠️ 未进预测前10，模型待优化</span>')+'<br>'+
+      (hitTop3?'':'　当时前3名：'+teRankArr.slice(0,3).map(function(x){return String(x.n).padStart(2,'0')+'('+gz(x.n)+'分'+x.s+')';}).join('、')+'<br>')+
+      '　📌 '+(hitTop3?'维持当前评分权重设定，模型对该期判断准确。':'若连续多期排名靠后，可在「特码」Tab底部调节评分权重（百期热度/遗漏期数/庄家趋势/整体灵敏度）或调整排除设定。')+
+      '</div>';
+    saveData();
+  }
   // ===== 反推理回测 =====
   var bt=backtestAllFormulas();
   var btHtml=bt?renderBacktestSummary(bt):'';
@@ -9464,6 +9520,12 @@ function buildMidNumRefBlock(){
 function renderTE(){
   const TM=calcTmOm(),T100=calcT100();
   const sc=A49.map(n=>scoreTE_full(n,TM,T100)).sort((a,b)=>b.s-a.s);
+  // 【v10.0803.02】特码预测快照：首次预测某期时锁定全49号评分排名，开奖录入后用于复盘提醒（命中TOP3高亮）
+  if(!UP.te_pred_snapshot||UP.te_pred_snapshot.period!==NEXT){
+    var teSnapScores={};sc.forEach(function(x){teSnapScores[x.n]=x.s;});
+    UP.te_pred_snapshot={period:NEXT,scores:teSnapScores};
+    saveData();
+  }
   const strong=sc.filter(x=>x.s<=-8);
   const top20=sc.filter(x=>x.s>=1).slice(0,20);
   const cz=calcCurZhuang(),czH=calcZhuangHist();
@@ -9488,6 +9550,15 @@ function renderTE(){
 
   let h='<div class="sec-title">🔍 特码预测（第'+NEXT+'期）</div>';
   if(warns.length>0)h+='<div class="concl-warn">⚠️ 预测逻辑被推翻提醒：<br>'+warns.map(w=>'• '+w).join('<br>')+'</div>';
+  // 【v10.0803.02】上期预测复盘提醒（开奖录入后常驻显示：当时预测排名第几、是否命中TOP3/TOP10）
+  if(UP.te_pred_result&&UP.te_pred_result.period===LAST.p){
+    var lpr=UP.te_pred_result;
+    h+='<div class="card" style="background:'+(lpr.hitTop3?'#fff8e1':'#fdf2f2')+';border:2px solid '+(lpr.hitTop3?'#ff9800':'#c0392b')+';margin-bottom:8px">'+
+       '<b style="color:'+(lpr.hitTop3?'#e65100':'#c0392b')+'">🔮 上期预测复盘（第'+LAST.p+'期）：</b>'+
+       '特码'+String(lpr.teNum).padStart(2,'0')+'('+gz(lpr.teNum)+')预测时评分排名 <b style="color:'+(lpr.rank<=3?'#d32f2f':'#e67e22')+'">第'+lpr.rank+'/49位</b>'+
+       (lpr.hitTop3?' <span style="color:#d32f2f;font-weight:bold;font-size:13px">🔥 命中预测TOP3！</span>':lpr.hitTop10?' <span style="color:#1e8449;font-weight:bold">✅ 命中预测TOP10</span>':' <span style="color:#c0392b">⚠️ 排名靠后，模型待优化</span>')+
+       '<span style="font-size:9px;color:#888">（预测评分'+(lpr.teScore!==undefined?lpr.teScore:'-')+'）</span></div>';
+  }
 
   // ===== AI独立预测（不受你的设定影响，用于对比验证）=====
   const aiPred=aiOwnPrediction();
@@ -9809,9 +9880,12 @@ function renderTE(){
   // 全49号评分表
   h+='<div class="sec-title" style="margin-top:10px">📋 全部49号评分明细</div><div style="overflow-x:auto"><table>'+
      '<tr><th>号</th><th>肖</th><th>五行</th><th>波</th><th>大小</th><th>单双</th><th>合数</th><th>家野</th><th>尾</th><th>差</th><th>特遗漏</th><th>已出</th><th>评分</th><th>排除</th><th>加分</th></tr>';
+  var lastTeRank=null;
+  if(UP.te_pred_result&&UP.te_pred_result.period===LAST.p)lastTeRank=UP.te_pred_result.rank;
   sc.forEach(it=>{
-    h+='<tr style="background:'+(it.s<=-8?'#fee2e2':it.s<=0?'#fff3cd':APP.includes(it.n)?'#e8f5e9':'#f8f9ff')+'">'+
-       '<td>'+ball(it.n,16,it.s<=-8)+'</td><td>'+gz(it.n)+'</td>'+
+    var isLastTe=it.n===lastT;
+    h+='<tr style="background:'+(isLastTe?'#fff8e1':it.s<=-8?'#fee2e2':it.s<=0?'#fff3cd':APP.includes(it.n)?'#e8f5e9':'#f8f9ff')+';'+(isLastTe?'outline:2px solid #ff9800;font-weight:bold':'')+'">'+
+       '<td>'+ball(it.n,16,it.s<=-8)+(isLastTe?'<div style="font-size:6px;color:#e65100;font-weight:bold;line-height:1.2">上期特'+(lastTeRank?'第'+lastTeRank+'名':'')+'</div>':'')+'</td><td>'+gz(it.n)+'</td>'+
        '<td style="color:'+WXC[gwx(it.n)]+'">'+gwx(it.n)+'</td><td style="color:'+WVB[gwv(it.n)]+'">'+gwv(it.n)+'</td>'+
        '<td>'+gsz(it.n)+'</td><td>'+gpar(it.n)+'</td><td>'+ghe(it.n)+'</td><td>'+gfam(it.n)+'</td>'+
        '<td>'+gtl(it.n)+'</td><td>'+gdf(it.n)+'</td>'+
@@ -10638,6 +10712,88 @@ function renderLX(){
     var avgIn=hist9Stats.total>0?Math.round(seq1InCount/hist9Stats.total*10)/10:0;
     h+='<div style="margin-top:4px;font-size:10px;color:#555">'+
        '九肖内平均 <b style="color:#1e8449">'+avgIn+'个</b>/期（九肖内共9个期望约'+(Math.round(7*9/12*10)/10)+'个）</div>';
+  }
+
+  // 【v10.0803.02】🗂️ 九肖历史规律（每次录入开奖自动快照：①序列命中分布/位置映射方式/新出现生肖，验证"位置完全映射少见、九肖内5个概率大、新出现生肖"）
+  var lx9Hist=UP.lx9_history||[];
+  if(lx9Hist.length>=3){
+    var h9dist={0:0,1:0,2:0,3:0,4:0,5:0,6:0,7:0};
+    var h9fullMap=0,h9nearMap=0,h9anyHit=0;var h9total=0;
+    var h9newDist={0:0,1:0,2:0,3:0};var h9newCnt=0;
+    var h9newKeep=0,h9newKeepTotal=0; // 新出现生肖下期延续统计
+    lx9Hist.forEach(function(hh,hi){
+      if(hh.s1Hit===null||hh.s1Hit===undefined)return;
+      h9dist[Math.min(hh.s1Hit,7)]=(h9dist[Math.min(hh.s1Hit,7)]||0)+1;
+      h9total++;
+      var nz=hh.newZ?hh.newZ.length:0;
+      h9newDist[Math.min(nz,3)]=(h9newDist[Math.min(nz,3)]||0)+1;
+      h9newCnt+=nz;
+      var nxt=lx9Hist[hi+1];
+      if(nxt&&hh.newZ&&hh.newZ.length>0&&nxt.drawZ){
+        h9newKeep+=hh.newZ.filter(function(z){return nxt.drawZ.indexOf(z)>=0;}).length;
+        h9newKeepTotal+=hh.newZ.length;
+      }
+      // 位置映射方式：②命中位置集 → ①同位置 → 是否被开奖命中（完全映射=②命中位在①中同位置全部命中）
+      if(hh.seq1&&hh.seq1.length===9&&hh.seq2&&hh.seq2.length===9&&hh.drawZ){
+        var h2pos=[],h1pos=[],nearCnt=0;
+        for(var q=0;q<9;q++){
+          if(hh.drawZ.indexOf(hh.seq2[q])>=0)h2pos.push(q);
+          if(hh.drawZ.indexOf(hh.seq1[q])>=0)h1pos.push(q);
+        }
+        var mapHit=h2pos.filter(function(p){return h1pos.indexOf(p)>=0;}).length;
+        h1pos.forEach(function(p1){
+          if(h2pos.some(function(p2){return Math.abs(p2-p1)<=1;}))nearCnt++;
+        });
+        if(h2pos.length>=2&&mapHit===h2pos.length)h9fullMap++;
+        if(nearCnt>=2)h9nearMap++;
+        if(h1pos.length>=3)h9anyHit++;
+      }
+    });
+    var h9fullPct=h9total>0?Math.round(h9fullMap/h9total*100):0;
+    var h9nearPct=h9total>0?Math.round(h9nearMap/h9total*100):0;
+    var h9anyPct=h9total>0?Math.round(h9anyHit/h9total*100):0;
+    var h9midCnt=(h9dist[4]||0)+(h9dist[5]||0)+(h9dist[6]||0);
+    var h9midPct=h9total>0?Math.round(h9midCnt/h9total*100):0;
+    var h9keepPct=h9newKeepTotal>0?Math.round(h9newKeep/h9newKeepTotal*100):0;
+    h+='<div style="background:#fff;border:2px solid #16a085;border-radius:8px;padding:10px;margin-bottom:8px">'+
+       '<b style="color:#16a085">🗂️ 九肖历史规律（自动记录近'+lx9Hist.length+'期开奖 · 验证"位置完全映射少见 / 九肖内5个概率大 / 新出现生肖"）</b>'+
+       '<div style="font-size:9px;color:#888;margin:4px 0">数据来源：每次录入开奖时自动快照当时的①/②序列与开奖生肖，纯历史统计</div>'+
+       '<table style="width:100%;font-size:10px;border-collapse:collapse;margin-top:4px">'+
+       '<tr style="background:#e0f5f0"><th style="padding:4px;border:1px solid #b2dfdb" colspan="9">①序列每期命中个数分布（验证九肖内"5个左右概率大"）</th></tr>'+
+       '<tr style="background:#fff"><td style="padding:3px;border:1px solid #ddd;text-align:center;font-weight:bold;color:#16a085">命中N个</td>';
+    for(var hd=0;hd<=7;hd++)h+='<td style="padding:3px;border:1px solid #ddd;text-align:center;color:#888">'+hd+'个</td>';
+    h+='</tr><tr style="background:#fff"><td style="padding:3px;border:1px solid #ddd;text-align:center;font-weight:bold">次数/占比</td>';
+    for(var hd2=0;hd2<=7;hd2++){
+      var hv9=h9dist[hd2]||0;
+      h+='<td style="padding:3px;border:1px solid #ddd;text-align:center;'+(hv9>0&&hd2>=4?'background:#e8f5e9;font-weight:bold;color:#1e8449':'color:#888')+'">'+hv9+'<br>'+Math.round(hv9/(h9total||1)*100)+'%</td>';
+    }
+    h+='</tr></table>'+
+       '<div style="margin-top:4px;font-size:10px;color:#555">💡 九肖内命中<b style="color:#1e8449">4-6个</b>合计 <b>'+h9midCnt+'/'+h9total+'期（'+h9midPct+'%）</b>'+
+       (h9midPct>=60?'，印证"九肖内5个左右概率大"，连肖组合应以九肖内为主、九肖外1-2个为辅。':'，当前命中集中度一般，九肖外补充更关键。')+'</div>'+
+       '<table style="width:100%;font-size:10px;border-collapse:collapse;margin-top:6px">'+
+       '<tr style="background:#e0f5f0"><th style="padding:4px;border:1px solid #b2dfdb" colspan="4">位置映射方式统计（验证"位置完全映射比较少见"）</th></tr>'+
+       '<tr style="background:#fff"><td style="padding:3px;border:1px solid #ddd;font-weight:bold">映射方式</td>'+
+       '<td style="padding:3px;border:1px solid #ddd">完全位置映射<br><span style="font-size:8px;color:#888">②命中位在①同位置全部命中</span></td>'+
+       '<td style="padding:3px;border:1px solid #ddd">邻近映射≥2个<br><span style="font-size:8px;color:#888">①命中位在②命中位±1内</span></td>'+
+       '<td style="padding:3px;border:1px solid #ddd">任意位命中≥3个<br><span style="font-size:8px;color:#888">①序列内任意位置命中</span></td></tr>'+
+       '<tr style="background:#fff"><td style="padding:3px;border:1px solid #ddd;font-weight:bold">次数/占比</td>'+
+       '<td style="padding:3px;border:1px solid #ddd;text-align:center;color:'+(h9fullPct<=30?'#c0392b':'#1e8449')+';font-weight:bold">'+h9fullMap+'次（'+h9fullPct+'%）</td>'+
+       '<td style="padding:3px;border:1px solid #ddd;text-align:center;color:#e67e22;font-weight:bold">'+h9nearMap+'次（'+h9nearPct+'%）</td>'+
+       '<td style="padding:3px;border:1px solid #ddd;text-align:center;color:#1e8449;font-weight:bold">'+h9anyHit+'次（'+h9anyPct+'%）</td></tr></table>'+
+       '<div style="margin-top:4px;font-size:10px;color:#555">'+(h9fullPct<=30?'⚠️ 完全位置映射仅 <b style="color:#c0392b">'+h9fullPct+'%</b>，确实少见 —— 连肖选号<b>不能只依赖"②命中位→①同位置"</b>，应同时考虑邻近位与任意位命中（已在评分中加分）。':'✅ 完全位置映射达 <b style="color:#1e8449">'+h9fullPct+'%</b>，可重点关注同位置映射。')+'</div>'+
+       '<table style="width:100%;font-size:10px;border-collapse:collapse;margin-top:6px">'+
+       '<tr style="background:#e0f5f0"><th style="padding:4px;border:1px solid #b2dfdb" colspan="6">新出现生肖统计（上期未出→本期新出，验证"与上期生肖不同的出现"）</th></tr>'+
+       '<tr style="background:#fff"><td style="padding:3px;border:1px solid #ddd;font-weight:bold">每期新出个数</td>';
+    for(var hn=0;hn<=3;hn++)h+='<td style="padding:3px;border:1px solid #ddd;text-align:center;color:#888">'+hn+(hn===3?'+':'')+'个</td>';
+    h+='<td style="padding:3px;border:1px solid #ddd;text-align:center;font-weight:bold;color:#16a085">平均/期</td></tr>'+
+       '<tr style="background:#fff"><td style="padding:3px;border:1px solid #ddd;font-weight:bold">次数</td>';
+    for(var hn2=0;hn2<=3;hn2++){
+      var hnv=h9newDist[hn2]||0;
+      h+='<td style="padding:3px;border:1px solid #ddd;text-align:center;'+(hnv>0&&hn2>=1?'background:#fdf2f2;font-weight:bold;color:#c0392b':'color:#888')+'">'+hnv+'<br>'+Math.round(hnv/(h9total||1)*100)+'%</td>';
+    }
+    h+='<td style="padding:3px;border:1px solid #ddd;text-align:center;font-weight:bold;color:#c0392b">'+(h9total>0?Math.round(h9newCnt/h9total*10)/10:0)+'个</td></tr></table>'+
+       '<div style="margin-top:4px;font-size:10px;color:#555">新出现生肖下期延续：保留 <b style="color:#c0392b">'+h9newKeep+'/'+h9newKeepTotal+'（'+h9keepPct+'%）</b>'+
+       (h9keepPct>=40?'，新出现生肖<b>倾向延续</b>，连肖评分保留"新出现肖"加分合理。':'，延续性一般，新出现肖不宜过度依赖。')+'</div></div>';
   }
 
   // ===== 规律总结：位置匹配概率 =====
@@ -12309,6 +12465,27 @@ function scoreLXCombo(combo,zSc){
     }
     s+=sc17;
   }
+  // 18. 【v10.0803.02新增】新出现生肖覆盖：上期未出→本期新出的生肖（延续性强，避免全旧肖）
+  if(PREV){
+    var prevZ18=Array.from(new Set(PREV.n.concat(PREV.t).map(gz)));
+    var newZ18=cur7Z.filter(function(z){return prevZ18.indexOf(z)<0;});
+    var newHit18=combo.filter(function(item){return newZ18.indexOf(item.z)>=0;}).length;
+    var sc18=0;
+    if(newHit18>=2){sc18=2;b.push({label:'新出现肖',raw:newHit18+'个新出现(上期未出)',score:'+2'});}
+    else if(newHit18===1){sc18=1;b.push({label:'新出现肖',raw:'1个新出现(上期未出)',score:'+1'});}
+    else{b.push({label:'新出现肖',raw:'0个新出现(全旧肖)',score:'-1'});sc18=-1;}
+    s+=sc18;
+  }
+  // 19. 【v10.0803.02新增】九肖内不同位置覆盖：组合包含"邻近映射位/任意位命中"的九肖内生肖（不完全照搬完全映射）
+  var lx9NearCnt=combo.filter(function(item){return item.posMapNear;}).length;
+  var lx9AnyHitCnt=combo.filter(function(item){return item.seq1AnyHit;}).length;
+  var sc19=0;
+  if(lx9NearCnt>=2){sc19+=1.5;b.push({label:'九肖邻近位',raw:lx9NearCnt+'个邻近映射',score:'+1.5'});}
+  else if(lx9NearCnt===1){sc19+=0.5;b.push({label:'九肖邻近位',raw:'1个邻近映射',score:'+0.5'});}
+  if(lx9AnyHitCnt>=4){sc19+=2;b.push({label:'九肖任意位',raw:lx9AnyHitCnt+'个任意位命中',score:'+2'});}
+  else if(lx9AnyHitCnt>=3){sc19+=1;b.push({label:'九肖任意位',raw:lx9AnyHitCnt+'个任意位命中',score:'+1'});}
+  else if(lx9AnyHitCnt<=1){sc19-=1;b.push({label:'九肖任意位',raw:'仅'+lx9AnyHitCnt+'个任意位命中',score:'-1'});}
+  s+=sc19;
   return {s:Math.round(s*10)/10,breakdown:b,details:b.map(function(x){return x.label+x.raw+'('+x.score+')';}).join(' · ')};
 }
 
