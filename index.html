@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">184</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0805.03</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0805.04</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -4533,6 +4533,24 @@ document.addEventListener('click',function(e){
     }
     saveData();render();
     showClickFeedback(i9>=0?'已取消'+EMJ[z9]+z9:'✓ '+EMJ[z9]+z9+' ('+UP[seqKey9].length+'/9)');
+  } else if(action==='applyAiTop9'){
+    // 【v10.0805.04】🤖 系统自主九肖推荐一键应用（反庄家思维，系统自主评分非用户预设）
+    try{
+      var aiSc=scoreZod(false).sort(function(a,b){return b.s-a.s;});
+      if(aiSc.length<12){showClickFeedback('⚠️ 数据不足，无法自主评分');return;}
+      if(key==='lx9_out'){
+        var aiLow=aiSc.slice(-3).map(function(x){return x.z;});
+        UP.lx9_ai_out=aiLow.slice();
+        saveData();render();
+        showClickFeedback('📉 已记录反庄家回避生肖（评分最低）：'+aiLow.map(function(z){return EMJ[z]+z;}).join('、'));
+      }else{
+        var aiTop=aiSc.slice(0,9).map(function(x){return x.z;});
+        UP[key]=aiTop.slice();
+        UP[key+'_period']=key==='lx9_seq1'?(NEXT||0):(LAST?LAST.p:0);
+        saveData();render();
+        showClickFeedback('⚡ 已应用系统自主TOP9到'+(key==='lx9_seq1'?'①（预测期#'+(NEXT||0)+'）':'②（上期#'+(LAST?LAST.p:0)+'）')+'：'+aiTop.map(function(z){return EMJ[z]+z;}).join(''));
+      }
+    }catch(e){showClickFeedback('⚠️ 自主推荐应用失败');console.warn(e);}
   } else if(action==='clear9seq'){
     UP[key]=[];saveData();render();
     var seqName=key==='lx9_seq1'?'①':(key==='lx9_seq2'?'②':'③固定基线');
@@ -4559,14 +4577,14 @@ document.addEventListener('click',function(e){
     showClickFeedback('✅ 九肖设定已保存，①作为下期(预测期=NEXT)的预测依据（当前预测期#'+(NEXT||'?')+'），已记录确认历史');
   } else if(action==='nextPeriod9seq'){
     // 开奖后滚动：①→②，①清空等待新输入
+    // 【v10.0805.04】改用统一防跳期滚动：仅当①预测期=最新开奖期才滚动（录入开奖已自动滚动，此按钮仅作兜底）
     if(!UP.lx9_seq1||UP.lx9_seq1.length!==9){showClickFeedback('⚠️ ①序列未满9个，无法滚动到下期');return;}
-    UP.lx9_seq2=UP.lx9_seq1.slice();
-    UP.lx9_seq2_period=LAST?LAST.p:0;
-    // 可选：清空①或保留（让用户自己改）
-    UP.lx9_seq1=[];
-    UP.lx9_seq1_period=0;
+    var lp9=LAST?LAST.p:0;
+    var roll9=rollLx9AfterDraw(lp9);
+    if(roll9.warn){showClickFeedback(roll9.warn);return;}
+    if(!roll9.rolled){showClickFeedback('⚠️ ①序列预测期与最新开奖期#'+lp9+'不一致，未滚动');return;}
     saveData();render();
-    showClickFeedback('✅ 已滚动到下期：旧①→②，请重新填入新的①序列');
+    showClickFeedback('✅ 已滚动到下期：旧①→②（上期=最新已开奖#'+lp9+'），请重新填入新的①序列');
   } else if(action==='copy9seq1to2'){
     if(!UP.lx9_seq1||UP.lx9_seq1.length!==9){showClickFeedback('⚠️ ①序列未满9个');return;}
     UP.lx9_seq2=UP.lx9_seq1.slice();
@@ -4828,6 +4846,24 @@ function recordLx9SeqHistory(period,date,isConfirm,opts){
     UP.lx9_history=hist.slice(-80);
   }catch(e){console.warn('lx9_history record fail',e);}
 }
+// 【v10.0805.04】九肖开奖后自动滚动：①(预测期=刚开奖期np) → ②(上期=np)，①清空等待新预测。
+// 规则（用户明确要求）：最新九肖①=预测期(未开奖)；上期九肖②=最新已开奖期。
+// 防跳期：仅当①的预测期===刚开奖期np才滚动；否则不滚动并返回警告（可能漏录/录错）。
+// 返回: {rolled:bool, warn:string|null}
+function rollLx9AfterDraw(np){
+  var s1=UP.lx9_seq1||[],s1p=UP.lx9_seq1_period||0;
+  if(s1.length===9){
+    if(s1p===np){
+      UP.lx9_seq2=s1.slice();
+      UP.lx9_seq2_period=np;
+      UP.lx9_seq1=[];
+      UP.lx9_seq1_period=0;
+      return {rolled:true,warn:null};
+    }
+    return {rolled:false,warn:'⚠️ 九肖未自动滚动：①预测期#'+(s1p||'?')+' ≠ 刚开奖期#'+np+'（若漏录/录错请先修正开奖记录，②上期九肖保持='+(UP.lx9_seq2_period||'?')+'期）'};
+  }
+  return {rolled:false,warn:null}; // ①未设定，无需滚动
+}
 function addRecord(){
   const ns=[1,2,3,4,5,6].map(i=>parseInt(document.getElementById('b'+i).value));
   const t=parseInt(document.getElementById('bt').value);
@@ -4839,6 +4875,8 @@ function addRecord(){
   // 【v10.0803.02新增】记录九肖历史（每期开奖后自动记录，供发现"位置完全映射少见/九肖内5个概率大/新出现生肖"规律）
   // 【v10.0805.02】改用统一辅助函数 recordLx9SeqHistory（开奖后 isConfirm=false，补全命中位置）
   recordLx9SeqHistory(np,nd,false,{drawN:ns,drawT:t,prevDraw:histPrevDraw});
+  // 【v10.0805.04】录入开奖后自动滚动九肖：①(预测期=np)→②(上期=np)，②永远=最新已开奖期，期号不跳变
+  var lx9Roll=rollLx9AfterDraw(np);
   saveData();
   var teSnapForReview=UP.te_pred_snapshot; // 【v10.0803.02】必须在render(会把快照滚动到新期)之前捕获本期预测快照，供下方复盘对比
   calcDerived();render();
@@ -4862,6 +4900,13 @@ function addRecord(){
       hitMsg+='</div>';
     });
     hitMsg+='</div>';
+  }
+  // 【v10.0805.04】九肖自动滚动反馈：②上期九肖=最新已开奖期；期号不匹配时给出警告
+  if(lx9Roll&&lx9Roll.warn){
+    hitMsg+='<div style="margin-top:6px;padding:6px;background:#fff3e0;border-radius:6px;border-left:3px solid #e67e22;font-size:11px;text-align:left">'+lx9Roll.warn+'</div>';
+  }else if(lx9Roll&&lx9Roll.rolled){
+    hitMsg+='<div style="margin-top:6px;padding:6px;background:#e8f5e9;border-radius:6px;border-left:3px solid #27ae60;font-size:11px;text-align:left">'+
+      '🔄 九肖已自动滚动：第'+np+'期开奖的①预测 → ②上期九肖（最新已开奖#'+np+'），①已清空等待新一期预测</div>';
   }
   // 生成即时复盘摘要
   var prevR=DR[DR.length-2];
@@ -4987,7 +5032,8 @@ function addRecord(){
       msg.innerHTML='<span class="ok">✅ 第'+np+'期录入成功（本地）！</span><br><span class="warn" style="font-size:10px">⚠️ 云端同步异常，请点击"手动同步"重试</span>';
     });
   }else{
-    msg.innerHTML='<span class="ok">✅ 第'+np+'期录入成功（本地）！⚠️ 云端未连接</span>';
+    // 【v10.0805.04修复】云端未连接时也必须显示命中检查/九肖滚动反馈/复盘摘要，否则离线录入看不到这些动态结果
+    msg.innerHTML='<span class="ok">✅ 第'+np+'期录入成功（本地）！⚠️ 云端未连接</span>'+hitMsg+summary;
   }
   setTimeout(()=>{hideAddModal();activeTab='rev';render();document.getElementById('tabContent').scrollIntoView({behavior:'smooth'});},2500);
 }
@@ -10838,6 +10884,8 @@ function renderLX(){
   // 序列①
   h+='<div style="flex:1;min-width:280px;background:#fff;border:2px solid #00bcd4;border-radius:8px;padding:10px">'+
      '<b style="font-size:11px;color:#00bcd4">① 当前九肖序列（自填9个，不得重复）</b>'+
+     '<div style="font-size:9px;margin:3px 0;color:#00838f">🎯 预测期：<b>#'+(UP.lx9_seq1_period||NEXT||'?')+'</b>'+
+     (UP.lx9_seq1_period&&UP.lx9_seq1_period!==(NEXT||0)?' <span style="color:#e67e22;font-weight:bold">⚠️ 与当前预测期#'+(NEXT||'?')+'不一致（保存时自动校准）</span>':' <span style="color:#27ae60;font-weight:bold">未开奖</span>')+'</div>'+
      '<div style="font-size:9px;margin:3px 0">'+
      '<span style="color:#e67e22;font-weight:bold">已选 '+(lx9_seq1.length)+'/9</span> '+
      '<span style="color:#c0392b">九肖外：'+nineOut1.map(function(z){return EMJ[z]+z;}).join(' ')+'</span>'+
@@ -10866,10 +10914,12 @@ function renderLX(){
      '</div></div>';
   // 序列②
   h+='<div style="flex:1;min-width:280px;background:#fff;border:2px dashed #8e44ad;border-radius:8px;padding:10px">'+
-     '<b style="font-size:11px;color:#8e44ad">② 上期九肖序列（首次可手动填，之后由①自动继承）</b> '+
+     '<b style="font-size:11px;color:#8e44ad">② 上期九肖序列（=最新已开奖期，录入开奖自动继承）</b> '+
      (lx9_seq2.length===0?'<span style="font-size:9px;color:#c0392b">未设定</span>':'<span style="font-size:9px;color:#27ae60">✅ '+lx9_seq2.length+'个</span>')+
+     '<div style="font-size:9px;margin:3px 0">'+
+     (UP.lx9_seq2_period?('<span style="color:#7b1fa2;font-weight:bold">上期(最新已开奖) #'+UP.lx9_seq2_period+'</span>'+(LAST&&UP.lx9_seq2_period!==LAST.p?' <span style="color:#c0392b;font-weight:bold">⚠️ ≠ 最新开奖#'+LAST.p+'（请核对开奖记录）</span>':' <span style="color:#27ae60;font-weight:bold">✅ 与最新开奖一致</span>')):'<span style="color:#888">未记录期号</span>')+'</div>'+
      '<div style="font-size:9px;color:#888;margin:3px 0">'+
-     '首次：手动点选上期（如201期）9个生肖；以后：保存①后自动滚入②</div>'+
+     '首次：手动点选上期（如201期）9个生肖；以后：录入开奖后①自动滚入②</div>'+
      '<div style="font-size:9px;color:#555;margin:3px 0">'+
      '<span style="color:#e67e22;font-weight:bold">已选 '+(lx9_seq2.length)+'/9</span> '+
      '<span style="color:#c0392b">九肖外：'+nineOut2.map(function(z){return EMJ[z]+z;}).join(' ')+'</span>'+
@@ -10930,9 +10980,40 @@ function renderLX(){
   // 保存 & 继承说明
   h+='<div style="background:#e0f7fa;border:1px solid #00bcd4;border-radius:6px;padding:8px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
      '<button class="btn btn-green" data-action="save9seq" style="font-size:10px">💾 保存当前预测（使用①）</button>'+
-     '<button class="btn btn-orange" data-action="nextPeriod9seq" style="font-size:10px">🎱 开奖后滚动到下期（①→②）</button>'+
-     '<span style="font-size:9px;color:#555">首次：手动填②（上期）+①（本期）→保存；以后：开奖后点“滚动”→①变②→填新①</span>'+
+     '<button class="btn btn-orange" data-action="nextPeriod9seq" style="font-size:10px">🎱 手动滚动兜底（①→②）</button>'+
+     '<span style="font-size:9px;color:#555">首次：手动填②（上期=最新已开奖）+①（本期预测）→保存；以后：<b style="color:#00838f">录入开奖自动滚动</b>①→②，无需手动</span>'+
      '</div>';
+
+  // 【v10.0805.04】🤖 系统自主九肖推荐（反庄家思维）：系统按历史数据自主评分，不依赖用户预设思想
+  try{
+    var zScAI=scoreZod(false).sort(function(a,b){return b.s-a.s;});
+    if(zScAI.length>=12){
+      var aiTop9=zScAI.slice(0,9);
+      var aiLow3=zScAI.slice(-3).map(function(x){return x.z;});
+      var aiTopZods=aiTop9.map(function(x){return x.z;});
+      h+='<div style="background:linear-gradient(135deg,#f3e5f5,#ede7f6);border:2px solid #6a1b9a;border-radius:10px;padding:10px;margin-bottom:10px">'+
+         '<b style="color:#6a1b9a;font-size:12px">🤖 系统自主九肖推荐（反庄家思维）</b>'+
+         '<div style="font-size:9px;color:#7b1fa2;margin:4px 0;line-height:1.6">'+
+         '由系统按<b>近6期热度排名 / 遗漏连出 / 位置映射(含邻近) / 上期重叠加权 / 新出现生肖</b>等19维度<b>自主评分</b>生成，'+
+         '非用户预设——<b style="color:#6a1b9a">反庄家逻辑</b>：数据延续性强的生肖（高分）优先，大众跟风重仓的冷门生肖（低分）主动回避。</div>'+
+         '<div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0">'+
+         '<b style="font-size:10px;color:#6a1b9a;align-self:center">📊 自主评分TOP9（推荐为①）：</b>';
+      aiTop9.forEach(function(x,ai){
+        var curSel=lx9_seq1.indexOf(x.z)>=0;
+        h+='<span style="display:inline-block;padding:3px 6px;border-radius:5px;font-size:10px;background:'+(curSel?'#b39ddb;color:#fff;font-weight:bold':'#fff;border:1px solid #ce93d8;color:#4a148c')+'">'+(ai+1)+'.'+EMJ[x.z]+x.z+'<b style="font-size:8px;margin-left:2px">'+Math.round(x.s)+'分</b></span>';
+      });
+      h+='</div>'+
+         '<div style="font-size:9px;color:#555;margin:2px 0">💬 评分理由摘要：'+
+         aiTop9.slice(0,5).map(function(x){return EMJ[x.z]+x.z+'('+(x.rs&&x.rs.slice(0,2).join('·')||'综合')+')';}).join('　')+'</div>'+
+         '<div style="font-size:9px;color:#c0392b;margin:2px 0">📉 反庄家回避（九肖外候选·评分最低）：'+
+         aiLow3.map(function(z){return EMJ[z]+z;}).join('、')+'　<span style="color:#888">（避开大众重仓，九肖外常出1-2个可从这里选）</span></div>'+
+         '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">'+
+         '<button class="btn btn-purple" data-action="applyAiTop9" data-key="lx9_seq1" style="font-size:10px;padding:4px 10px">⚡ 一键应用TOP9为①</button>'+
+         '<button class="btn btn-purple" data-action="applyAiTop9" data-key="lx9_seq2" style="font-size:10px;padding:4px 10px">⚡ 一键应用TOP9为②</button>'+
+         '<button class="btn btn-gray" data-action="applyAiTop9" data-key="lx9_out" style="font-size:10px;padding:4px 10px">📉 应用低分3个为九肖外参考</button>'+
+         '</div></div>';
+    }
+  }catch(e){console.warn('AI九肖推荐失败',e);}
 
   // ===== 位置匹配+九肖外分析 =====
   if(lx9_seq1.length>=9&&lx9_seq2.length>=9){
