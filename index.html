@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">184</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">180</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0803.02</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">180</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0803.03</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -937,7 +937,7 @@ function saveCopyHistToLocal(){
 }
 // 导出复制记录为JSON文件
 function exportCopyHistory(){
-  var d={ver:'v10.0803.02',ts:new Date().toISOString(),lot:CUR_LOT,records:COPY_HISTORY.slice()};
+  var d={ver:'v10.0803.03',ts:new Date().toISOString(),lot:CUR_LOT,records:COPY_HISTORY.slice()};
   var blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);
   var lbl=LOTTERIES[CUR_LOT].name;
@@ -12592,8 +12592,12 @@ function renderZ3(){
   var top3;
   if(scoredTrios.length>0){
     var bestScore=scoredTrios[0].sc.s;
-    var threshold=Math.max(bestScore*0.85,bestScore-4); // 85%阈值或差4分以内
+    // 【修复v10.0803.03】原 Math.max(bestScore*0.85,bestScore-4) 在负分时 threshold 超过最高分
+    // （负数×0.85会变大），导致 candidates 为空、idx=NaN、candidates[NaN] 崩溃。
+    // 改用 min 保证 threshold 永不高于最高分；并对 candidates 为空再兜底一次。
+    var threshold=Math.min(bestScore*0.85,bestScore-4); // 85%阈值或差4分以内
     var candidates=scoredTrios.filter(function(t){return t.sc.s>=threshold;});
+    if(candidates.length===0)candidates=scoredTrios.slice(0,Math.min(3,scoredTrios.length)); // 兜底：至少3组最高分
     candidates=candidates.slice(0,Math.min(12,candidates.length)); // 最多取12组候选
     // 用当前期数作为种子确定性轮选（同期同权重同结果，跨期不同）
     var seed=LAST.p;
