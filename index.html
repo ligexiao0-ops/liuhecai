@@ -3565,6 +3565,8 @@ function scoreTE_full(n,TM,T100){
 }
 
 // ===== AI纯净评分（不受用户UP设定影响，用于独立预测对比）=====
+// 与scoreTE_full刻意保持分离（#434决策）：full=用户完整评分(权重缩放+全部筛选维度)，
+// pure=AI独立统计基准(固定分值+冲煞加分)，合并需引入多配置辅助函数，收益<回归风险
 function scoreTE_pure(n,TM,T100){
   const lZ=Array.from(new Set(LAST.n.map(gz))),lTeZ=gz(LAST.t),lT=gtl(LAST.t),lD=gdf(LAST.t);
   const t15c=te15();let s=0;
@@ -3582,13 +3584,11 @@ function scoreTE_pure(n,TM,T100){
   if(APP.includes(n))s+=1;
   const zMx=Math.min.apply(null,(ZM[gz(n)]||[]).map(x=>T100[x]||0));
   if((T100[n]||0)===zMx&&zMx<=1)s+=2;
-  // 100期特码热门前7/后7
+  // 100期特码热门前7/后7（统计加分，无条件——纯净评分不受用户设定影响）
   const tHot7=A49.map(x=>({n:x,c:T100[x]||0})).sort((a,b)=>b.c-a.c).slice(0,7).map(x=>x.n);
   const tCold7=A49.map(x=>({n:x,c:T100[x]||0})).sort((a,b)=>a.c-b.c).slice(0,7).map(x=>x.n);
-  if(UP.te_t100_hot7&&tHot7.includes(n))s+=3;
-  if(UP.te_excl_t100_hot7&&tHot7.includes(n))s-=15;
-  if(UP.te_t100_cold7&&tCold7.includes(n))s+=3;
-  if(UP.te_excl_t100_cold7&&tCold7.includes(n))s-=15;
+  if(tHot7.includes(n))s+=3;
+  if(tCold7.includes(n))s+=3;
   const cz=calcCurZhuang();var czN2=cz[gz(n)]||{cold:0,hot:0,score:0};if(czN2.cold>=5)s+=czN2.cold*0.5;else if(czN2.hot>=2)s-=czN2.hot*0.5;
   if(ghesum(n)===ghesum(LAST.t))s-=2;
   const dayChong2=getDayChong(pToDate(NEXT));if(dayChong2&&gz(n)===dayChong2)s+=2;
