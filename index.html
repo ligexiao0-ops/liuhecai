@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">184</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0805.02</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0805.03</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -2605,7 +2605,10 @@ function scoreZhengAI(){
 }
 // NOTE: loadData() is sync now (defined earlier), refreshFromServer() runs in background
 
-function saveData(){if(!_isAdmin)return;const cfg=LOTTERIES[CUR_LOT];localStorage.setItem(cfg.up_key,JSON.stringify(UP));localStorage.setItem(cfg.dr_key,JSON.stringify(DR));try{localStorage.setItem(cfg.dr_key+'_safe',JSON.stringify(DR));}catch(e){}syncAllToServer();}
+function saveData(){if(!_isAdmin)return;
+  // 【v10.0805.03】窗口模式下DR被临时截断，此时绝不能落盘（否则会丢失最近N期开奖数据）
+  if(__winActive){console.warn('[窗口回退模式] 已跳过saveData，防止截断后的DR覆盖真实数据');return;}
+  const cfg=LOTTERIES[CUR_LOT];localStorage.setItem(cfg.up_key,JSON.stringify(UP));localStorage.setItem(cfg.dr_key,JSON.stringify(DR));try{localStorage.setItem(cfg.dr_key+'_safe',JSON.stringify(DR));}catch(e){}syncAllToServer();}
 function resetData(){if(!requireAdmin())return;if(!confirm('确认恢复'+LOTTERIES[CUR_LOT].name+'初始数据？'))return;const cfg=LOTTERIES[CUR_LOT];localStorage.removeItem(cfg.dr_key);localStorage.removeItem(cfg.up_key);loadData();calcDerived();render();}
 function switchLottery(lot){
   CUR_LOT=lot;
@@ -2631,13 +2634,63 @@ function renderLotteryBar(){
 
 // ===== 衍生数据 =====
 let LAST,NEXT,D6,ALL42,APP,NOT,PREV;
+// ========== 【v10.0805.03】统一窗口回退引擎 ==========
+// 需求：翻"上一轮"= 期数减1（最新210-215 → 上一轮209-214），且特码/三中三/五连肖推荐必须跟着重算。
+// 实现：渲染期间把 DR 临时截断掉最近 N 期，则所有下游统计（含8处硬编码 DR.slice(-6)、
+//       遗漏/冷热/100期/共现/评分/组合器）自动落在该轮次上，零遗漏、无需逐处改造。
+// 安全：窗口生效期间 saveData() 会被拦截，绝不会把截断后的 DR 写回存储。
+let WIN_OFF=0,__winActive=false,__DR_FULL=null;
+function winFullLen(){return (__winActive&&__DR_FULL)?__DR_FULL.length:DR.length;}
+function winMaxOff(){return Math.max(0,winFullLen()-7);}          // 至少保留7期(6期窗口+1期上期参照)
+function winCurOff(){return Math.min(Math.max(parseInt(UP&&UP.not_sub_latest)||0,0),winMaxOff());}
+function winApply(){                                              // 进入窗口模式：截断DR
+  if(__winActive)return false;
+  var off=winCurOff();
+  if(off<=0){WIN_OFF=0;return false;}
+  __DR_FULL=DR;DR=DR.slice(0,DR.length-off);__winActive=true;WIN_OFF=off;return true;
+}
+function winRelease(applied){                                     // 退出窗口模式：还原DR
+  if(applied&&__winActive){DR=__DR_FULL;__DR_FULL=null;__winActive=false;}
+}
+function winLabelText(){                                          // 当前窗口的期号区间文字
+  var off=winCurOff(),end=DR.length-(__winActive?0:off),s=Math.max(0,end-6),w=DR.slice(s,end);
+  return w.length?(w[0].p+'~'+w[w.length-1].p+'期'):'';
+}
+// 翻轮次：delta=+1 上一轮(期数-1)，-1 下一轮(期数+1)，0 回到当前。
+// ★ 关键：步长是 1 期（210-215 → 209-214），不是过去错误的 6 期。
+function winStep(delta){
+  var off=winCurOff(),mx=winMaxOff();
+  var nx=(delta===0)?0:off+delta;
+  if(nx<0)nx=0; if(nx>mx)nx=mx;
+  if(nx===off){showClickFeedback(delta>0?'⚠️ 已到最早可用轮次':'⚠️ 已是最新轮次');return;}
+  UP.not_sub_latest=nx;saveData();render();
+  showClickFeedback(nx===0?'✅ 已回到当前轮次（最新6期）':'✅ 已回退'+nx+'期 → 窗口 '+winLabelText()+'，全部推荐已重算');
+}
+// 顶部窗口横幅：所有分析Tab共用，明确当前统计轮次并可就地翻页
+function winBannerHTML(){
+  var off=winCurOff(),mx=winMaxOff(),lbl=winLabelText(),isCur=(off===0);
+  var opts=[];for(var k=0;k<=Math.min(mx,12);k++)opts.push(k);
+  return '<div class="card" style="background:'+(isCur?'linear-gradient(90deg,#14532d,#166534)':'linear-gradient(90deg,#7f1d1d,#b91c1c)')+
+    ';color:#fff;border:2px solid '+(isCur?'#22c55e':'#ef4444')+';padding:8px 10px;margin-bottom:8px">'+
+    '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
+      '<b style="font-size:11px">'+(isCur?'🟢 当前轮次':'🔴 历史回看模式')+'</b>'+
+      '<span style="font-size:11px;font-weight:bold;background:rgba(255,255,255,.18);padding:2px 8px;border-radius:4px">统计窗口：'+lbl+'</span>'+
+      '<span style="font-size:9px;opacity:.9">'+(isCur?'（最新6期）':'（已回退 '+off+' 期 · 未出号码/特码/三中三/五连肖 全部推荐按此窗口重算）')+'</span>'+
+    '</div>'+
+    '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center">'+
+      '<button class="btn btn-gray" style="font-size:10px;padding:3px 10px" onclick="winStep(1)"'+(off>=mx?' disabled':'')+'>◀ 上一轮（期数-1）</button>'+
+      '<button class="btn btn-gray" style="font-size:10px;padding:3px 10px" onclick="winStep(-1)"'+(off<=0?' disabled':'')+'>下一轮（期数+1）▶</button>'+
+      '<button class="btn btn-blue" style="font-size:10px;padding:3px 10px" onclick="winStep(0)"'+(off<=0?' disabled':'')+'>⏮ 回到当前</button>'+
+      '<span style="font-size:9px;opacity:.9">直接跳：</span>'+
+      '<select onchange="setNotSubLatest(parseInt(this.value))" style="font-size:10px;padding:2px 6px;border-radius:3px;border:none">'+
+        opts.map(function(k){return '<option value="'+k+'"'+(off===k?' selected':'')+'>'+(k===0?'当前（最新6期）':'回退'+k+'期')+'</option>';}).join('')+
+      '</select>'+
+    '</div></div>';
+}
 function calcDerived(){
+  // 注意：窗口模式下 DR 已被 winApply() 截断，这里直接取末6期即为该轮次窗口
   LAST=DR[DR.length-1];NEXT=LAST.p+1;PREV=DR.length>1?DR[DR.length-2]:null;
-  // 【v10.0805.02】未出号码窗口：默认减去最近1期开奖记录（not_sub_latest=1）。
-  // 例：最新开奖为210-215期，则未出窗口用209-214期（去掉最新的215），避免用最新开奖污染"已出/未出"判断。
-  // 减N期 → D6取 DR.slice(-(6+N), -N)。窗口固定6期，整体向历史回退N期。
-  var subN=Math.min(Math.max((UP&&UP.not_sub_latest)||0,0),Math.max(0,DR.length-2));
-  D6=subN>0?DR.slice(-(6+subN),-subN):DR.slice(-6);
+  D6=DR.slice(-6);
   ALL42=D6.flatMap(d=>[].concat(d.n,[d.t]));
   APP=Array.from(new Set(ALL42));NOT=A49.filter(n=>!APP.includes(n));
 }
@@ -7067,34 +7120,20 @@ function renderAttrOmitHit(){
   h+='</div>';
   return h;
 }
-// 【v10.0803.05新增】未出号码分类翻页：page=0当前近6期，>0为历史轮次
-function stats42PageNav(delta){
-  if(delta===0){window.stats42Page=0;}
-  else{
-    var np=(window.stats42Page||0)+delta;
-    if(np<0)np=0;
-    window.stats42Page=np;
-  }
-  render();
-}
+// 【v10.0805.03】翻页统一走全局窗口引擎 winStep（步长1期），旧的6期跳页已废弃
+function stats42PageNav(delta){ winStep(delta); }
 function setNotSubLatest(n){
-  n=Math.min(Math.max(parseInt(n)||0,0),Math.max(0,DR.length-2));
-  UP.not_sub_latest=n;saveData();calcDerived();render();
-  showClickFeedback('✅ 未出窗口已回退'+n+'期（去掉最近'+n+'期开奖）');
+  n=Math.min(Math.max(parseInt(n)||0,0),winMaxOff());
+  if(n===winCurOff())return;
+  UP.not_sub_latest=n;saveData();render();
+  showClickFeedback(n===0?'✅ 已回到当前轮次（最新6期）':'✅ 未出窗口已回退'+n+'期 → '+winLabelText()+'，全部推荐已重算');
 }
 function renderStats42(){
   if(DR.length<2)return '<div class="card">数据不足</div>';
-  // 【v10.0803.05新增】未出号码分类翻页：page=0当前近6期，page=1上一轮(7-12期前)，以此类推
-  // 【v10.0805.02】默认窗口(当前页)整体回退 not_sub_latest 期：当前页从"减N期"位置起算，避免最新的开奖污染未出判断
-  var pageW=window.stats42Page||0;
-  var subN=Math.min(Math.max((UP&&UP.not_sub_latest)||0,0),Math.max(0,DR.length-2));
-  var winEnd=Math.max(0,DR.length-subN-6*pageW);
-  var winStart=Math.max(0,winEnd-6);
-  var winDR=DR.slice(winStart,winEnd);
-  if(winDR.length===0)winDR=DR.slice(-6);
-  var winAll=winDR.flatMap(function(d){return [].concat(d.n,[d.t]);});
-  var winNOT=A49.filter(function(n){return winAll.indexOf(n)<0;});
-  var winAPP=Array.from(new Set(winAll));
+  // 【v10.0805.03】未出窗口不再本Tab自算：render() 已按全局窗口截断 DR，这里直接复用全局 D6/APP/NOT，
+  // 保证「未出号码」与「特码/三中三/五连肖推荐」永远来自同一个轮次窗口。
+  var subN=winCurOff();
+  var winDR=D6,winNOT=NOT,winAPP=APP;
   var winLabel=winDR.length>0?(winDR[0].p+'~'+winDR[winDR.length-1].p+'期'):'';
   const TM2=calcTmOm(),zc6=mzc(ALL42),zc15=te15();
   const tailStreak=calcTailStreak();
@@ -7112,21 +7151,18 @@ function renderStats42(){
 
   let h='<div class="sec-title">📊 六合彩号码统计总览</div>';
 
-  // ===== 第一栏：未出号码分类（可翻页查看历史轮次）=====
+  // ===== 第一栏：未出号码分类（窗口由顶部横幅全局统一控制）=====
   h+='<div class="card" style="border:2px solid #c0392b">'+
-     '<div class="sec-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">📛 未出号码分类（'+(pageW===0?'当前近6期':'上一轮·第'+pageW+'页')+' · '+winLabel+' · 共'+winNOT.length+'个）'+
-     '<span style="font-size:9px;color:#888;font-weight:normal">近6期=每6期一轮，翻页查看历史未出情况</span></div>'+
-     '<div style="display:flex;gap:6px;margin-bottom:6px">'+
-     '<button class="btn btn-gray" style="font-size:10px;padding:3px 10px" onclick="stats42PageNav(-1)"'+(pageW===0?' disabled':'')+'>◀ 上一轮</button>'+
-     '<button class="btn btn-gray" style="font-size:10px;padding:3px 10px" onclick="stats42PageNav(1)"'+(winDR.length<6?' disabled':'')+'>下一轮 ▶</button>'+
-     '<button class="btn btn-blue" style="font-size:10px;padding:3px 10px" onclick="stats42PageNav(0)">回到当前</button>'+
-     '<span style="font-size:9px;color:#888;align-self:center">当前窗口：'+winLabel+(pageW>0?'（含遗漏期数按全局计算）':'')+'</span></div>'+
+     '<div class="sec-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">📛 未出号码分类（'+(subN===0?'当前近6期':'回退'+subN+'期 · 上一轮')+' · '+winLabel+' · 共'+winNOT.length+'个）'+
+     '<span style="font-size:9px;color:#888;font-weight:normal">回退N期=去掉最近N期开奖，用更早轮次重算；窗口由顶部横幅全局控制，特码/三中三/五连肖同步联动</span></div>'+
      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:9px;color:#555">'+
-     '<span>未出窗口回退：</span>'+
+     '<span>当前窗口：</span>'+
      '<select onchange="setNotSubLatest(parseInt(this.value))" style="font-size:9px;padding:2px 4px;border:1px solid #1a6baa;border-radius:3px">'+
-     [0,1,2,3].map(function(k){return '<option value="'+k+'"'+(subN===k?' selected':'')+'>减'+k+'期'+(k===0?'（含最新）':(k===1?'（默认209-214式）':''))+'</option>';}).join('')+
+     [0,1,2,3].map(function(k){return '<option value="'+k+'"'+(subN===k?' selected':'')+'>当前近6期'+(k===0?'':('减'+k+'期·上一轮'))+'</option>';}).join('')+
      '</select>'+
-     '<span style="color:#888">（减N期=去掉最近N期开奖，用更早的轮次算未出）</span></div>'+
+     '<button class="btn btn-blue" style="font-size:10px;padding:3px 10px" onclick="stats42PageNav(-1)"'+(subN===0?' disabled':'')+'>◀ 上一轮(减1期)</button>'+
+     '<button class="btn btn-gray" style="font-size:10px;padding:3px 10px" onclick="stats42PageNav(1)"'+(subN>=winMaxOff()?' disabled':'')+'>下一轮 ▶(加1期)</button>'+
+     '<span style="color:#888">（每一步1期，如210-215→209-214；顶部横幅可快捷跳转）</span></div>'+
      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">'+
      '<div style="background:#fee2e2;border-radius:6px;padding:6px"><b style="font-size:10px">🔴 窗口未出'+winNOT.length+'个</b><div style="display:flex;flex-wrap:wrap;gap:1px;margin-top:3px">'+winNOT.map(n=>ball(n,18)).join('')+'</div></div>'+
      '<div style="background:#e8f5e9;border-radius:6px;padding:6px"><b style="font-size:10px">🟢 窗口已出'+winAPP.length+'个</b><div style="display:flex;flex-wrap:wrap;gap:1px;margin-top:3px">'+winAPP.slice().sort((a,b)=>a-b).map(n=>ball(n,18)).join('')+'</div></div></div>';
@@ -7213,7 +7249,7 @@ function renderStats42(){
        ' → 这些尾数多期未出，下期开出概率较高，可重点关注</div>';
   }
   h+='</div>';
-  const zeroTails=[];for(let t=0;t<=9;t++)if(winAll.filter(n=>gtl(n)===t).length===0)zeroTails.push(t);
+  const zeroTails=[];for(let t=0;t<=9;t++)if(ALL42.filter(n=>gtl(n)===t).length===0)zeroTails.push(t);
   const maxNoZ=Object.keys(byZ).sort((a,b)=>(byZ[b]||[]).length-(byZ[a]||[]).length)[0];
   h+=concl('未出最多生肖：'+(maxNoZ?EMJ[maxNoZ]+maxNoZ+'('+(byZ[maxNoZ]||[]).length+'个)':'无')+'。'+(zeroTails.length>0?'当前窗口完全未出尾数：'+zeroTails.map(t=>'尾'+t).join('、')+'→优先考虑。':'各尾均有出现。'));
 
@@ -16146,6 +16182,10 @@ const TABS=[
 ];
 let activeTab='rec';
 function render(){
+  // 【v10.0805.03】开奖记录Tab始终用全量数据（防止录入误判）；其余分析Tab全程运行在回退窗口内，
+  // 使特码/三中三/五连肖等所有推荐都按该轮次重算。
+  var __w=(activeTab==='rec')?false:winApply();
+  try{
   calcDerived();
   autoLogAiRecs(); // 自动记录AI推荐到复制记录
   // 显示今天日期和开奖日状态
@@ -16190,6 +16230,8 @@ function render(){
   }
   try{
     var contentHTML=(renders[activeTab]||renderRecord)();
+    // 【v10.0805.03】窗口回退横幅：每个分析Tab顶部都显示当前窗口，并可就地翻轮次
+    contentHTML=winBannerHTML()+contentHTML;
     if(statWarnings.length>0){
       contentHTML='<div class="card" style="background:linear-gradient(90deg,#7b3f00,#8b4513);color:#fff;border:2px solid #ffa500;font-size:10px;line-height:1.7">'+
         '<b style="color:#ffa500;font-size:11px">📢 统计可靠性提醒</b><br>'+statWarnings.join('<br>')+'</div>'+contentHTML;
@@ -16205,6 +16247,7 @@ function render(){
   }
   updateSyncUI();
   applyPermissions();
+  }finally{winRelease(__w);}
 }
 function switchTab(id){activeTab=id;render();}
 
