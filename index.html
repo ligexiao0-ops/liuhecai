@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">184</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0805.04</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0806.02</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -3179,6 +3179,66 @@ function calcTeAttrPred(){
   return result;
 }
 
+// ===== 【v10.0806.02新增】特码规律漂移检测（问题4：发现其它规律有改变需及时更新包括概率）=====
+// 比较"全历史"vs"最近N期"各属性延续命中率，差异>=15%即预警"规律变化"
+// 渲染到特码Tab顶部，让用户直观看到哪些规律正在漂移，预测概率会随之调整
+function detectPatternDrift(){
+  var drift=[];
+  if(!DR||DR.length<13)return drift;
+  var recentN=Math.min(10,DR.length-1);
+  var fns={sz:gsz,par:gpar,he:ghe,fam:gfam,wx:gwx,wv:gwv};
+  var lbls={sz:"大小",par:"单双",he:"合数",fam:"家野",wx:"五行",wv:"波色"};
+  Object.keys(fns).forEach(function(key){
+    var fn=fns[key];
+    var histSame=0,histTotal=0,recSame=0,recTotal=0;
+    for(var i=1;i<DR.length;i++){
+      var prev=DR[i-1],cur=DR[i];
+      if(prev.t===undefined||cur.t===undefined)continue;
+      histTotal++;
+      if(fn(prev.t)===fn(cur.t))histSame++;
+      if(i>=(DR.length-recentN)){recTotal++;if(fn(prev.t)===fn(cur.t))recSame++;}
+    }
+    var histRate=histTotal>0?histSame/histTotal:0.5;
+    var recRate=recTotal>0?recSame/recTotal:histRate;
+    var diff=recRate-histRate;
+    if(Math.abs(diff)>=0.15){
+      drift.push({key:key,label:lbls[key],histRate:histRate,recRate:recRate,diff:diff,
+        trend:diff>0?"延续增强(连出概率上升)":"延续减弱(反转概率上升)"});
+    }
+  });
+  // 特码生肖转移漂移（同肖连出 vs 换肖）
+  try{
+    var zHS=0,zHT=0,zRS=0,zRT=0;
+    for(var zi=1;zi<DR.length;zi++){
+      var pz=gz(DR[zi-1].t),cz=gz(DR[zi].t);
+      zHT++;
+      if(pz===cz)zHS++;
+      if(zi>=(DR.length-recentN)){zRT++;if(pz===cz)zRS++;}
+    }
+    var zH=zHT>0?zHS/zHT:0,zR=zRT>0?zRS/zRT:zH;
+    if(Math.abs(zR-zH)>=0.15){
+      drift.push({key:'zod',label:'特码生肖',histRate:zH,recRate:zR,diff:zR-zH,
+        trend:zR>zH?"同肖连出概率上升":"同肖连出概率下降(换肖概率上升)"});
+    }
+  }catch(e){}
+  // 特码尾数转移漂移（同尾连出 vs 换尾）
+  try{
+    var tHS=0,tHT=0,tRS=0,tRT=0;
+    for(var ti=1;ti<DR.length;ti++){
+      var pt=DR[ti-1].t%10,ct=DR[ti].t%10;
+      tHT++;
+      if(pt===ct)tHS++;
+      if(ti>=(DR.length-recentN)){tRT++;if(pt===ct)tRS++;}
+    }
+    var tH=tHT>0?tHS/tHT:0,tR=tRT>0?tRS/tRT:tH;
+    if(Math.abs(tR-tH)>=0.15){
+      drift.push({key:'tail',label:'特码尾数',histRate:tH,recRate:tR,diff:tR-tH,
+        trend:tR>tH?"同尾连出概率上升":"同尾连出概率下降(换尾概率上升)"});
+    }
+  }catch(e){}
+  return drift;
+}
+
 // ===== 正码6码结构预测（意见四⭐最想做：先预测开奖结构，再从结构中选号）=====
 // 大小比/单双比/家野比：二值属性计数预测(0-6)；波色/五行：多类分布计数预测
 // 复用 calcTeAttrPred 四信号加权思路（转移概率+近10期频率+连续反转+长期基线）
@@ -3943,11 +4003,23 @@ function scoreZod(useUserPrefs){
       if(seq1.includes(z)){s+=2;rs.push("①九肖内(+2)");}
       else{s-=2;rs.push("①九肖外(-2)");}
     }
-    if(posMap[z]){s+=3;rs.push("②→①映射(+3)");}
-    else if(posMapNear[z]){s+=1.5;rs.push("②→①邻近映射(+1.5)");}
-    if(seq1AnyHit[z]){s+=1;rs.push("九肖内任意位命中(+1)");}
+    // 【v10.0806.01降权】位置映射作为参考信号(非结论)，权重减半
+    if(posMap[z]){s+=1.5;rs.push("映射参考(+1.5)");}
+    else if(posMapNear[z]){s+=1;rs.push("邻近映射参考(+1)");}
+    if(seq1AnyHit[z]){s+=0.5;rs.push("任意位命中(+0.5)");}
+    // 【v10.0806.01新增】非前端位置(6-9位)活跃：②后段命中→①同肖活跃→非映射位置也考虑
+    if(hasSeq1&&hasSeq2&&cur7Z.includes(z)&&seq1.includes(z)){
+      if(seq2.indexOf(z)>=5&&seq2.indexOf(z)<9){s+=1.5;rs.push("②后段命中(+1.5)");}
+      if(seq1.indexOf(z)>=5&&seq1.indexOf(z)<9){s+=1;rs.push("①后段活跃(+1)");}
+    }
+    // 【v10.0806.01新增】位置映射完全相同惩罚：②和①同一位置相同生肖→太僵化降分
+    if(hasSeq1&&hasSeq2){
+      for(var pi=0;pi<9;pi++){
+        if(seq2[pi]&&seq1[pi]&&seq2[pi]===seq1[pi]&&seq2[pi]===z){s-=2;rs.push("同位置同肖降(-2)");break;}
+      }
+    }
     if(hasSeq0&&seq0.includes(z)){s+=1;rs.push("③基线(+1)");}
-    // 【v10.0803.02新增】本期新出现生肖（上期未出→本期出）→连肖延续
+    // 本期新出现生肖（上期未出→本期出）→连肖延续
     if(newCurZ.includes(z)){s+=2;rs.push("新出延续(+2)");}
     return{z:z,s:s,rs:rs,hot6:hot6,no:no,sameLastZ:sameLastZ,wild:WILD.includes(z),str:str,ab:ab,mxSt:mxSt,czN:czN,mxAb:mxAb,zwx:zodWx(z),crossZ:crossZ.includes(z),inSeq1:hasSeq1?seq1.includes(z):null,inSeq2:hasSeq2?seq2.includes(z):null,inSeq0:hasSeq0?seq0.includes(z):null,posMap:!!posMap[z],posMapNear:!!posMapNear[z],seq1AnyHit:!!seq1AnyHit[z],newCurZ:newCurZ.includes(z),teHot6:teZod6[z]||0,teHot15:teZod15[z]||0};
   }).sort((a,b)=>b.s-a.s);
@@ -9915,6 +9987,23 @@ function renderTE(){
        '<span style="font-size:9px;color:#888">（预测评分'+(lpr.teScore!==undefined?lpr.teScore:'-')+'）</span></div>';
   }
 
+  // 【v10.0806.02新增-问题4】规律漂移检测：全历史 vs 最近10期命中率偏差>=15%预警
+  const drifts=detectPatternDrift();
+  if(drifts.length>0){
+    h+='<div class="card" style="border:2px solid #e67e22;background:#fef9f0;margin-bottom:8px">'+
+       '<div style="font-weight:bold;font-size:12px;color:#e67e22;margin-bottom:4px">📈 规律漂移预警（全历史 vs 最近10期）</div>'+
+       '<div style="font-size:9px;color:#888;margin-bottom:6px">以下属性近期命中规律与历史出现明显偏差(≥15%)，预测概率已随之动态更新，请注意变化方向</div>'+
+       drifts.map(function(d){
+         var dirCls=d.diff>0?'#c0392b':'#1e8449';
+         var arrow=d.diff>0?'▲':'▼';
+         return '<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px dashed #eee;font-size:11px;gap:8px">'+
+           '<span style="flex-shrink:0"><b>'+d.label+'</b></span>'+
+           '<span style="color:#888;flex-shrink:0">延续 '+Math.round(d.histRate*100)+'% → 近10期 '+Math.round(d.recRate*100)+'%</span>'+
+           '<span style="color:'+dirCls+';font-weight:bold;font-size:10px">'+arrow+Math.round(Math.abs(d.diff)*100)+'% '+d.trend+'</span></div>';
+       }).join('')+
+       '</div>';
+  }
+
   // ===== AI独立预测（不受你的设定影响，用于对比验证）=====
   const aiPred=aiOwnPrediction();
   h+='<div class="card" style="background:linear-gradient(135deg,#0f3460,#16213e);color:#fff;border:2px solid #00d9ff">'+
@@ -12648,6 +12737,29 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
     s+=sc13;
     b.push({label:'结构匹配',raw:s13.length>0?s13.join(';'):'中性',score:(sc13>=0?'+':'')+sc13.toFixed(1)});
   }
+  // 14. 【v10.0806.01新增】五连肖联动维度（问题2核心修复）
+  // 用户核心逻辑："三中三跟连肖中选的生肖有关，定生肖、尾数、五行才容易；
+  // 如果觉得生肖都不会出，那么号码肯定不会出"
+  // 3码生肖落在五连肖推荐TOP生肖内越多，组合越可信
+  var lxTopZ=[];
+  try{lxTopZ=scoreZod(false).slice(0,8).map(function(x){return x.z;});}catch(e){}
+  if(lxTopZ.length>0){
+    var lxTopSet=new Set(lxTopZ);
+    var lxTop5=lxTopZ.slice(0,5);
+    var lxTop5Set=new Set(lxTop5);
+    var lxHit=combo.filter(function(n){return lxTopSet.has(gz(n));}).length; // 命中TOP8
+    var lxHit5=combo.filter(function(n){return lxTop5Set.has(gz(n));}).length; // 命中TOP5
+    var sc14=0;var s14=[];
+    if(lxHit===3){sc14+=5;s14.push('3肖全在连肖TOP8');}
+    else if(lxHit===2){sc14+=2.5;s14.push('2肖在连肖TOP8');}
+    else if(lxHit===1){sc14+=0.5;s14.push('1肖在连肖TOP8');}
+    else{sc14-=2;s14.push('0肖在连肖TOP8(生肖全脱节)');}
+    if(lxHit5===3){sc14+=3;s14.push('3肖全在TOP5');}
+    else if(lxHit5===2){sc14+=1.5;s14.push('2肖在TOP5');}
+    else if(lxHit5===1){sc14+=0.5;}
+    s+=sc14;
+    b.push({label:'连肖联动',raw:'连肖TOP8:'+lxTopZ.join(''),score:(sc14>=0?'+':'')+sc14.toFixed(1)});
+  }
   return {s:Math.round(s*10)/10,breakdown:b,details:b.map(function(x){return x.label+x.raw+'('+x.score+')';}).join(' · ')};
 }
 // 连肖组合评分（多维度综合评分：生肖均分·野家搭配·缺席加分·冷热降权·庄家反向·生肖五行·统计排除反馈·九肖参考）
@@ -13131,23 +13243,53 @@ function renderZ3(){
     // 候选池应反映这个事实：60%来自APP高分，40%来自NOT高分
     // scoreZheng中已包含：排除号码/尾数/生肖/五行/属性 + 已出/未出 + 同尾 + 冷热 + 指定等
     var topSc=sc.filter(function(x){return x.s>-5;}); // 排除极低分（被明确排除的号码）
+    // 【v10.0806.01新增-问题3修复】用户评分号码强制进入候选池作为种子
+    // 用户先在"自定义号码评分验证"里输入号码评估，点"加入推荐候选池"后强制参与推荐
+    var customPool=(UP.zm3_custom_pool||[]).slice();
+    var customKeep=customPool.filter(function(n){
+      if((UP.zm3_excl_nums||[]).indexOf(n)>=0)return false;
+      if((UP.zm3_excl_zods||[]).indexOf(gz(n))>=0)return false;
+      return true;
+    });
+    // 【v10.0806.01新增-问题2修复】五连肖联动：获取scoreZod() TOP8推荐生肖
+    // 用户核心逻辑："定生肖、尾数、五行才容易选；如果觉得生肖都不会出，号码肯定不会出"
+    // 三中三候选池优先放"生肖∈五连肖TOP8"的号码（占70%），其余生肖仅作30%平衡
+    var lxZodTop=[];
+    try{lxZodTop=scoreZod(false).slice(0,8).map(function(x){return x.z;});}catch(e){}
+    var lxZodSet=new Set(lxZodTop);
     // 按APP/NOT分组，各自取高分
     var appCand=topSc.filter(function(x){return APP.includes(x.n);});
     var notCand=topSc.filter(function(x){return !APP.includes(x.n);});
+    // 【v10.0806.01】再按生肖是否∈五连肖TOP8二次分组（联动核心）
+    var appLx=appCand.filter(function(x){return lxZodSet.has(gz(x.n));});
+    var appNonLx=appCand.filter(function(x){return !lxZodSet.has(gz(x.n));});
+    var notLx=notCand.filter(function(x){return lxZodSet.has(gz(x.n));});
+    var notNonLx=notCand.filter(function(x){return !lxZodSet.has(gz(x.n));});
     var poolSize=12;
-    // 动态计算比例：APP目标占比60%（~7/12，匹配60%正码来自APP的统计事实）
-    var targetAppCnt=Math.min(Math.max(4,Math.round(poolSize*0.6)),appCand.length);
-    var targetNotCnt=Math.min(poolSize-targetAppCnt,notCand.length);
-    // 如果某一边不够，另一边补足
-    if(appCand.length<targetAppCnt){
-      targetNotCnt=Math.min(poolSize-appCand.length,notCand.length);
-      targetAppCnt=Math.min(poolSize-targetNotCnt,appCand.length);
+    // 候选池构成（3层优先级，逐层补足到12个）：
+    // 第0层：用户自定义候选池号码（强制种子，优先于一切）
+    // 第1层：生肖∈五连肖TOP8 的号码（APP约60% + NOT约40%，合计约70%）
+    // 第2层：生肖不在TOP8 的号码（约30%平衡，兼容新肖/九肖外生肖）
+    poolTop=[];
+    // 第0层：用户种子
+    customKeep.forEach(function(n){if(poolTop.indexOf(n)<0)poolTop.push(n);});
+    // 第1层：五连肖TOP8生肖内的号码
+    var lxAppCnt=Math.min(Math.max(4,Math.round(poolSize*0.42)),appLx.length);   // 12*0.42≈5
+    var lxNotCnt=Math.min(Math.round(poolSize*0.28),notLx.length);               // 12*0.28≈3
+    if(appLx.length<lxAppCnt){lxNotCnt=Math.min(poolSize-lxAppCnt,notLx.length);lxAppCnt=Math.min(poolSize-lxNotCnt,appLx.length);}
+    if(notLx.length<lxNotCnt){lxAppCnt=Math.min(poolSize-lxNotCnt,appLx.length);lxNotCnt=Math.min(poolSize-lxAppCnt,notLx.length);}
+    appLx.slice(0,lxAppCnt).forEach(function(x){if(poolTop.indexOf(x.n)<0)poolTop.push(x.n);});
+    notLx.slice(0,lxNotCnt).forEach(function(x){if(poolTop.indexOf(x.n)<0)poolTop.push(x.n);});
+    // 第2层：非TOP8生肖平衡（约30%）
+    var balanceNeed=Math.max(0,poolSize-poolTop.length);
+    var balApp=Math.min(Math.round(balanceNeed*0.6),appNonLx.length);
+    var balNot=Math.min(balanceNeed-balApp,notNonLx.length);
+    appNonLx.slice(0,balApp).forEach(function(x){if(poolTop.indexOf(x.n)<0)poolTop.push(x.n);});
+    notNonLx.slice(0,balNot).forEach(function(x){if(poolTop.indexOf(x.n)<0)poolTop.push(x.n);});
+    // 若仍不足12个，从全量topSc补足
+    if(poolTop.length<poolSize){
+      topSc.forEach(function(x){if(poolTop.indexOf(x.n)<0&&poolTop.length<poolSize)poolTop.push(x.n);});
     }
-    if(notCand.length<targetNotCnt){
-      targetAppCnt=Math.min(poolSize-notCand.length,appCand.length);
-      targetNotCnt=Math.min(poolSize-targetAppCnt,notCand.length);
-    }
-    poolTop=appCand.slice(0,targetAppCnt).concat(notCand.slice(0,targetNotCnt)).map(function(x){return x.n;});
     // 最终确保不超过12个
     poolTop=poolTop.slice(0,poolSize);
     // 如果过滤后不足3个，说明用户筛选太严格，逐步放宽回退
@@ -13925,7 +14067,12 @@ function renderZ3(){
   h+='<div class="sec-title">🧪 自定义号码评分验证</div>'+
      '<div class="card"><div style="font-size:10px;color:#555;margin-bottom:4px">输入你自己想选的3个号码，系统给出评分排名，对照系统推荐</div>'+
      '<textarea id="z3-custom" rows="1" placeholder="如：05 18 32"></textarea>'+
-     '<button class="btn btn-blue" onclick="checkCustomZ3()" style="margin-top:4px">🔍 评分验证</button>'+
+     '<div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">'+
+     '<button class="btn btn-blue" onclick="checkCustomZ3()">🔍 评分验证</button>'+
+     '<button class="btn btn-green" onclick="customZ3ToPool()">📌 加入推荐候选池</button>'+
+     '<button class="btn btn-gray" onclick="clearCustomZ3Pool()">🗑️ 清空候选池</button>'+
+     '</div>'+
+     '<div id="z3-custom-pool-status" style="font-size:10px;color:#8e44ad;margin-top:4px">'+(UP.zm3_custom_pool&&UP.zm3_custom_pool.length>0?'📌 当前候选池中的号码：<b>'+UP.zm3_custom_pool.map(function(n){return String(n).padStart(2,'0');}).join(' ')+'</b>（共'+UP.zm3_custom_pool.length+'个，强制进入推荐候选池）':'')+'</div>'+
      '<div id="z3-custom-result" style="margin-top:8px"></div></div>';
 
   // ===== 回测：AI TOP评分对近期开奖的命中率 =====
@@ -14396,6 +14543,41 @@ function checkCustomZ3(){
   const avgRank=nums.reduce((s,n)=>s+ranked.find(x=>x.n===n).rank,0)/nums.length;
   h+=concl('你的组合平均排名第'+avgRank.toFixed(0)+'位（共49号）。'+(avgRank<=15?'整体评分较高，与系统推荐方向接近。':avgRank<=30?'评分中等，部分号码可能基于你的特殊判断（如反向思维），建议保留观察。':'评分偏低，但请记住：评分是基于历史统计规律，不代表绝对正确，你的自定义判断仍有价值，尤其当你预判到"反向"情况时。'));
   resEl.innerHTML=h;
+  // 更新候选池状态显示
+  updateCustomPoolStatus();
+}
+
+// 【v10.0806.01新增】用户输入号码→加入推荐候选池（问题3修复：用户评估号码强制进入poolTop）
+function customZ3ToPool(){
+  var raw=(document.getElementById('z3-custom').value||'').trim();
+  var nums=raw.split(/[^0-9]+/).map(Number).filter(function(n){return n>=1&&n<=49;});
+  if(nums.length<2){alert('请先输入至少2个号码');return;}
+  UP.zm3_custom_pool=(UP.zm3_custom_pool||[]).slice();
+  nums.forEach(function(n){
+    if(UP.zm3_custom_pool.indexOf(n)<0)UP.zm3_custom_pool.push(n);
+  });
+  // 排序去重后保存
+  UP.zm3_custom_pool.sort(function(a,b){return a-b;});
+  saveData();
+  updateCustomPoolStatus();
+  alert('✅ 已加入候选池('+nums.length+'个号码)，立即渲染推荐...');
+  render();
+}
+function clearCustomZ3Pool(){
+  UP.zm3_custom_pool=[];
+  saveData();
+  updateCustomPoolStatus();
+  render();
+}
+function updateCustomPoolStatus(){
+  var el=document.getElementById('z3-custom-pool-status');
+  if(!el)return;
+  var pool=UP.zm3_custom_pool||[];
+  if(pool.length>0){
+    el.innerHTML='📌 当前候选池中的号码：<b>'+pool.map(function(n){return String(n).padStart(2,'0');}).join(' ')+'</b>（共'+pool.length+'个，强制进入推荐候选池）';
+  }else{
+    el.innerHTML='';
+  }
 }
 
 // ===== 图片识别 + 自动应用 =====
