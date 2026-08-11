@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0806.06</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0811.01</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -3737,30 +3737,31 @@ function scoreTE_full(n,TM,T100){
   const eDiffs=UP.te_excl_diffs||[],pDiffs=UP.te_pick_diffs||[];
   const eHeSums=UP.te_excl_hesums||[],pHeSums=UP.te_pick_hesums||[];
   const atF={大小:gsz,单双:gpar,合数:ghe,家野:gfam,五行:gwx,波色:gwv};
-  if(eNums.includes(n)){s-=10;exc.push("用户排除号");}
-  if(eTails.includes(gtl(n))){s-=8;exc.push("排尾"+gtl(n));}
-  if(pTails.length>0&&!pTails.includes(gtl(n))){s-=8;exc.push("不在指定尾数");}
-  if(eZods.includes(gz(n))){s-=10;exc.push("用户排除肖");}
-  if(pZods.includes(gz(n))){s+=5;kp.push("用户指定肖");}
-  Object.keys(pAttrs).forEach(k=>{const v=pAttrs[k];if(v&&atF[k]&&atF[k](n)!==v){s-=6;exc.push("不符必须"+v);}});
-  Object.keys(eAttrs).forEach(k=>{const v=eAttrs[k];if(v&&atF[k]&&atF[k](n)===v){s-=6;exc.push("排除"+v);}});
-  eCombos.forEach(ck=>{const c=COMBOS.find(x=>x.k===ck);if(c&&c.fn(n)){s-=8;exc.push("排组合"+ck);}});
-  pCombos.forEach(ck=>{const c=COMBOS.find(x=>x.k===ck);if(c&&!c.fn(n)){s-=5;exc.push("不符组合"+ck);}});
+  // ===== 【v10.0806.07-#525】用户排除/指定项主导降权：-999彻底排除，规律加分(+1~+5)无法抵消 =====
+  if(eNums.includes(n)){s-=999;exc.push("用户排除号(彻底)");}
+  if(eTails.includes(gtl(n))){s-=999;exc.push("排尾"+gtl(n)+"(彻底)");}
+  if(pTails.length>0&&!pTails.includes(gtl(n))){s-=999;exc.push("不在指定尾数(彻底)");}
+  if(eZods.includes(gz(n))){s-=999;exc.push("用户排除肖(彻底)");}
+  if(pZods.includes(gz(n))){s+=8;kp.push("用户指定肖");}
+  Object.keys(pAttrs).forEach(k=>{const v=pAttrs[k];if(v&&atF[k]&&atF[k](n)!==v){s-=999;exc.push("不符必须"+v+"(彻底)");}});
+  Object.keys(eAttrs).forEach(k=>{const v=eAttrs[k];if(v&&atF[k]&&atF[k](n)===v){s-=999;exc.push("排除"+v+"(彻底)");}});
+  eCombos.forEach(ck=>{const c=COMBOS.find(x=>x.k===ck);if(c&&c.fn(n)){s-=999;exc.push("排组合"+ck+"(彻底)");}});
+  pCombos.forEach(ck=>{const c=COMBOS.find(x=>x.k===ck);if(c&&!c.fn(n)){s-=999;exc.push("不符组合"+ck+"(彻底)");}});
   // 头数筛选
-  if(eHeads.includes(ghd(n))){s-=8;exc.push("排"+ghd(n)+"头");}
-  if(pHeads.length>0&&!pHeads.includes(ghd(n))){s-=8;exc.push("不在指定头数");}
+  if(eHeads.includes(ghd(n))){s-=999;exc.push("排"+ghd(n)+"头(彻底)");}
+  if(pHeads.length>0&&!pHeads.includes(ghd(n))){s-=999;exc.push("不在指定头数(彻底)");}
   // 五行多选
-  if(eWxMulti.includes(gwx(n))){s-=8;exc.push("排五行"+gwx(n));}
-  if(pWxMulti.length>0&&!pWxMulti.includes(gwx(n))){s-=8;exc.push("不在指定五行");}
+  if(eWxMulti.includes(gwx(n))){s-=999;exc.push("排五行"+gwx(n)+"(彻底)");}
+  if(pWxMulti.length>0&&!pWxMulti.includes(gwx(n))){s-=999;exc.push("不在指定五行(彻底)");}
   // 波色多选
-  if(eWvMulti.includes(gwv(n))){s-=8;exc.push("排波色"+gwv(n));}
-  if(pWvMulti.length>0&&!pWvMulti.includes(gwv(n))){s-=8;exc.push("不在指定波色");}
+  if(eWvMulti.includes(gwv(n))){s-=999;exc.push("排波色"+gwv(n)+"(彻底)");}
+  if(pWvMulti.length>0&&!pWvMulti.includes(gwv(n))){s-=999;exc.push("不在指定波色(彻底)");}
   // 差数筛选
-  if(eDiffs.includes(gdf(n))){s-=8;exc.push("排差"+gdf(n));}
-  if(pDiffs.length>0&&!pDiffs.includes(gdf(n))){s-=8;exc.push("不在指定差数");}
+  if(eDiffs.includes(gdf(n))){s-=999;exc.push("排差"+gdf(n)+"(彻底)");}
+  if(pDiffs.length>0&&!pDiffs.includes(gdf(n))){s-=999;exc.push("不在指定差数(彻底)");}
   // 合数值筛选
-  if(eHeSums.includes(ghesum(n))){s-=8;exc.push("排合数"+ghesum(n));}
-  if(pHeSums.length>0&&!pHeSums.includes(ghesum(n))){s-=8;exc.push("不在指定合数");}
+  if(eHeSums.includes(ghesum(n))){s-=999;exc.push("排合数"+ghesum(n)+"(彻底)");}
+  if(pHeSums.length>0&&!pHeSums.includes(ghesum(n))){s-=999;exc.push("不在指定合数(彻底)");}
   // 已出/未出筛选
   const appMode=UP.te_pick_app||'';
   if(appMode==='app'&&!APP.includes(n)){s-=20;exc.push("不在已出号");}
@@ -3854,8 +3855,11 @@ function scoreTE_full(n,TM,T100){
   if(tePool.length>0&&!tePool.includes(n)){s-=20;exc.push("不在候选池");}
   // ===== 统计排除准确率反馈（AI自主分析维度）=====
   // 准确率高的排除项→被排除号码降权；准确率低的排除项→被排除号码反而加分（反向指标）
+  // 【v10.0806.07-#525守卫】已被-999硬排除的号码跳过本反馈：
+  // ①避免"彻底排除"与"排除不准反加+2"明细自相矛盾；②-999主导语义不受AI统计干扰
+  var hardExcl=s<=-999;
   var exclAccTE=getExclAccuracy();
-  if(exclAccTE){
+  if(exclAccTE&&!hardExcl){
     var accDims=[
       {k:'sz',fn:gsz,lbl:'大小'},{k:'par',fn:gpar,lbl:'单双'},
       {k:'he',fn:ghe,lbl:'合数'},{k:'fam',fn:gfam,lbl:'家野'},
@@ -3884,7 +3888,9 @@ function scoreTE_full(n,TM,T100){
     });
   }
   // 整体灵敏度权重缩放
-  s*=W.te_w4;
+  // 【v10.0806.07-#525守卫】滑块min=0，若te_w4=0则全体s清零→-999硬排除与exclAccTE反馈全失效(strong/top20全空)
+  // 下限钳制0.05：硬排除号仍为-49.95(≤-8仍入strong)，保证"用户硬排除>任何规律加分"语义在任何权重下成立
+  s*=Math.max(parseFloat(W.te_w4)||1,0.05);
   return {n:n,s:s,exc:exc,kp:kp};
 }
 
