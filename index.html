@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0811.01</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0811.02</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -3115,7 +3115,9 @@ function calcTeLink(){
 }
 
 // ===== 特码属性增强预测（多信号加权模型）=====
-// 四信号：转移概率(30%) + 近10期频率(20%) + 连续反转因子(30%) + 长期基线(20%)
+// 四信号：转移概率(30%) + 近10期频率(20%) + 连续反转因子(30%) + 边际频率基线(20%)
+// ⚠️【v10.0811#531核查】S3(连续反转)在 streak=1 时与 S1(转移概率) 数学恒等(1-反转率=转移率)，等效转移权重0.6，属设计冗余而非错误；
+//    S4(边际频率)是 lastVal 在全历史中的出现率(P(出现lastVal))，非"延续概率"，iid假设下的先验基线
 function calcTeAttrPred(){
   const fns={sz:gsz,par:gpar,he:ghe,fam:gfam};
   const lbls={sz:"大小",par:"单双",he:"合数",fam:"家野"};
@@ -3180,7 +3182,7 @@ function calcTeAttrPred(){
       {name:"转移概率",rate:transRate,sample:transSample,weight:w_trans,pSameContrib:transRate},
       {name:"近10期频率",rate:recentSignal,sample:recentN,weight:w_recent,pSameContrib:recentSignal},
       {name:"连续反转",rate:1-effReversalRate,sample:reversalSamples,weight:w_reversal,pSameContrib:1-effReversalRate},
-      {name:"长期基线",rate:longTermRate,sample:seq.length,weight:w_baseline,pSameContrib:longTermRate}
+      {name:"边际频率",rate:longTermRate,sample:seq.length,weight:w_baseline,pSameContrib:longTermRate}
     ];
 
     result[key]={
@@ -3262,12 +3264,12 @@ function detectPatternDrift(){
 
 // ===== 正码6码结构预测（意见四⭐最想做：先预测开奖结构，再从结构中选号）=====
 // 大小比/单双比/家野比：二值属性计数预测(0-6)；波色/五行：多类分布计数预测
-// 复用 calcTeAttrPred 四信号加权思路（转移概率+近10期频率+连续反转+长期基线）
+// 复用 calcTeAttrPred 四信号加权思路（转移概率+近10期频率+连续反转+边际频率基线）
 function predCountSeq(seq,lastVal){
   // 对计数序列(0-6)预测下期计数，返回 {prediction,topCands,confidence,streak}
   var cands=[0,1,2,3,4,5,6];
   var N=seq.length;
-  // Signal 4: 长期基线频率
+  // Signal 4: 边际频率基线（lastVal 全历史出现率，iid先验）
   var base={};cands.forEach(function(v){base[v]=0;});
   seq.forEach(function(v){base[v]++;});
   cands.forEach(function(v){base[v]=base[v]/N;});
@@ -3978,8 +3980,10 @@ function scoreZod(useUserPrefs){
       }
     });
   }
-  // 【v10.0803.02新增】本期新出现生肖（上期未出→本期出），连肖延续信号
-  const newCurZ=cur7Z.filter(function(z){return !prev7Z.includes(z);});
+  // 【v10.0811修正#530】新生肖 = 上期未出现 且 不在位置映射生肖中（位置映射已解释的出现不算"新生"，避免映射信号与新出信号重复计分）
+  // 排除集合 = posMap(完全映射) + posMapNear(邻近映射) + seq1AnyHit(任意位命中) 三个映射来源的生肖
+  const mapZodSet=Object.keys(posMap).concat(Object.keys(posMapNear)).concat(Object.keys(seq1AnyHit));
+  const newCurZ=cur7Z.filter(function(z){return !prev7Z.includes(z)&&mapZodSet.indexOf(z)<0;});
   return ZODS.map(z=>{
     let s=0;const rs=[];
     const hot6=zc6[z],no=notByZ[z],str=stks[z]||0,ab=abs[z]||0,mxSt=mxs[z]||0,mxAb=mxAbs[z]||0,czN=cz[z]||{cold:0,hot:0,score:0};
@@ -10020,7 +10024,7 @@ function renderTE(){
   if(drifts.length>0){
     h+='<div class="card" style="border:2px solid #e67e22;background:#fef9f0;margin-bottom:8px">'+
        '<div style="font-weight:bold;font-size:12px;color:#e67e22;margin-bottom:4px">📈 规律漂移预警（全历史 vs 最近10期）</div>'+
-       '<div style="font-size:9px;color:#888;margin-bottom:6px">以下属性近期命中规律与历史出现明显偏差(≥15%)，预测概率已随之动态更新，请注意变化方向</div>'+
+       '<div style="font-size:9px;color:#888;margin-bottom:6px">以下属性近期命中规律与历史出现明显偏差(≥15%)，预测概率已随之动态更新，请注意变化方向（最近10期样本较小，漂移信号仅供参考，不构成确定结论）</div>'+
        drifts.map(function(d){
          var dirCls=d.diff>0?'#c0392b':'#1e8449';
          var arrow=d.diff>0?'▲':'▼';
@@ -10048,7 +10052,7 @@ function renderTE(){
   const aiCopyTxt=lotLabel()+'AI特码'+aiPred.top20.map(x=>String(x.n).padStart(2,'0')).join(',');
   h+='<b style="font-size:11px;color:#ffd700">📋 AI评分前20号码（点击复制）：</b>'+
      '<div class="ai-copy-box" onclick="copyAiRec(this,\''+aiCopyTxt+'\')" title="点击复制全部">'+aiCopyTxt+'</div>'+
-     '<div style="font-size:9px;color:#aed6f1;margin-top:4px">共'+aiPred.nonExcl.length+'个非排除候选号码（评分>-3）</div>'+
+     '<div style="font-size:9px;color:#aed6f1;margin-top:4px">共'+aiPred.nonExcl.length+'个非排除候选号码（评分>-8）</div>'+
      '</div>';
 
   // ===== AI推荐10码（不受用户限制，用于对比复盘）=====
@@ -10216,7 +10220,7 @@ function renderTE(){
   // 属性预测（增强版：多信号加权）
   h+='<div class="card" style="background:#1a1a2e;color:#fff">'+
      '<div style="font-weight:bold;color:#ffd700;margin-bottom:4px">🔮 '+NEXT+'期特码属性预测（多信号加权模型）</div>'+
-     '<div style="font-size:9px;color:#aed6f1;margin-bottom:6px">📊 四信号加权：转移概率(30%) + 近10期频率(20%) + 连续反转(30%) + 长期基线(20%)</div>'+
+     '<div style="font-size:9px;color:#aed6f1;margin-bottom:6px">📊 四信号加权：转移概率(30%) + 近10期频率(20%) + 连续反转(30%) + 边际频率(20%)</div>'+
      '<div style="font-size:10px;margin-bottom:6px">本期特码 '+ball(lastT,18)+' '+gz(lastT)+'：'+nattrs(lastT)+'</div>';
   // Enhanced 4-attribute prediction cards
   h+='<div class="grid2" style="gap:6px;margin-bottom:8px">';
@@ -10387,6 +10391,8 @@ function renderLX(){
   var czHotLx=ZODS.filter(function(z){return cz[z].hot>=2;}).sort(function(a,b){return cz[b].hot-cz[a].hot;});
   const cur7Z=Array.from(new Set([].concat(LAST.n,[LAST.t]).map(gz)));
   const force=UP.lx_force_zods||[],excl=UP.lx_excl_zods||[],noTog=UP.lx_no_together||[],grpLimits=UP.lx_grp_limits||[];
+  // 【v10.0811#530新增】AI三特肖（特码预测前3生肖）：五连肖推荐中排除，特肖与正码连肖分开投注
+  var aiTeZods=[];try{var _aiPTx=aiOwnPrediction();if(_aiPTx&&_aiPTx.top3Zods)aiTeZods=_aiPTx.top3Zods.slice();}catch(e){}
 
   function violatesGrp(z,chosen){
     return grpLimits.some(function(g){
@@ -11448,8 +11454,9 @@ function renderLX(){
     // 核心来源②：九肖外 —— 必出1-2个，不可忽略
     var nineOut1F=nineOut1.filter(function(z){return excl.indexOf(z)<0;});
     // 核心来源③：新生肖（上期未出本期出）—— 连肖延续信号
+    // 【v10.0811修正#530】新生肖排除位置映射候选(posMapped)：位置映射已解释的出现不算"新生"
     var prevDrawZ0=PREV?Array.from(new Set(PREV.n.concat(PREV.t).map(gz))):[];
-    var newCurZ=cur7Z.filter(function(z){return prevDrawZ0.indexOf(z)<0&&excl.indexOf(z)<0;});
+    var newCurZ=cur7Z.filter(function(z){return prevDrawZ0.indexOf(z)<0&&excl.indexOf(z)<0&&posMapped.indexOf(z)<0;});
     // 核心来源④：本期7开奖肖中"不在九肖内"的（九肖外新生肖，最强信号）
     var cur7Out9F=cur7Z.filter(function(z){return nineOut1.indexOf(z)>=0&&excl.indexOf(z)<0;});
     // 位置映射（仅作排序加分参考，不强制）
@@ -11458,6 +11465,11 @@ function renderLX(){
     var lx9CorePool=Array.from(new Set(cur7ZF.concat(nineOut1F).concat(newCurZ)));
     // 位置映射命中但不在综合池中的（额外补入，标注来源）
     posMappedF.forEach(function(z){if(lx9CorePool.indexOf(z)<0)lx9CorePool.push(z);});
+    // 【v10.0811#530新增】三特肖排除：AI预测的特码前3生肖不参与五连肖组合（特肖与正码连肖分开投注）
+    var teExclZods=aiTeZods.filter(function(z){return lx9CorePool.indexOf(z)>=0;});
+    if(teExclZods.length>0){
+      lx9CorePool=lx9CorePool.filter(function(z){return teExclZods.indexOf(z)<0;});
+    }
     var forceNotInPool=force.filter(function(z){return lx9CorePool.indexOf(z)<0;});
     // 【v10.0807 #519新增】映射覆盖状态诊断：判断"位置映射候选是否充足"，用于映射不足时给出重选提示
     var mapCoverState={
@@ -11484,9 +11496,10 @@ function renderLX(){
        '<span style="font-size:10px;font-weight:bold">'+nineOut1F.map(function(z){return EMJ[z]+z;}).join(' ')+'</span><br>'+
        '<span style="font-size:8px;color:#666">其中<b style="color:#c0392b">本期已出</b>：'+(cur7Out9F.length>0?cur7Out9F.map(function(z){return EMJ[z]+z;}).join(' '):'无')+'（最强信号，必含）</span></div>'+
        '<div style="flex:1;min-width:150px;background:#e3f2fd;border:2px solid #2196f3;border-radius:6px;padding:6px">'+
-       '<b style="color:#1565c0;font-size:10px">🧬 新生肖（上期未出本期出）</b><br>'+
+       '<b style="color:#1565c0;font-size:10px">🧬 新生肖（上期未出本期出·非映射）</b><br>'+
        '<span style="font-size:10px;font-weight:bold">'+(newCurZ.length>0?newCurZ.map(function(z){return EMJ[z]+z;}).join(' '):'<span style="color:#888">无</span>')+'</span><br>'+
-       '<span style="font-size:8px;color:#666">连肖延续信号，本期新进入的生肖</span></div>'+
+       '<span style="font-size:8px;color:#666">连肖延续信号，本期新进入的生肖（<b>不含位置映射解释过的出现</b>）</span></div>'+
+       (teExclZods.length>0?'<div style="flex:0;min-width:120px;background:#fce4ec;border:2px solid #e91e63;border-radius:6px;padding:6px"><b style="color:#c2185b;font-size:10px">🔒 三特肖排除</b><br><span style="font-size:10px">'+teExclZods.map(function(z){return EMJ[z]+z;}).join(' ')+'</span><br><span style="font-size:8px;color:#666">AI特码预测前3，不参与连肖</span></div>':'')+
        (forceNotInPool.length>0?'<div style="flex:0;min-width:120px;background:#fff3e0;border:2px solid #ff9800;border-radius:6px;padding:6px"><b style="color:#e65100;font-size:10px">🔷 强制必含</b><br><span style="font-size:10px">'+forceNotInPool.map(function(z){return EMJ[z]+z;}).join(' ')+'</span><br><span style="font-size:8px;color:#666">不在综合池中</span></div>':'')+
        '</div>'+
        // 【v10.0807 #519新增】映射覆盖状态诊断条：映射候选充足与否的明确提示
@@ -14450,6 +14463,69 @@ function renderZ3(){
     });
     h+='</div>';
     h+='<div style="font-size:9px;color:#888;margin-top:4px">⭐标记=下期正码最可能出现的生肖TOP3，建议在选号时优先覆盖这些生肖的号码</div>';
+
+    // --- 5. 【v10.0811#529新增】上期正码→下期正码 关系统计 ---
+    h+='<div style="margin-top:10px;border-top:2px solid #90caf9;padding-top:6px"><b style="font-size:11px;color:#1565c0">⑤ 上期正码→下期正码 关系统计（号码重复 / 生肖延续 / 尾数延续 / 区间延续）</b></div>';
+    var relStats={num:{m:0,t:0},zod:{m:0,t:0},tail:{m:0,t:0},range:{m:0,t:0}};
+    var relRecent=[];
+    for(var rli=DR.length-1;rli>=1;rli--){
+      var rCur=DR[rli].n,rPrev=DR[rli-1].n;
+      var rCurZ=rCur.map(gz),rPrevZ=rPrev.map(gz);
+      var rCurT=rCur.map(gtl),rPrevT=rPrev.map(gtl);
+      var rCurR=rCur.map(numRange),rPrevR=rPrev.map(numRange);
+      var rNumHit=rCur.filter(function(n){return rPrev.indexOf(n)>=0;}).length;
+      var rZodHit=rCurZ.filter(function(z){return rPrevZ.indexOf(z)>=0;}).length;
+      var rTailHit=rCurT.filter(function(t){return rPrevT.indexOf(t)>=0;}).length;
+      var rRangeHit=rCurR.filter(function(r){return rPrevR.indexOf(r)>=0;}).length;
+      relStats.num.m+=rNumHit;relStats.num.t++;
+      relStats.zod.m+=rZodHit;relStats.zod.t++;
+      relStats.tail.m+=rTailHit;relStats.tail.t++;
+      relStats.range.m+=rRangeHit;relStats.range.t++;
+      if(relRecent.length<10)relRecent.push({p:DR[rli].p,num:rNumHit,zod:rZodHit,tail:rTailHit,range:rRangeHit});
+    }
+    function relAvg(stat){return stat.t>0?Math.round(stat.m/stat.t*10)/10:0;}
+    // 汇总卡片
+    var relCards=[
+      {k:'🔢 号码重复',v:relAvg(relStats.num),tip:'上期正码号在下期正码中再次出现'},
+      {k:'🐾 生肖延续',v:relAvg(relStats.zod),tip:'上期正码生肖在下期正码中延续'},
+      {k:'🔚 尾数延续',v:relAvg(relStats.tail),tip:'上期正码尾数在下期正码中延续'},
+      {k:'📦 区间延续',v:relAvg(relStats.range),tip:'上期正码区间(0-9/10-19…)在下期延续'}
+    ];
+    h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">';
+    relCards.forEach(function(rc){
+      h+='<div style="flex:1;min-width:100px;background:#fff;border:1px solid #90caf9;border-radius:6px;padding:5px;text-align:center" title="'+rc.tip+'">'+
+         '<div style="font-size:8px;color:#666">'+rc.k+'</div>'+
+         '<div style="font-size:15px;font-weight:bold;color:'+(rc.v>=2?'#27ae60':rc.v>=1?'#e67e22':'#c0392b')+'">'+rc.v+'<span style="font-size:9px;color:#888"> 个/期</span></div>'+
+         '<div style="font-size:7px;color:#aaa">'+rc.tip+'</div></div>';
+    });
+    h+='</div>';
+    // 最近10期明细表
+    h+='<table style="width:100%;font-size:9px;border-collapse:collapse;text-align:center;margin-top:6px">'+
+       '<tr style="background:#bbdefb"><th style="padding:3px;border:1px solid #90caf9">期</th><th style="padding:3px;border:1px solid #90caf9">号码重复</th><th style="padding:3px;border:1px solid #90caf9">生肖延续</th><th style="padding:3px;border:1px solid #90caf9">尾数延续</th><th style="padding:3px;border:1px solid #90caf9">区间延续</th></tr>';
+    relRecent.forEach(function(rr){
+      h+='<tr style="background:#fff"><td style="padding:3px;border:1px solid #ddd;color:#1565c0;font-weight:bold">#'+rr.p+'</td>'+
+         '<td style="padding:3px;border:1px solid #ddd;color:'+(rr.num>0?'#27ae60;font-weight:bold':'#aaa')+'">'+rr.num+'</td>'+
+         '<td style="padding:3px;border:1px solid #ddd;color:'+(rr.zod>0?'#27ae60;font-weight:bold':'#aaa')+'">'+rr.zod+'</td>'+
+         '<td style="padding:3px;border:1px solid #ddd;color:'+(rr.tail>0?'#27ae60;font-weight:bold':'#aaa')+'">'+rr.tail+'</td>'+
+         '<td style="padding:3px;border:1px solid #ddd;color:'+(rr.range>0?'#27ae60;font-weight:bold':'#aaa')+'">'+rr.range+'</td></tr>';
+    });
+    h+='</table>';
+    // 当前上期正码→下期预测建议
+    var curPrevN=PREV?PREV.n:[];
+    var curPrevZ=[],curPrevT=[],curPrevR=[];
+    curPrevN.forEach(function(n){curPrevZ.push(gz(n));curPrevT.push(gtl(n));curPrevR.push(numRange(n));});
+    var curPrevZSet=Array.from(new Set(curPrevZ)),curPrevTSet=Array.from(new Set(curPrevT)),curPrevRSet=Array.from(new Set(curPrevR));
+    h+='<div style="margin-top:6px;font-size:9px;color:#555;line-height:1.7;background:#f4f9ff;border:1px solid #bbdefb;border-radius:6px;padding:6px">'+
+       '<b style="color:#1565c0">📌 当前上期（#'+(PREV?PREV.p:'-')+'期）正码延续信号：</b><br>'+
+       '🐾 上期正码生肖 <b>'+curPrevZSet.join(' ')+'</b> → 下期正码延续期望 <b style="color:#27ae60">'+relAvg(relStats.zod)+'个</b>，建议三中三优先覆盖这些生肖的号码<br>'+
+       '🔚 上期正码尾数 <b>'+curPrevTSet.join(' ')+'</b> → 尾数延续期望 <b style="color:#27ae60">'+relAvg(relStats.tail)+'个</b>，选号时保留其中1-2个尾数<br>'+
+       '🔢 号码完全重复期望仅 <b style="color:#e67e22">'+relAvg(relStats.num)+'个</b>，说明上期正码号下期再出的概率低，可适当降低上期已出号码的权重</div>';
+    // 应用按钮：生肖延续→三中三候选池
+    if(curPrevZSet.length>0){
+      var relZ3Nums=[];
+      curPrevZSet.forEach(function(z){relZ3Nums=relZ3Nums.concat(ZM[z]||[]);});
+      h+='<div style="margin-top:4px"><button class="btn btn-green" style="font-size:9px;padding:3px 8px" onclick="window.copyAndApplyPool(\''+relZ3Nums.join(' ')+'\',\'zm3_pick_pool\')">📋 上期正码生肖全部号码→三中三候选池</button></div>';
+    }
 
     // 应用按钮：马尔可夫TOP10→三中三候选池
     if(markovSorted.length>0){
