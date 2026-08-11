@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">184</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0806.02</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0806.03</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -11411,82 +11411,107 @@ function renderLX(){
     }
     h+='</table>';
 
-    // 候选池
+    // 候选池【v10.0807 Q1核心重构】
+    // ★★★ 用户核心思路：五连肖真正来源 = 6正码+1特肖 = 7个开奖生肖 + 九肖外(必出1-2) + 新生肖(上期未出本期出)
+    // ★★★ 位置映射只作参考排序加分，不再作为唯一生成来源！
     var zScMap9={};zSc.forEach(function(x){zScMap9[x.z]=x;});
-    var posMappedF=posMapped.filter(function(z){return excl.indexOf(z)<0;});
+    // 核心来源①：本期7个开奖生肖（6正码+1特肖）—— 连肖的主来源
+    var cur7ZF=cur7Z.filter(function(z){return excl.indexOf(z)<0;});
+    // 核心来源②：九肖外 —— 必出1-2个，不可忽略
     var nineOut1F=nineOut1.filter(function(z){return excl.indexOf(z)<0;});
-    var forceNotInPool=force.filter(function(z){return posMappedF.indexOf(z)<0&&nineOut1.indexOf(z)<0;});
+    // 核心来源③：新生肖（上期未出本期出）—— 连肖延续信号
+    var prevDrawZ0=PREV?Array.from(new Set(PREV.n.concat(PREV.t).map(gz))):[];
+    var newCurZ=cur7Z.filter(function(z){return prevDrawZ0.indexOf(z)<0&&excl.indexOf(z)<0;});
+    // 核心来源④：本期7开奖肖中"不在九肖内"的（九肖外新生肖，最强信号）
+    var cur7Out9F=cur7Z.filter(function(z){return nineOut1.indexOf(z)>=0&&excl.indexOf(z)<0;});
+    // 位置映射（仅作排序加分参考，不强制）
+    var posMappedF=posMapped.filter(function(z){return excl.indexOf(z)<0;});
+    // 综合候选池：7开奖肖 ∪ 九肖外 ∪ 新生肖（去重、去排除）
+    var lx9CorePool=Array.from(new Set(cur7ZF.concat(nineOut1F).concat(newCurZ)));
+    // 位置映射命中但不在综合池中的（额外补入，标注来源）
+    posMappedF.forEach(function(z){if(lx9CorePool.indexOf(z)<0)lx9CorePool.push(z);});
+    var forceNotInPool=force.filter(function(z){return lx9CorePool.indexOf(z)<0;});
 
     h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">'+
-       '<div style="flex:1;min-width:180px;background:#e8f5e9;border:2px solid #4caf50;border-radius:6px;padding:6px">'+
-       '<b style="color:#2e7d32;font-size:10px">⭐ 九肖内候选（位置映射）</b><br>'+
-       '<span style="font-size:10px;font-weight:bold">'+(posMappedF.length>0?posMappedF.map(function(z){return EMJ[z]+z;}).join(' '):'<span style="color:#c0392b">无可用候选</span>')+'</span><br>'+
-       '<span style="font-size:8px;color:#666">从'+hitPos2.length+'个命中位置映射，排除'+(posMapped.length-posMappedF.length)+'个</span></div>'+
-       '<div style="flex:1;min-width:180px;background:#fbe9e7;border:2px solid #c0392b;border-radius:6px;padding:6px">'+
-       '<b style="color:#c0392b;font-size:10px">🔴 九肖外（稳定出1-2个）</b><br>'+
+       '<div style="flex:1;min-width:200px;background:#e8f5e9;border:2px solid #4caf50;border-radius:6px;padding:6px">'+
+       '<b style="color:#2e7d32;font-size:10px">🎯 综合候选池（真实来源：7开奖肖+九肖外+新生肖）</b><br>'+
+       '<span style="font-size:10px;font-weight:bold">'+(lx9CorePool.length>0?lx9CorePool.map(function(z){return EMJ[z]+z;}).join(' '):'<span style="color:#c0392b">无可用候选</span>')+'</span><br>'+
+       '<span style="font-size:8px;color:#666">共'+lx9CorePool.length+'个 · 其中本期开奖肖'+(cur7ZF.filter(function(z){return nineOut1.indexOf(z)<0;}).length)+'个 + 九肖外'+(nineOut1F.filter(function(z){return cur7Z.indexOf(z)>=0;}).length+'个开奖+'+nineOut1F.filter(function(z){return cur7Z.indexOf(z)<0;}).length+'个未开')+') + 新生肖'+newCurZ.length+'个 · 位置映射仅作排序加分</span></div>'+
+       '<div style="flex:1;min-width:170px;background:#fbe9e7;border:2px solid #c0392b;border-radius:6px;padding:6px">'+
+       '<b style="color:#c0392b;font-size:10px">🔴 九肖外（必出1-2个）</b><br>'+
        '<span style="font-size:10px;font-weight:bold">'+nineOut1F.map(function(z){return EMJ[z]+z;}).join(' ')+'</span><br>'+
-       '<span style="font-size:8px;color:#666">九肖外几乎必出，不可忽略</span></div>'+
-       (forceNotInPool.length>0?'<div style="flex:0;min-width:120px;background:#e3f2fd;border:2px solid #2196f3;border-radius:6px;padding:6px"><b style="color:#1565c0;font-size:10px">🔷 强制必含</b><br><span style="font-size:10px">'+forceNotInPool.map(function(z){return EMJ[z]+z;}).join(' ')+'</span><br><span style="font-size:8px;color:#666">不在九肖候选池中</span></div>':'')+
+       '<span style="font-size:8px;color:#666">其中<b style="color:#c0392b">本期已出</b>：'+(cur7Out9F.length>0?cur7Out9F.map(function(z){return EMJ[z]+z;}).join(' '):'无')+'（最强信号，必含）</span></div>'+
+       '<div style="flex:1;min-width:150px;background:#e3f2fd;border:2px solid #2196f3;border-radius:6px;padding:6px">'+
+       '<b style="color:#1565c0;font-size:10px">🧬 新生肖（上期未出本期出）</b><br>'+
+       '<span style="font-size:10px;font-weight:bold">'+(newCurZ.length>0?newCurZ.map(function(z){return EMJ[z]+z;}).join(' '):'<span style="color:#888">无</span>')+'</span><br>'+
+       '<span style="font-size:8px;color:#666">连肖延续信号，本期新进入的生肖</span></div>'+
+       (forceNotInPool.length>0?'<div style="flex:0;min-width:120px;background:#fff3e0;border:2px solid #ff9800;border-radius:6px;padding:6px"><b style="color:#e65100;font-size:10px">🔷 强制必含</b><br><span style="font-size:10px">'+forceNotInPool.map(function(z){return EMJ[z]+z;}).join(' ')+'</span><br><span style="font-size:8px;color:#666">不在综合池中</span></div>':'')+
        '</div>';
 
-    // 生成五连肖组合
+    // 生成五连肖组合【v10.0807 Q1核心重构】
+    // ★★★ 不再强制"映射4+外1"或"映射3+外2"，改为从综合候选池(lx9CorePool)生成 C(池,5)
+    // ★★★ 约束：必须覆盖 九肖外（必出1-2）+ 本期7开奖肖（通常2-4个）
+    // ★★★ 位置映射命中数作为排序加分（参考信号，不强制）
     var lx9Candidates=[];
-    // Strategy A: 4 from posMapped + 1 from nineOut1
-    if(posMappedF.length>=4&&nineOut1F.length>=1){
-      var pm4=combNK(posMappedF,4);
-      pm4.forEach(function(pmCombo){
-        nineOut1F.forEach(function(outZ){
-          var five=pmCombo.concat([outZ]);
-          if(force.some(function(fz){return five.indexOf(fz)<0;}))return;
-          var fOk=true;
-          for(var ti=0;ti<five.length&&fOk;ti++){
-            for(var tj=ti+1;tj<five.length&&fOk;tj++){
-              if(noTog.some(function(pair){return pair.indexOf(five[ti])>=0&&pair.indexOf(five[tj])>=0;}))fOk=false;
-            }
-          }
-          if(!fOk)return;
-          var items=five.map(function(z){return zScMap9[z]||zSc.find(function(x){return x.z===z;});});
-          if(items.some(function(x){return !x;}))return;
-          lx9Candidates.push({zods:five,sc:scoreLXCombo(items,zSc),strategy:'A(映射4+外1)',outCount:1});
-        });
-      });
+    function buildLX9Candidate(five){
+      if(force.some(function(fz){return five.indexOf(fz)<0;}))return;
+      // noTog互斥检查
+      for(var ti=0;ti<five.length;ti++){
+        for(var tj=ti+1;tj<five.length;tj++){
+          if(noTog.some(function(pair){return pair.indexOf(five[ti])>=0&&pair.indexOf(five[tj])>=0;}))return;
+        }
+      }
+      var items=five.map(function(z){return zScMap9[z]||zSc.find(function(x){return x.z===z;});});
+      if(items.some(function(x){return !x;}))return;
+      var base=scoreLXCombo(items,zSc);
+      // 位置映射参考加分（仅作排序信号）
+      var mapHit=five.filter(function(z){return posMappedF.indexOf(z)>=0;}).length;
+      // 覆盖度约束与加分：
+      var outHit=five.filter(function(z){return nineOut1F.indexOf(z)>=0;}).length;      // 九肖外覆盖数（应1-2）
+      var curHit=five.filter(function(z){return cur7ZF.indexOf(z)>=0;}).length;        // 开奖肖覆盖数
+      var newHit=five.filter(function(z){return newCurZ.indexOf(z)>=0;}).length;       // 新生肖覆盖数
+      var curOutHit=five.filter(function(z){return cur7Out9F.indexOf(z)>=0;}).length; // 九肖外开奖肖（最强）
+      var mapBonus=mapHit*0.8;   // 每个位置映射命中 +0.8
+      var outBonus=(outHit>=1&&outHit<=2)?2:(outHit>2?-2:0); // 九肖外覆盖1-2个最佳
+      var curOutBonus=curOutHit*3; // 九肖外开奖肖是最强信号，每个+3
+      var newBonus=newHit*1.2;   // 新生肖每个+1.2
+      var curBalance=Math.abs(curHit-3); // 开奖肖覆盖越接近3越好（±惩罚）
+      var s=base.s+mapBonus+outBonus+curOutBonus+newBonus-curBalance*0.5;
+      var strategy='综合';
+      lx9Candidates.push({zods:five,sc:{s:s,details:(base.details||'')+' | 映射'+mapHit+'·九肖外'+outHit+'·开奖肖'+curHit+'·新生肖'+newHit},strategy:strategy,outCount:outHit,mapHit:mapHit});
     }
-    // Strategy B: 3 from posMapped + 2 from nineOut1
-    if(posMappedF.length>=3&&nineOut1F.length>=2){
-      var pm3=combNK(posMappedF,3);
-      var no2=combNK(nineOut1F,2);
-      pm3.forEach(function(pmCombo){
-        no2.forEach(function(outCombo){
-          var five=pmCombo.concat(outCombo);
-          if(force.some(function(fz){return five.indexOf(fz)<0;}))return;
-          var fOk=true;
-          for(var ti2=0;ti2<five.length&&fOk;ti2++){
-            for(var tj2=ti2+1;tj2<five.length&&fOk;tj2++){
-              if(noTog.some(function(pair){return pair.indexOf(five[ti2])>=0&&pair.indexOf(five[tj2])>=0;}))fOk=false;
-            }
-          }
-          if(!fOk)return;
-          var items2=five.map(function(z){return zScMap9[z]||zSc.find(function(x){return x.z===z;});});
-          if(items2.some(function(x){return !x;}))return;
-          lx9Candidates.push({zods:five,sc:scoreLXCombo(items2,zSc),strategy:'B(映射3+外2)',outCount:2});
-        });
-      });
+    // 从综合池生成所有5连肖组合
+    if(lx9CorePool.length>=5){
+      var allFive=combNK(lx9CorePool,5);
+      allFive.forEach(buildLX9Candidate);
+    }else{
+      // 池子不足5个：放宽到 ZODS 全量（仍尊重排除/强制），补齐到5
+      var extendPool=Array.from(new Set(lx9CorePool.concat(ZODS.filter(function(z){return excl.indexOf(z)<0;}))));
+      if(extendPool.length>=5){
+        combNK(extendPool,5).forEach(buildLX9Candidate);
+      }
     }
-    // 【v10.0730.02】过滤掉同位置映射重复过多导致“不推荐”的组合
+    // 【v10.0730.02】过滤掉同位置映射重复过多导致"不推荐"的组合
     lx9Candidates=lx9Candidates.filter(function(c){return c.sc.details.indexOf('不推荐')<0&&c.sc.s>-20;});
     lx9Candidates.sort(function(a,b){return b.sc.s-a.sc.s;});
+    // 去重（相同生肖集合只保留一次）
+    var lx9Seen={};lx9Candidates=lx9Candidates.filter(function(c){
+      var key=c.zods.slice().sort().join(',');
+      if(lx9Seen[key])return false;lx9Seen[key]=true;return true;
+    });
 
     if(lx9Candidates.length>0){
       h+='<div style="background:#fff;border:2px solid #8e44ad;border-radius:8px;padding:10px;margin-bottom:6px">'+
-         '<b style="color:#8e44ad;font-size:12px">🏆 位置映射五连肖推荐（共'+lx9Candidates.length+'种组合）</b>'+
+         '<b style="color:#8e44ad;font-size:12px">🏆 综合来源五连肖推荐（共'+lx9Candidates.length+'种组合）</b>'+
          '<table style="width:100%;font-size:10px;border-collapse:collapse;margin-top:6px">'+
-         '<tr style="background:#e8e1f5"><th style="padding:4px;border:1px solid #d5d0f0">排名</th><th style="padding:4px;border:1px solid #d5d0f0">五连肖组合</th><th style="padding:4px;border:1px solid #d5d0f0">策略</th><th style="padding:4px;border:1px solid #d5d0f0">总分</th><th style="padding:4px;border:1px solid #d5d0f0">分项</th><th style="padding:4px;border:1px solid #d5d0f0">操作</th></tr>';
+         '<tr style="background:#e8e1f5"><th style="padding:4px;border:1px solid #d5d0f0">排名</th><th style="padding:4px;border:1px solid #d5d0f0">五连肖组合</th><th style="padding:4px;border:1px solid #d5d0f0">策略</th><th style="padding:4px;border:1px solid #d5d0f0">映射命中</th><th style="padding:4px;border:1px solid #d5d0f0">总分</th><th style="padding:4px;border:1px solid #d5d0f0">分项</th><th style="padding:4px;border:1px solid #d5d0f0">操作</th></tr>';
       lx9Candidates.slice(0,6).forEach(function(item,i){
         var isTop=i===0;
         h+='<tr style="background:'+(isTop?'#e8f5e9':'#fff')+'">'+
            '<td style="text-align:center;font-weight:bold;color:'+(isTop?'#27ae60':'#888')+';padding:4px;border:1px solid #ddd">#'+(i+1)+(isTop?' ⬅':'')+'</td>'+
            '<td style="font-weight:bold;color:#6a5acd;padding:4px;border:1px solid #ddd">'+item.zods.map(function(z){return EMJ[z]+z;}).join('')+'</td>'+
            '<td style="text-align:center;font-size:9px;padding:4px;border:1px solid #ddd;color:'+(item.outCount>=1?'#c0392b':'#1e8449')+'">'+item.strategy+'</td>'+
+           '<td style="text-align:center;font-size:9px;padding:4px;border:1px solid #ddd;color:#1565c0">映射'+item.mapHit+'</td>'+
            '<td style="text-align:center;font-weight:bold;color:#c0392b;padding:4px;border:1px solid #ddd">'+item.sc.s+'</td>'+
            '<td style="font-size:8px;color:#666;padding:4px;border:1px solid #ddd;max-width:120px">'+item.sc.details+'</td>'+
            '<td style="text-align:center;padding:4px;border:1px solid #ddd"><button class="btn btn-purple" data-action="apply9ToLX5" data-zods="'+item.zods.join(',')+'" style="font-size:9px;padding:2px 6px">⚡应用</button></td></tr>';
@@ -11496,14 +11521,14 @@ function renderLX(){
       var lx9Chart=lx9Candidates.slice(0,6).map(function(item,i){
         return {label:'#'+(i+1)+(i===0?'推':''),val:item.sc.s,color:i===0?'#27ae60':(i===1?'#6a5acd':(i===2?'#e67e22':(i===3?'#8e44ad':(i===4?'#1a6baa':'#666'))))};
       });
-      h+='<div style="margin-top:6px">'+chartBar(lx9Chart,{w:340,h:130,title:'五连肖位置映射TOP6评分',maxVal:lx9Candidates[0].sc.s})+'</div>';
+      h+='<div style="margin-top:6px">'+chartBar(lx9Chart,{w:340,h:130,title:'综合来源五连肖TOP6评分',maxVal:lx9Candidates[0].sc.s})+'</div>';
       h+='</div>';
-    }else if(hitPos2.length===0){
+    }else if(lx9CorePool.length<5&&cur7Z.length===0){
       h+='<div style="padding:8px;background:#fdf2f2;border-radius:6px;font-size:11px;color:#c0392b;margin-bottom:8px">'+
-         '⚠️ ②序列无命中位置（上期开奖生肖全部不在②序列九肖中），无法生成位置映射。请重新填写九肖。</div>';
+         '⚠️ 综合候选池为空（无开奖数据或全部被排除），无法生成五连肖。请先录入开奖或调整排除规则。</div>';
     }else{
       h+='<div style="padding:8px;background:#fff3cd;border-radius:6px;font-size:11px;color:#856404;margin-bottom:8px">'+
-         '⚠️ 无法生成五连肖组合。候选池不足（映射候选='+posMappedF.length+'个，九肖外='+nineOut1F.length+'个）。请调整排除规则。</div>';
+         '⚠️ 无法生成五连肖组合。综合候选池='+lx9CorePool.length+'个，需至少5个（开奖肖'+cur7ZF.length+'个 + 九肖外'+nineOut1F.length+'个 + 新生肖'+newCurZ.length+'个），或排除规则过严。请调整。</div>';
     }
 
     // 历史位置映射准确率
@@ -13265,11 +13290,11 @@ function renderZ3(){
     var appNonLx=appCand.filter(function(x){return !lxZodSet.has(gz(x.n));});
     var notLx=notCand.filter(function(x){return lxZodSet.has(gz(x.n));});
     var notNonLx=notCand.filter(function(x){return !lxZodSet.has(gz(x.n));});
-    var poolSize=12;
-    // 候选池构成（3层优先级，逐层补足到12个）：
+    var poolSize=12; // 软上限（仅作最大约束，不作为凑数目标）
+    // 候选池构成（3层优先级，不再为凑够12个补回低分/已排除号码，池子不足就少给）：
     // 第0层：用户自定义候选池号码（强制种子，优先于一切）
-    // 第1层：生肖∈五连肖TOP8 的号码（APP约60% + NOT约40%，合计约70%）
-    // 第2层：生肖不在TOP8 的号码（约30%平衡，兼容新肖/九肖外生肖）
+    // 第1层：生肖∈五连肖TOP8 的号码（APP约60% + NOT约40%）
+    // 第2层：生肖不在TOP8 的号码（至多约30%平衡，兼容新肖/九肖外生肖）
     poolTop=[];
     // 第0层：用户种子
     customKeep.forEach(function(n){if(poolTop.indexOf(n)<0)poolTop.push(n);});
@@ -13280,40 +13305,20 @@ function renderZ3(){
     if(notLx.length<lxNotCnt){lxAppCnt=Math.min(poolSize-lxNotCnt,appLx.length);lxNotCnt=Math.min(poolSize-lxAppCnt,notLx.length);}
     appLx.slice(0,lxAppCnt).forEach(function(x){if(poolTop.indexOf(x.n)<0)poolTop.push(x.n);});
     notLx.slice(0,lxNotCnt).forEach(function(x){if(poolTop.indexOf(x.n)<0)poolTop.push(x.n);});
-    // 第2层：非TOP8生肖平衡（约30%）
-    var balanceNeed=Math.max(0,poolSize-poolTop.length);
+    // 第2层：非TOP8生肖平衡（至多约占30%，不足也不强求）
+    var balanceNeed=Math.max(0,Math.round(poolSize*0.30));
     var balApp=Math.min(Math.round(balanceNeed*0.6),appNonLx.length);
     var balNot=Math.min(balanceNeed-balApp,notNonLx.length);
     appNonLx.slice(0,balApp).forEach(function(x){if(poolTop.indexOf(x.n)<0)poolTop.push(x.n);});
     notNonLx.slice(0,balNot).forEach(function(x){if(poolTop.indexOf(x.n)<0)poolTop.push(x.n);});
-    // 若仍不足12个，从全量topSc补足
-    if(poolTop.length<poolSize){
-      topSc.forEach(function(x){if(poolTop.indexOf(x.n)<0&&poolTop.length<poolSize)poolTop.push(x.n);});
-    }
-    // 最终确保不超过12个
-    poolTop=poolTop.slice(0,poolSize);
-    // 如果过滤后不足3个，说明用户筛选太严格，逐步放宽回退
+    // 【v10.0806.03 Q2修复】不再为凑够12个从全量topSc补回——那会混入低分/偏离用户筛选的号码，
+    // 正是导致"三中三选不中"的根因。池子不足就少给（保持候选集中、干净），组合与评分仍在当前池内完成。
+    // 仅当池子不足3个（无法组成三中三）时，才从 topSc（已含用户排除逻辑，s>-5）补足到至少3个保底。
     if(poolTop.length<3){
-      // 第1轮回退：放宽APP/NOT比例限制，取所有非负分号码（仍保留排除条件）
-      var relaxed=sc.filter(function(x){return x.s>=0;}).map(function(x){return x.n;});
-      poolTop=relaxed.slice(0,Math.min(poolSize,relaxed.length));
-      // 第2轮回退：放宽到分数>=-5的号码（仅排除用户明确排除的）
-      if(poolTop.length<3){
-        var relaxed2=sc.filter(function(x){return x.s>=-5;}).map(function(x){return x.n;});
-        poolTop=relaxed2.slice(0,Math.min(poolSize,relaxed2.length));
-      }
-      // 第3轮回退：最终回退到AI评分（但始终尊重用户明确排除的号码和生肖）
-      if(poolTop.length<3){
-        var aiFallback=aiSc.filter(function(x){
-          var n=x.n;
-          if((UP.zm3_excl_nums||[]).indexOf(n)>=0)return false;
-          if((UP.zm3_excl_zods||[]).indexOf(gz(n))>=0)return false;
-          if((UP.zm3_excl_tails||[]).indexOf(gtl(n))>=0)return false;
-          return true;
-        }).map(function(x){return x.n;});
-        poolTop=aiFallback.slice(0,Math.min(poolSize,aiFallback.length));
-      }
+      topSc.forEach(function(x){if(poolTop.indexOf(x.n)<0&&poolTop.length<3)poolTop.push(x.n);});
     }
+    // 最终软上限约束（防组合爆炸）
+    poolTop=poolTop.slice(0,poolSize);
   }
   var allTrios=combNK(poolTop,3);
   var scoredTrios=allTrios.map(function(trio){
@@ -14064,12 +14069,12 @@ function renderZ3(){
   }
 
   // ===== 用户自定义号码评分（验证你的猜测）=====
-  h+='<div class="sec-title">🧪 自定义号码评分验证</div>'+
-     '<div class="card"><div style="font-size:10px;color:#555;margin-bottom:4px">输入你自己想选的3个号码，系统给出评分排名，对照系统推荐</div>'+
+  h+='<div class="sec-title">🧪 自定义号码评分验证（评分自动联动推荐）</div>'+
+     '<div class="card"><div style="font-size:10px;color:#555;margin-bottom:4px">输入你自己想选的3个号码，系统给出评分排名。评分排名前10的高分号码将<strong>自动加入推荐候选池</strong>并立即参与三中三推荐（无需手动点按钮）</div>'+
      '<textarea id="z3-custom" rows="1" placeholder="如：05 18 32"></textarea>'+
      '<div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">'+
-     '<button class="btn btn-blue" onclick="checkCustomZ3()">🔍 评分验证</button>'+
-     '<button class="btn btn-green" onclick="customZ3ToPool()">📌 加入推荐候选池</button>'+
+     '<button class="btn btn-blue" onclick="checkCustomZ3()">🔍 评分验证并自动联动</button>'+
+     '<button class="btn btn-green" onclick="customZ3ToPool()">📌 手动加入候选池</button>'+
      '<button class="btn btn-gray" onclick="clearCustomZ3Pool()">🗑️ 清空候选池</button>'+
      '</div>'+
      '<div id="z3-custom-pool-status" style="font-size:10px;color:#8e44ad;margin-top:4px">'+(UP.zm3_custom_pool&&UP.zm3_custom_pool.length>0?'📌 当前候选池中的号码：<b>'+UP.zm3_custom_pool.map(function(n){return String(n).padStart(2,'0');}).join(' ')+'</b>（共'+UP.zm3_custom_pool.length+'个，强制进入推荐候选池）':'')+'</div>'+
@@ -14542,9 +14547,29 @@ function checkCustomZ3(){
   h+='</table>';
   const avgRank=nums.reduce((s,n)=>s+ranked.find(x=>x.n===n).rank,0)/nums.length;
   h+=concl('你的组合平均排名第'+avgRank.toFixed(0)+'位（共49号）。'+(avgRank<=15?'整体评分较高，与系统推荐方向接近。':avgRank<=30?'评分中等，部分号码可能基于你的特殊判断（如反向思维），建议保留观察。':'评分偏低，但请记住：评分是基于历史统计规律，不代表绝对正确，你的自定义判断仍有价值，尤其当你预判到"反向"情况时。'));
+  // 【v10.0806.03新增-问题3自动联动】评分验证时自动把"高分候选"(排名前10)号码注入推荐候选池，
+  // 无需再手动点"加入推荐候选池"按钮——评分即联动，低分号码不进入以免污染推荐。
+  var highNums=nums.filter(function(n){return ranked.find(function(x){return x.n===n;}).rank<=10;});
+  if(highNums.length>0){
+    UP.zm3_custom_pool=(UP.zm3_custom_pool||[]).slice();
+    var added=0;
+    highNums.forEach(function(n){
+      if(UP.zm3_custom_pool.indexOf(n)<0){UP.zm3_custom_pool.push(n);added++;}
+    });
+    if(added>0){
+      UP.zm3_custom_pool.sort(function(a,b){return a-b;});
+      saveData();
+      h+='<div style="margin-top:6px;font-size:10px;color:#27ae60">⚡ 已自动联动：'+added+'个高分号码加入推荐候选池，立即参与三中三推荐。</div>';
+    }else{
+      h+='<div style="margin-top:6px;font-size:10px;color:#888">📌 高分号码已在候选池中。</div>';
+    }
+  }else{
+    h+='<div style="margin-top:6px;font-size:10px;color:#c0392b">⚠️ 无排名前10的高分号码，未自动加入候选池（避免污染推荐）。</div>';
+  }
   resEl.innerHTML=h;
   // 更新候选池状态显示
   updateCustomPoolStatus();
+  render();
 }
 
 // 【v10.0806.01新增】用户输入号码→加入推荐候选池（问题3修复：用户评估号码强制进入poolTop）
