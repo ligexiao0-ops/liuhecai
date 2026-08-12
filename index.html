@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.07</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.08</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -13583,15 +13583,22 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
   else{sc9-=1.5*srcC;om9Notes.push('0号未出(全已出)-'+Math.round(1.5*srcC*10)/10);}
   s+=sc9;
   b.push({label:'未出+遗漏',raw:om9Notes.join(';'),score:(sc9>=0?'+':'')+Math.round(sc9*10)/10});
-  // 9b. 【v10.0803.05新增】同生肖两码加分（用户：216期新奥/老奥几乎都存在一个生肖的两个号码；参考意见⑧两肖两码⭐4）
+  // 9b. 【v10.0812.08-#527】同肖双码结构优先（基于回测：几乎每期含一个生肖的两个号码）
+  // 升级：2同肖+1异肖(理想结构)+5 / 3同肖+2(罕见但有效) / 3异肖(无同肖对)-1(结构不利)
   var zodCnt9={};
   combo.forEach(function(n){var z9=gz(n);zodCnt9[z9]=(zodCnt9[z9]||0)+1;});
   var twoZod9=Object.keys(zodCnt9).filter(function(z){return zodCnt9[z]>=2;});
   var sc9b=0;
-  if(twoZod9.length>=1){
-    sc9b=3;b.push({label:'同肖两码',raw:twoZod9.map(function(z){return EMJ[z]+z+'×'+zodCnt9[z];}).join(','),score:'+3'});
+  if(twoZod9.length>=1&&Object.keys(zodCnt9).length===2){
+    // 2同肖+1异肖：理想结构（回测高频出现）
+    sc9b=5;var pairZ=twoZod9[0];
+    b.push({label:'同肖双码⭐',raw:EMJ[pairZ]+pairZ+'×'+zodCnt9[pairZ]+'+1异肖',score:'+5'});
+  }else if(twoZod9.length>=1&&Object.keys(zodCnt9).length===1){
+    // 3同肖：罕见但有效
+    sc9b=2;b.push({label:'同肖双码',raw:EMJ[twoZod9[0]]+twoZod9[0]+'×3(三同肖)',score:'+2'});
   }else{
-    b.push({label:'同肖两码',raw:'3号3肖(无同肖)',score:'0'});
+    // 3异肖：无同肖对，结构不利
+    sc9b=-1;b.push({label:'同肖双码',raw:'3号3肖(无同肖对)',score:'-1'});
   }
   s+=sc9b;
   // 10. 用户自选池加分（自选模式下高分，非自选模式0分）
@@ -14244,6 +14251,39 @@ function renderZ3(){
     }
     // 最终软上限约束（防组合爆炸）
     poolTop=poolTop.slice(0,poolSize);
+    // 【v10.0812.08-#527】同肖对齐：确保候选池中至少2个生肖有2+号码（同肖双码结构基础）
+    // 回测结论：几乎每期含一个生肖的两个号码 → 候选池必须保证同肖对的存在
+    var zodGroups={};
+    poolTop.forEach(function(n){var z=gz(n);if(!zodGroups[z])zodGroups[z]=[];zodGroups[z].push(n);});
+    var pairZods=Object.keys(zodGroups).filter(function(z){return zodGroups[z].length>=2;});
+    if(pairZods.length<2&&topSc.length>0){
+      // 同肖对不足2个：从topSc中找同肖号码补入（优先补已有1号的生肖使其变2号）
+      var poolSet=new Set(poolTop);
+      var singleZods=Object.keys(zodGroups).filter(function(z){return zodGroups[z].length===1;});
+      // 先尝试给已有1号的生肖补第2个号码
+      for(var si=0;si<singleZods.length&&pairZods.length<2;si++){
+        var sz=singleZods[si];
+        for(var ti=0;ti<topSc.length;ti++){
+          if(gz(topSc[ti].n)===sz&&!poolSet.has(topSc[ti].n)){
+            poolTop.push(topSc[ti].n);poolSet.add(topSc[ti].n);
+            zodGroups[sz].push(topSc[ti].n);pairZods.push(sz);
+            break;
+          }
+        }
+      }
+      // 若仍不足，从topSc找任意同肖对
+      if(pairZods.length<2){
+        var byZod={};
+        topSc.forEach(function(x){var z=gz(x.n);if(!byZod[z])byZod[z]=[];byZod[z].push(x.n);});
+        var candPairZods=Object.keys(byZod).filter(function(z){return byZod[z].length>=2&&!poolSet.has(byZod[z][0]);});
+        for(var ci=0;ci<candPairZods.length&&pairZods.length<2;ci++){
+          var cz=candPairZods[ci];
+          byZod[cz].slice(0,2).forEach(function(n){if(!poolSet.has(n)){poolTop.push(n);poolSet.add(n);}});
+          pairZods.push(cz);
+        }
+      }
+      poolTop=poolTop.slice(0,poolSize);
+    }
   }
   var allTrios=combNK(poolTop,3);
   var scoredTrios=allTrios.map(function(trio){
@@ -14259,6 +14299,19 @@ function renderZ3(){
     var threshold=Math.min(bestScore*0.85,bestScore-4); // 85%阈值或差4分以内
     var candidates=scoredTrios.filter(function(t){return t.sc.s>=threshold;});
     if(candidates.length===0)candidates=scoredTrios.slice(0,Math.min(3,scoredTrios.length)); // 兜底：至少3组最高分
+    // 【v10.0812.08-#527】同肖双码结构优先：将候选分为"含同肖对"和"不含"两组
+    // 回测结论：几乎每期含一个生肖的两个号码 → 优先选择含同肖对的组合
+    var pairCands=candidates.filter(function(t){
+      var zc={};t.set.forEach(function(n){var z=gz(n);zc[z]=(zc[z]||0)+1;});
+      return Object.keys(zc).some(function(z){return zc[z]>=2;});
+    });
+    var noPairCands=candidates.filter(function(t){
+      var zc={};t.set.forEach(function(n){var z=gz(n);zc[z]=(zc[z]||0)+1;});
+      return !Object.keys(zc).some(function(z){return zc[z]>=2;});
+    });
+    // 优先取同肖对组合（≥70%），不足时用无对组合补
+    var pairTake=Math.min(pairCands.length,Math.max(1,Math.ceil(candidates.length*0.7)));
+    candidates=pairCands.slice(0,pairTake).concat(noPairCands.slice(0,Math.min(noPairCands.length,Math.floor(candidates.length*0.3))));
     candidates=candidates.slice(0,Math.min(12,candidates.length)); // 最多取12组候选
     // 用当前期数作为种子确定性轮选（同期同权重同结果，跨期不同）
     var seed=LAST.p;
@@ -14767,6 +14820,34 @@ function renderZ3(){
      '</div>'+
      '<div class="ai-copy-box" onclick="copyAiRec(this,\''+lotLabel()+'AI三中三,'+aiTop6.map(n=>String(n).padStart(2,'0')).join(',')+'\')" title="点击复制全部">'+lotLabel()+'AI三中三,'+aiTop6.map(n=>String(n).padStart(2,'0')).join(',')+'</div>'+
      '</div>';
+
+  // ===== 【v10.0812.08-#527】同肖双码结构策略 =====
+  var z3ZodGroups={};
+  poolTop.forEach(function(n){var z=gz(n);if(!z3ZodGroups[z])z3ZodGroups[z]=[];z3ZodGroups[z].push(n);});
+  var z3PairZods=Object.keys(z3ZodGroups).filter(function(z){return z3ZodGroups[z].length>=2;});
+  var z3TopTrioHasPair=(function(){
+    if(!top3||top3.length<3)return false;
+    var zc={};top3.forEach(function(n){var z=gz(n);zc[z]=(zc[z]||0)+1;});
+    return Object.keys(zc).some(function(z){return zc[z]>=2;});
+  })();
+  h+='<div class="card" style="border:2px solid #6a1b9a;background:#f3e5f5;margin-bottom:8px">'+
+     '<div class="sec-title" style="color:#6a1b9a;border-bottom-color:#6a1b9a">🎯 同肖双码结构策略（#527）</div>'+
+     '<div style="font-size:9px;color:#888;margin-bottom:6px">回测结论：几乎每期正码含一个生肖的两个号码。候选池优先保证同肖对存在，组合评分"2同肖+1异肖"+5分（理想结构），"3异肖"-1分。</div>';
+  if(z3PairZods.length>0){
+    h+='<div style="margin-bottom:4px"><b style="font-size:10px;color:#6a1b9a">📋 候选池同肖对（'+z3PairZods.length+'组）：</b></div>';
+    h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">';
+    z3PairZods.forEach(function(z){
+      var nums=z3ZodGroups[z].map(function(n){return String(n).padStart(2,'0');});
+      h+='<div style="background:#e1bee7;border:1px solid #6a1b9a;border-radius:5px;padding:3px 6px;font-size:10px">'+
+         EMJ[z]+'<b>'+z+'</b> <span style="font-size:9px">'+nums.join(' ')+'</span></div>';
+    });
+    h+='</div>';
+  }else{
+    h+='<div style="font-size:10px;color:#e65100;margin-bottom:4px">⚠️ 候选池中无同肖对，系统已自动从高分号码中补入。</div>';
+  }
+  h+='<div style="font-size:10px;color:'+(z3TopTrioHasPair?'#1b5e20':'#e65100')+';font-weight:bold">'+
+     (z3TopTrioHasPair?'✅ 主推3码含同肖双码（结构理想）':'⚠️ 主推3码无同肖对（结构不利）')+'</div>';
+  h+='</div>';
 
   h+='<div class="sec-title">🥇 主推3码</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">';
   top3.forEach((n,i)=>{const si=sc.find(x=>x.n===n);
