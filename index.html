@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.01</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.02</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -3197,6 +3197,97 @@ function ruleCard(r){ // 规律卡片：名称/触发/命中/命中率/理论基
     '触发 <b>'+r.n+'</b>次 · 命中 <b>'+r.m+'</b> · 命中率 <b style="color:#1a6baa">'+(r.rate*100).toFixed(1)+'%</b> · 理论基准 '+(r.base*100).toFixed(1)+'% · 提升 <b style="color:'+upCol+'">'+upStr+'pp</b> · 置信度 <b>'+r.conf+'</b><br>'+
     '<span style="color:'+g.cls+';font-weight:bold">'+g.lvl+'</span> <span style="color:#999">'+g.desc+'</span></div>';
 }
+// ===== 阶段②：位置参考价值模型（v10.0812.02）=====
+// 在 condProbEngine 基础上聚合 6位置×8维 的强/中规律，正式回答"哪个位置最有参考价值"并输出结构化结果供评分消费：
+//   posScores[6]: 每位置 得分(2×强+1×中)/强中计数/维度贡献/该位置规律列表(按提升降序)
+//   topRules: 全历史强规律(样本≥30且提升≥10pp，按提升降序)
+//   curRules: 当期有效规律(from=当期第p正码实际属性，按提升降序) → 供 posMBonus 加分
+//   bestPos/overallConf: 最佳位置与整体可信度
+// 样本保护：强规律 w=1(样本≥30) / 中规律 w=0.5(样本10-29) —— 与 sampleGuard 分级一致
+function posModelScore(){
+  // 引擎缓存：以 DR.length 为失效键（addRecord 后长度必变，保证新鲜；避免49号评分重复重算）
+  if(!posModelScore._E||posModelScore._E.total!==DR.length){
+    posModelScore._E=condProbEngine();
+  }
+  const E=posModelScore._E;
+  const totalN=Math.max(1,DR.length);
+  const posScores=[],topRules=[];
+  for(let p=0;p<6;p++){
+    let score=0,strong=0,mid=0;
+    const dimContrib={},rules=[];
+    E.dims.forEach(function(d){
+      let dScore=0,dStrong=0,dMid=0;
+      const fromMap=E.dist[p][d.k]||{};
+      Object.keys(fromMap).forEach(function(fv){
+        const toMap=fromMap[fv]||{};
+        Object.keys(toMap).forEach(function(tv){
+          const c=toMap[tv];
+          const base=d.k==='df'?((E.margin.df[p]&&E.margin.df[p][tv])||0)/E.total:(E.margin[d.k][tv]||0)/totalN;
+          const rate=c.m/c.t;
+          const up=(rate-base)*100;
+          const conf=cpConfidence(c.m,c.t,base);
+          if(c.t>=30&&up>=10){ // 强规律
+            score+=2;strong++;dScore+=2;dStrong++;
+            rules.push({p:p,dk:d.k,lbl:d.lbl,from:fv,to:tv,n:c.t,m:c.m,rate:rate,base:base,up:up,conf:conf,w:1});
+            topRules.push(rules[rules.length-1]);
+          }else if(c.t>=10&&up>=5){ // 中规律
+            score+=1;mid++;dScore+=1;dMid++;
+            rules.push({p:p,dk:d.k,lbl:d.lbl,from:fv,to:tv,n:c.t,m:c.m,rate:rate,base:base,up:up,conf:conf,w:0.5});
+          }
+        });
+      });
+      if(dScore>0)dimContrib[d.lbl]={score:dScore,strong:dStrong,mid:dMid};
+    });
+    rules.sort(function(a,b){return b.up-a.up;});
+    posScores.push({p:p,score:score,strong:strong,mid:mid,dimContrib:dimContrib,rules:rules});
+  }
+  topRules.sort(function(a,b){return b.up-a.up;});
+  // 当期有效规律：from=当期第p正码实际属性（升序排序后取位）
+  const cur6=(LAST&&LAST.n)?LAST.n.slice(0,6).sort(function(a,b){return a-b;}):[];
+  const curRules=[];
+  posScores.forEach(function(ps){
+    const p=ps.p,cn=cur6[p]||0;
+    ps.rules.forEach(function(r){
+      let fv;
+      if(r.dk==='df')fv=dfFromSeg(cn);
+      else fv=E.dims.filter(function(d){return d.k===r.dk;})[0].fn(cn);
+      if(r.from===fv)curRules.push(Object.assign({},r,{curCn:cn}));
+    });
+  });
+  curRules.sort(function(a,b){return b.up-a.up;});
+  const bestPos=posScores.reduce(function(a,b){return b.score>a.score?b:a;},posScores[0]);
+  const strCnt=topRules.length;
+  const overallConf=strCnt>=6?'高可信':strCnt>=3?'正常':strCnt>=1?'参考':'弱';
+  return{posScores:posScores,topRules:topRules,curRules:curRules,bestPos:bestPos,overallConf:overallConf,total:E.total};
+}
+// 位置模型加分：候选特码号命中当期强/中规律的 to 值 → 加分（强+2/中+1，×sampleGuard权重；上限+6）
+function posMBonus(n,posM){
+  const ATF={wv:gwv,wx:gwx,par:gpar,sz:gsz,he:ghe,tl:gtl,gz:gz}; // 特码属性判定（df差值段单独处理）
+  let bonus=0;const rs=[];
+  const hitPos={};
+  // 【v10.0812.02-fix】同(位置×维度×from值)只取提升最高一条：curRules 已按提升降序，filter 保留每组首条。
+  // 若不分组，"双→双/双→单""小→大/小→小"等成对互补规律会同时入选→任何候选号按属性必中其一→全员顶满+6，加分失去区分度。
+  const dedup={};
+  const rules=posM.curRules.filter(function(r){
+    const key=r.p+'|'+r.dk+'|'+r.from;
+    if(dedup[key]!==undefined)return false;
+    dedup[key]=true;return true;
+  });
+  for(let i=0;i<rules.length;i++){
+    if(bonus>=6)break;
+    const r=rules[i];
+    const hit=(r.dk==='df')?(dfToSeg(Math.abs(r.curCn-n))===r.to):(ATF[r.dk](n)===r.to);
+    if(hit){
+      const wAdd=(r.w>=1?2:1)*r.w;
+      bonus+=wAdd;
+      hitPos[r.p]=true;
+      rs.push('位置模型#'+(r.p+1)+'正码'+(r.lbl==='差值段'?'差值':r.lbl)+' '+(r.lbl==='差值段'?'|'+r.curCn+'-特码|':r.from)+'→'+r.to+'('+(r.up>=0?'+':'')+r.up.toFixed(0)+'pp,n'+r.n+',+'+wAdd.toFixed(1)+')');
+    }
+  }
+  // 跨位置共振：≥3个不同正码位置同指候选 → 强信号加成
+  if(Object.keys(hitPos).length>=3&&bonus>0){bonus+=1;rs.push('3位置共振+1');}
+  return{bonus:Math.min(bonus,6),rs:rs};
+}
 function buildCondProbEngineBlock(){
   const E=condProbEngine();
   const cur6=(LAST&&LAST.n)?LAST.n.slice(0,6).sort(function(a,b){return a-b;}):[];
@@ -3208,32 +3299,27 @@ function buildCondProbEngineBlock(){
     '命中率 vs <b>理论基准</b>（特码该属性值无条件历史出现率）= <b>提升pp</b>。<b>样本保护：</b>&lt;10 不评分（灰）｜10-29 低权重｜30-49 正常｜≥50 高可信。'+
     '<b>位置价值</b>：按"强规律数"（样本≥30且提升≥10pp）排名。'+
     '</div>';
-  // ---- 位置价值排名 ----
-  const posScore=[0,0,0,0,0,0];
-  const strongRules=[];
-  for(let p=0;p<6;p++){
-    D8.forEach(function(d){
-      const fromMap=E.dist[p][d.k];
-      Object.keys(fromMap).forEach(function(fv){
-        const toMap=fromMap[fv];
-        Object.keys(toMap).forEach(function(tv){
-          const c=toMap[tv];
-          const base=d.k==='df'?((E.margin.df[p]&&E.margin.df[p][tv])||0)/E.total:(E.margin[d.k][tv]||0)/totalN;
-          const up=(c.m/c.t-base)*100;
-          if(c.t>=30&&up>=10){posScore[p]+=2;strongRules.push({p:p,lbl:d.lbl,from:fv,to:tv,n:c.t,m:c.m,rate:c.m/c.t,base:base,conf:cpConfidence(c.m,c.t,base)});}
-          else if(c.t>=10&&up>=5){posScore[p]+=1;}
-        });
-      });
-    });
-  }
-  strongRules.sort(function(a,b){return (b.rate-b.base)-(a.rate-a.base);});
-  const rankOrder=posScore.map(function(s,i){return{i:i,s:s};}).sort(function(a,b){return b.s-a.s;});
+  // ---- 位置价值排名（阶段②：posModelScore 完整位置模型）----
+  const PM=posModelScore();
+  const strongRules=PM.topRules.slice(0,24); // 供下方"全历史强规律汇总"使用
+  const posRank=PM.posScores.slice().sort(function(a,b){return b.score-a.score;});
   h+='<div class="card" style="border:2px solid #1a6baa;margin-bottom:6px">'+
-    '<b style="color:#1a6baa;font-size:11px">🏆 位置参考价值排名</b>'+
-    '<div style="font-size:10px;margin-top:4px">'+rankOrder.map(function(x){
-      return '<b>第'+(x.i+1)+'正码</b>：'+x.s+'个强规律'+(x.s>0?'🎯':'（无显著规律）');
-    }).join('　')+'</div>'+
-    '<div style="font-size:9px;color:#888;margin-top:2px">强规律=样本≥30且命中率比基准高≥10个百分点；位置得分=2×强规律数+1×中规律数(样本≥10且提升≥5pp)。</div></div>';
+    '<b style="color:#1a6baa;font-size:11px">🏆 位置参考价值排名（每位置得分=2×强规律+1×中规律）</b>'+
+    '<div style="font-size:9px;color:#888;margin:2px 0">可信度：强规律≥3=高可信 ｜ ≥1=正常 ｜ 仅中规律=参考 ｜ 无=弱。强规律=样本≥30且提升≥10pp；中规律=样本≥10且提升≥5pp。👑=最佳位置（当期评分加分权重最高）。</div>'+
+    posRank.map(function(ps){
+      const isBest=ps.p===PM.bestPos.p;
+      const confLvl=ps.strong>=3?'高可信':ps.strong>=1?'正常':ps.mid>=1?'参考':'弱';
+      const confCol=ps.strong>=3?'#1e8449':ps.strong>=1?'#1a6baa':ps.mid>=1?'#e67e22':'#999';
+      const dk=Object.keys(ps.dimContrib);
+      const dimStr=dk.length>0?dk.map(function(k){return k+'<b style="color:#1a6baa">'+ps.dimContrib[k].score+'</b>';}).join('·'):'（无显著规律）';
+      const top2=ps.rules.slice(0,2).map(function(r){return ruleCard(r);}).join('');
+      return '<div style="border:1px solid '+(isBest?'#1a6baa':'#dbe9f7')+';border-radius:6px;padding:5px 7px;margin:4px 0;background:'+(isBest?'#eef6ff':'#fff')+'">'+
+        '<div style="font-size:10px"><b>第'+(ps.p+1)+'正码</b> 得分 <b style="color:#1a6baa">'+ps.score+'</b> · 强规律'+ps.strong+' · 中规律'+ps.mid+' · 可信度 <b style="color:'+confCol+'">'+confLvl+'</b>'+(isBest?' 👑最佳':'')+'</div>'+
+        '<div style="font-size:9px;color:#555;margin:2px 0">维度贡献：'+dimStr+'</div>'+
+        (top2?'<div style="margin-top:2px">'+top2+'</div>':'')+
+        '</div>';
+    }).join('')+
+    '</div>';
   // ---- 当期 6 位置卡片 ----
   for(let p=0;p<6;p++){
     const cn=cur6[p]||0;
@@ -4058,6 +4144,10 @@ function scoreTE_full(n,TM,T100){
       }
     });
   }
+  // ===== 阶段②位置模型加分（v10.0812.02）：第①~⑥正码→下期特码条件概率强规律 =====
+  // posModelScore 聚合全历史强/中规律，posMBonus 判断候选号是否命中当期有效规律（样本≥10才计分）
+  const posB=posMBonus(n,posModelScore());
+  if(posB.bonus>0){s+=posB.bonus;posB.rs.forEach(function(t){kp.push(t);});}
   // 整体灵敏度权重缩放
   // 【v10.0806.07-#525守卫】滑块min=0，若te_w4=0则全体s清零→-999硬排除与exclAccTE反馈全失效(strong/top20全空)
   // 下限钳制0.05：硬排除号仍为-49.95(≤-8仍入strong)，保证"用户硬排除>任何规律加分"语义在任何权重下成立
@@ -4100,6 +4190,9 @@ function scoreTE_pure(n,TM,T100){
   const zc6Max=Math.max.apply(null,zc6Vals),zc6Min=Math.min.apply(null,zc6Vals);
   if((zc6ForScore[gz(n)]||0)===zc6Max&&zc6Max>=5)s-=1;
   if((zc6ForScore[gz(n)]||0)===zc6Min)s+=1;
+  // ===== 阶段②位置模型加分（纯净评分同样接入：纯统计规律，不含用户设定）=====
+  const posB2=posMBonus(n,posModelScore());
+  if(posB2.bonus>0)s+=posB2.bonus;
   return{n:n,s:s};
 }
 // AI独立预测：综合49号纯净评分给出三特肖+TOP候选
