@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.12</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.13</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -4742,6 +4742,20 @@ function scoreZheng(extraPrefs){
   // ===== 【阶段③】尾数条件概率 + 一肖两码剩余模型（v10.0812.03，预测目标=下期6正码，供正码评分加分）=====
   const TP3=tailProbEngine(),TZC3=twoCodeZodEngine();
 
+  // ===== 【v10.0812.13-#500】号码评分补强：尾数冷热+生肖冷热+正码位置模型预计算 =====
+  var tailFreq100={},zodFreq100={};
+  DR.slice(-100).forEach(function(d){
+    [].concat(d.n,[d.t]).forEach(function(x){
+      var t=gtl(x),z=gz(x);
+      tailFreq100[t]=(tailFreq100[t]||0)+1;
+      zodFreq100[z]=(zodFreq100[z]||0)+1;
+    });
+  });
+  var tailAvg=Object.keys(tailFreq100).length>0?Object.keys(tailFreq100).reduce(function(s,k){return s+tailFreq100[k];},0)/Object.keys(tailFreq100).length:70;
+  var zodAvg=Object.keys(zodFreq100).length>0?Object.keys(zodFreq100).reduce(function(s,k){return s+zodFreq100[k];},0)/Object.keys(zodFreq100).length:58;
+  var posM500=null;
+  try{posM500=posModelScore();}catch(e){posM500=null;}
+
   return A49.map(n=>{
     let s=0;const rs=[];
 
@@ -4957,6 +4971,33 @@ function scoreZheng(extraPrefs){
     // ===== 【阶段③】尾数距离规律 + 一肖两码剩余加分（v10.0812.03）=====
     var tnb3=tailNumBonus(n,TP3,TZC3);
     if(tnb3.bonus>0){s+=tnb3.bonus;tnb3.rs.forEach(function(t){rs.push(t);});}
+
+    // ===== 【v10.0812.13-#500】尾数冷热（100期尾数频率）=====
+    var myTF=tailFreq100[gtl(n)]||0;
+    if(myTF>=tailAvg*1.3){s+=1.5;rs.push("尾热"+gtl(n)+"("+myTF+")");}
+    else if(myTF>=tailAvg*1.1){s+=0.5;rs.push("尾偏热"+gtl(n)+"("+myTF+")");}
+    else if(myTF<=tailAvg*0.7){s-=1;rs.push("尾冷"+gtl(n)+"("+myTF+")");}
+
+    // ===== 【v10.0812.13-#500】生肖冷热（100期生肖频率）=====
+    var myZF=zodFreq100[gz(n)]||0;
+    if(myZF>=zodAvg*1.3){s+=1.5;rs.push("肖热"+gz(n)+"("+myZF+")");}
+    else if(myZF>=zodAvg*1.1){s+=0.5;rs.push("肖偏热"+gz(n)+"("+myZF+")");}
+    else if(myZF<=zodAvg*0.7){s-=1;rs.push("肖冷"+gz(n)+"("+myZF+")");}
+
+    // ===== 【v10.0812.13-#500】连号同尾关联（与上期正码形成连号或同尾对）=====
+    var hasConsec500=false,hasSameTail500=false;
+    for(var _ci500=0;_ci500<lastN.length;_ci500++){
+      if(Math.abs(n-lastN[_ci500])===1)hasConsec500=true;
+      if(gtl(n)===gtl(lastN[_ci500])&&n!==lastN[_ci500])hasSameTail500=true;
+    }
+    if(hasConsec500){s+=1.2;rs.push("连号关联");}
+    if(hasSameTail500){s+=1;rs.push("同尾关联");}
+
+    // ===== 【v10.0812.13-#500】正码位置影响（posMBonus接入）=====
+    if(posM500){
+      var pmb500=posMBonus(n,posM500);
+      if(pmb500.bonus>0){s+=pmb500.bonus;pmb500.rs.forEach(function(t){rs.push(t);});}
+    }
 
     // ===== 返回结果（v10.0730.02：移除属性比majAttr字段）=====
     var isNearTail=hasNearTail;
