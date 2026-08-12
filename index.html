@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0811.02</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.01</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -3112,6 +3112,175 @@ function calcTeLink(){
     Object.keys(fns).forEach(a=>{const v=fns[a](DR[i].t),nv=fns[a](DR[i+1].t);if(!r[a][v])r[a][v]={m:0,t:0};r[a][v].t++;if(v===nv)r[a][v].m++;});
   }
   return r;
+}
+
+// ===== 【阶段①】条件概率引擎（第①~⑥正码属性→下期特码 完整条件分布 + 样本保护）=====
+// 与 calcPosLink 的区别：calcPosLink 只记"同值命中" {m,t}；本引擎记录完整的 from→to 条件分布，
+// 并输出理论基准(特码属性值无条件历史出现率)、提升百分点、样本保护分级，供规律卡片展示与后续评分引用。
+// 8维：波色/五行/单双/大小/合数/尾数/生肖/差值段(源=正码数值段, 目标=|正码-下期特码|段)
+function dfFromSeg(n){ // 号码数值段（差值维度源值）
+  if(n<=10)return '1-10';if(n<=20)return '11-20';if(n<=30)return '21-30';if(n<=40)return '31-40';return '41-49';
+}
+function dfToSeg(d){ // |正码-特码| 差值段（差值维度目标值）
+  if(d<=5)return '0-5';if(d<=10)return '6-10';if(d<=15)return '11-15';if(d<=20)return '16-20';return '21+';
+}
+function cpConfidence(m,n,base){ // 置信度：Z检验（与基准比较）
+  if(n<10)return '样本不足';
+  const sd=Math.sqrt(base*(1-base)/n);
+  const z=sd>0?Math.abs((m/n)-base)/sd:0;
+  if(z>=2)return '显著';
+  if(z>=1.5)return '较显著';
+  if(z>=0.8)return '参考';
+  return '弱';
+}
+function sampleGuard(n){ // 样本保护分级（用户需求#12：<10不足/10-29低权/30-49正常/≥50高可信）
+  if(n<10)return{lvl:'样本不足',cls:'#999',w:0,desc:'样本<10：不进入主评分，仅观察'};
+  if(n<30)return{lvl:'低权重',cls:'#e67e22',w:0.5,desc:'样本10-29：权重×0.5'};
+  if(n<50)return{lvl:'正常',cls:'#1a6baa',w:1,desc:'样本30-49：正常权重'};
+  return{lvl:'高可信',cls:'#1e8449',w:1,desc:'样本≥50：高可信度'};
+}
+function condProbEngine(){
+  const dims=[
+    {k:'wv',fn:gwv,lbl:'波色'},
+    {k:'wx',fn:gwx,lbl:'五行'},
+    {k:'par',fn:gpar,lbl:'单双'},
+    {k:'sz',fn:gsz,lbl:'大小'},
+    {k:'he',fn:ghe,lbl:'合数'},
+    {k:'tl',fn:gtl,lbl:'尾数'},
+    {k:'gz',fn:gz,lbl:'生肖'},
+    {k:'df',fn:null,lbl:'差值段'}
+  ];
+  const posDims=dims.slice(0,7); // 前7维：正码属性→特码属性；第8维差值段特殊处理
+  const dist=[];for(let p=0;p<6;p++){dist[p]={};dims.forEach(function(d){dist[p][d.k]={};});}
+  const margin={};dims.forEach(function(d){margin[d.k]={};});
+  // 边际：特码属性值无条件历史出现率（理论基准分母）
+  DR.forEach(function(d){
+    posDims.forEach(function(dim){
+      const tv=dim.fn(d.t);
+      margin[dim.k][tv]=(margin[dim.k][tv]||0)+1;
+    });
+  });
+  const total=Math.max(0,DR.length-1);
+  for(let i=0;i<total;i++){
+    const sortedN=DR[i].n.slice().sort(function(a,b){return a-b;});
+    const nt=DR[i+1].t;
+    for(let p=0;p<Math.min(6,sortedN.length);p++){
+      const cn=sortedN[p];
+      posDims.forEach(function(dim){
+        const fv=dim.fn(cn),tv=dim.fn(nt);
+        if(!dist[p][dim.k][fv])dist[p][dim.k][fv]={};
+        if(!dist[p][dim.k][fv][tv])dist[p][dim.k][fv][tv]={m:0,t:0};
+        dist[p][dim.k][fv][tv].t++;
+        dist[p][dim.k][fv][tv].m++; // 转换命中：上期fv→下期tv 的条件频次（完整条件分布，非仅同值）
+      });
+      // 差值段：源=第p正码数值段，目标=|cn-nt|段；边际按位置分开（排序后各位置数值分布不同）
+      const dfv=dfFromSeg(cn),dtv=dfToSeg(Math.abs(cn-nt));
+      if(!dist[p].df[dfv])dist[p].df[dfv]={};
+      if(!dist[p].df[dfv][dtv])dist[p].df[dfv][dtv]={m:0,t:0};
+      dist[p].df[dfv][dtv].t++;
+      dist[p].df[dfv][dtv].m++;
+      if(!margin.df[p])margin.df[p]={};
+      margin.df[p][dtv]=(margin.df[p][dtv]||0)+1;
+    }
+  }
+  return{dist:dist,margin:margin,total:total,dims:dims,posDims:posDims};
+}
+function ruleCard(r){ // 规律卡片：名称/触发/命中/命中率/理论基准/提升pp/置信度/样本分级
+  const g=sampleGuard(r.n);
+  const up=(r.rate-r.base)*100;
+  const upStr=(up>=0?'+':'')+up.toFixed(1);
+  const upCol=up>=10?'#1e8449':up>=5?'#2e86c1':up>=-5?'#888':'#c0392b';
+  const bd=up>=10?'#1e8449':up<=-10?'#c0392b':'#ddd';
+  const bg=up>=10?'#f0fff4':up<=-10?'#fff5f5':'#fff';
+  return '<div style="border:1px solid '+bd+';border-radius:6px;padding:5px 7px;margin:3px 0;background:'+bg+';font-size:9px;line-height:1.7">'+
+    '<b>'+r.lbl+' · 第'+(r.p+1)+'正码</b> '+tag(r.from)+' → '+tag(r.to)+'<br>'+
+    '触发 <b>'+r.n+'</b>次 · 命中 <b>'+r.m+'</b> · 命中率 <b style="color:#1a6baa">'+(r.rate*100).toFixed(1)+'%</b> · 理论基准 '+(r.base*100).toFixed(1)+'% · 提升 <b style="color:'+upCol+'">'+upStr+'pp</b> · 置信度 <b>'+r.conf+'</b><br>'+
+    '<span style="color:'+g.cls+';font-weight:bold">'+g.lvl+'</span> <span style="color:#999">'+g.desc+'</span></div>';
+}
+function buildCondProbEngineBlock(){
+  const E=condProbEngine();
+  const cur6=(LAST&&LAST.n)?LAST.n.slice(0,6).sort(function(a,b){return a-b;}):[];
+  const D8=E.dims;
+  const totalN=Math.max(1,DR.length);
+  let h='<div class="sec-title">🎯 条件概率引擎（第①~⑥正码 → 下期特码 · 完整分布+样本保护）</div>'+
+    '<div class="card" style="background:#e8f4ff;font-size:10px;line-height:1.9;margin-bottom:6px">'+
+    '<b>📖 说明：</b>统计每个正码位置×属性"上期该位置属性=某值 → 下期特码属性=各值"的<b>完整条件分布</b>（不只记同值）。'+
+    '命中率 vs <b>理论基准</b>（特码该属性值无条件历史出现率）= <b>提升pp</b>。<b>样本保护：</b>&lt;10 不评分（灰）｜10-29 低权重｜30-49 正常｜≥50 高可信。'+
+    '<b>位置价值</b>：按"强规律数"（样本≥30且提升≥10pp）排名。'+
+    '</div>';
+  // ---- 位置价值排名 ----
+  const posScore=[0,0,0,0,0,0];
+  const strongRules=[];
+  for(let p=0;p<6;p++){
+    D8.forEach(function(d){
+      const fromMap=E.dist[p][d.k];
+      Object.keys(fromMap).forEach(function(fv){
+        const toMap=fromMap[fv];
+        Object.keys(toMap).forEach(function(tv){
+          const c=toMap[tv];
+          const base=d.k==='df'?((E.margin.df[p]&&E.margin.df[p][tv])||0)/E.total:(E.margin[d.k][tv]||0)/totalN;
+          const up=(c.m/c.t-base)*100;
+          if(c.t>=30&&up>=10){posScore[p]+=2;strongRules.push({p:p,lbl:d.lbl,from:fv,to:tv,n:c.t,m:c.m,rate:c.m/c.t,base:base,conf:cpConfidence(c.m,c.t,base)});}
+          else if(c.t>=10&&up>=5){posScore[p]+=1;}
+        });
+      });
+    });
+  }
+  strongRules.sort(function(a,b){return (b.rate-b.base)-(a.rate-a.base);});
+  const rankOrder=posScore.map(function(s,i){return{i:i,s:s};}).sort(function(a,b){return b.s-a.s;});
+  h+='<div class="card" style="border:2px solid #1a6baa;margin-bottom:6px">'+
+    '<b style="color:#1a6baa;font-size:11px">🏆 位置参考价值排名</b>'+
+    '<div style="font-size:10px;margin-top:4px">'+rankOrder.map(function(x){
+      return '<b>第'+(x.i+1)+'正码</b>：'+x.s+'个强规律'+(x.s>0?'🎯':'（无显著规律）');
+    }).join('　')+'</div>'+
+    '<div style="font-size:9px;color:#888;margin-top:2px">强规律=样本≥30且命中率比基准高≥10个百分点；位置得分=2×强规律数+1×中规律数(样本≥10且提升≥5pp)。</div></div>';
+  // ---- 当期 6 位置卡片 ----
+  for(let p=0;p<6;p++){
+    const cn=cur6[p]||0;
+    h+='<div class="card" style="margin:6px 0;border-left:4px solid #1a6baa">'+
+      '<b style="font-size:11px">第'+(p+1)+'正码 '+ball(cn,18)+' '+nattrs(cn)+' → 下期特码</b>';
+    D8.forEach(function(d){
+      let fv;
+      if(d.k==='df')fv=dfFromSeg(cn);
+      else fv=d.fn(cn);
+      const toMap=(E.dist[p][d.k]&&E.dist[p][d.k][fv])||{};
+      const toKeys=Object.keys(toMap);
+      if(toKeys.length===0){
+        h+='<div style="font-size:9px;color:#999;padding:2px 0;border-bottom:1px dashed #eee"><b style="width:42px;display:inline-block">'+d.lbl+'</b> 历史无此组合（样本0，无法推断）</div>';
+        return;
+      }
+      toKeys.sort(function(a,b){return (toMap[b].m/toMap[b].t)-(toMap[a].m/toMap[a].t);});
+      const cellHtml=toKeys.map(function(tv){
+        const c=toMap[tv];
+        const base=d.k==='df'?((E.margin.df[p]&&E.margin.df[p][tv])||0)/E.total:(E.margin[d.k][tv]||0)/totalN;
+        const rate=c.m/c.t;
+        const up=(rate-base)*100;
+        const g=sampleGuard(c.t);
+        let bg='#fff',bd='#eee',col='#555';
+        if(c.t>=10&&up>=10){bg='#f0fff4';bd='#1e8449';col='#1e8449';}
+        else if(c.t>=10&&up>=5){bg='#fffbea';bd='#e6c100';col='#7d6608';}
+        else if(c.t<10){bg='#f5f5f5';bd='#ddd';col='#999';}
+        const tvColor=ATRC[tv]||(d.k==='tl'?'#1a6baa':d.k==='gz'?'#6c3483':d.k==='df'?'#8B4513':'#555');
+        return '<span style="display:inline-block;background:'+bg+';border:1px solid '+bd+';border-radius:4px;padding:1px 4px;margin:1px;font-size:9px;text-align:center" title="命中率 vs 基准">'+
+          '<b style="color:'+tvColor+'">'+tv+'</b> <b style="color:'+col+'">'+(rate*100).toFixed(0)+'%</b>'+
+          '<span style="color:'+(c.t<10?'#bbb':'#999')+'">('+(up>=0?'+':'')+up.toFixed(0)+',n'+c.t+')</span>'+
+          '<span style="display:block;color:'+g.cls+';font-weight:bold">'+g.lvl+'</span></span>';
+      }).join('');
+      h+='<div style="font-size:9px;padding:3px 0;border-bottom:1px dashed #eee;line-height:1.9">'+
+        '<b style="width:42px;display:inline-block">'+d.lbl+'</b>'+
+        '<span style="color:#555;white-space:nowrap">'+tag(fv,ATRC[fv]||'#555')+'→</span>'+cellHtml+'</div>';
+    });
+    h+='</div>';
+  }
+  // ---- 全历史强规律汇总 ----
+  if(strongRules.length>0){
+    h+='<div class="card" style="border:2px solid #1e8449;margin-top:6px"><b style="color:#1e8449;font-size:11px">✅ 全历史强规律（样本≥30 · 提升≥10pp · 按提升排序）</b>'+
+      '<div style="font-size:9px;color:#888;margin:2px 0">这些规律可进入后续评分体系；样本&lt;10 一律不纳入评分。</div>';
+    strongRules.slice(0,24).forEach(function(r){h+=ruleCard(r);});
+    h+='</div>';
+  }
+  h+='<div style="font-size:9px;color:#999;margin-top:4px">⚠️ 样本不足(&lt;10)的规律不展示、不进入评分，避免小样本噪声干扰判断。</div>';
+  return h;
 }
 
 // ===== 特码属性增强预测（多信号加权模型）=====
@@ -7659,6 +7828,9 @@ function renderPosAttr(){
      (filtered.length===0?'<div style="color:#c0392b;font-size:10px;margin-top:4px">⚠️空集！矛盾属性推断不可靠，请放宽条件或手动调节。</div>':filtered.length<=5?'<div style="margin-top:4px">'+filtered.map(function(n){return ball(n,20);}).join('')+'</div>':'')+'</div>';
   var stable=preds.filter(function(p){return !p.conflict&&parseFloat(p.conf)>=10;});
   h+=concl(stable.length+'个属性有明确推断：'+stable.map(function(p){return p.lbl+'推'+tag(p.pred);}).join('')+'。矛盾属性：'+(preds.filter(function(p){return p.conflict;}).map(function(p){return p.lbl;}).join('、')||'无')+'。四属性筛余'+filtered.length+'个。');
+
+  // ===== 【阶段①】条件概率引擎面板（完整分布+样本保护，插在统计排除之前）=====
+  h+=buildCondProbEngineBlock();
 
   // ===== 统计排除（提取为独立函数，特码推荐页也调用）=====
   h+=buildStatExcludeBlock();
