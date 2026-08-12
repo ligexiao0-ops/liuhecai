@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.11</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.12</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -17732,6 +17732,24 @@ function render(){
   if((UP.zm3_pick_zods||[]).length>0&&(UP.zm3_excl_zods||[]).length>0){
     var overlapZods=(UP.zm3_pick_zods||[]).filter(function(z){return (UP.zm3_excl_zods||[]).indexOf(z)>=0;});
     if(overlapZods.length>0)statWarnings.push('⚠️ 三中三设定冲突：'+overlapZods.join('')+'同时在包含和排除列表中，排除优先级更高。');
+  }
+  // 【v10.0812.12-#490】排除选项矛盾检测（家肖+野肖同排=空集等互斥选项）
+  var ea=UP.te_excl_attrs||{};
+  var eWx=UP.te_excl_wx_multi||[],eWv=UP.te_excl_wv_multi||[];
+  var eZods=UP.te_excl_zods||[],lxExcl=UP.lx_excl_zods||[],zm3Ez=UP.zm3_excl_zods||[];
+  if(ea['家野']&&ea['家野'].length>=2)statWarnings.push('⚠️ 特码排除冲突：家+野全排除→空集！请取消其中一项。');
+  if(ea['大小']&&ea['大小'].length>=2)statWarnings.push('⚠️ 特码排除冲突：大+小全排除→空集！');
+  if(ea['单双']&&ea['单双'].length>=2)statWarnings.push('⚠️ 特码排除冲突：单+双全排除→空集！');
+  if(ea['合数']&&ea['合数'].length>=2)statWarnings.push('⚠️ 特码排除冲突：合数单+双全排除→空集！');
+  if(eWx.length>=5)statWarnings.push('⚠️ 特码排除冲突：五行(金木水火土)全排除→空集！');
+  if(eWv.length>=3)statWarnings.push('⚠️ 特码排除冲突：波色(红蓝绿)全排除→空集！');
+  if(eZods.length>=10)statWarnings.push('⚠️ 特码排除'+eZods.length+'肖，仅剩'+(12-eZods.length)+'肖，候选过少！');
+  if(lxExcl.length>=8)statWarnings.push('⚠️ 连肖排除'+lxExcl.length+'肖，仅剩'+(12-lxExcl.length)+'肖，五连肖需≥5肖！');
+  if(zm3Ez.length>=10)statWarnings.push('⚠️ 三中三排除'+zm3Ez.length+'肖，仅剩'+(12-zm3Ez.length)+'肖，三中三需≥3肖！');
+  var lxF=UP.lx_force_zods||[];
+  if(lxF.length>0&&lxExcl.length>0){
+    var lxOv=lxF.filter(function(z){return lxExcl.indexOf(z)>=0;});
+    if(lxOv.length>0)statWarnings.push('⚠️ 连肖设定冲突：'+lxOv.join('')+'同时在必出和排除列表中！');
   }
   try{
     var contentHTML=(renders[activeTab]||renderRecord)();
