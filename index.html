@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.09</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.10</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -13577,8 +13577,8 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
   }
   s+=pairScore;
   // 8. 【v10.0728.07移除】近6期重复 — 用户要求去除同号评分
-  // 9. 【v10.0803.05重写】未出号码+遗漏期数加权（用户突破点：昨晚开奖正码几乎来自未出号码，遗漏期数是参考）
-  // 依据参考意见①遗漏期数⭐5：遗漏6-10期+8/11-15期+12/16期以上+15、上期开出-15（换算为组合内相对加分）
+  // 9. 【v10.0812.10-#486增强】未出号码+遗漏期数加权（用户突破点：昨晚开奖正码几乎来自未出号码，遗漏期数是参考）
+  // #486增强：未出号码是核心突破点→权重提升(3→6/1.5→3.5/0.5→1/-1.5→-3)；遗漏期数参考→微调提升(4→5/3→4/2→3/1.5→2/0.8→1.2/0.3→0.5/-1.2→-2)
   var srcC=LTP.coef.source;
   var om9=ZM2; // 正码连续遗漏期数（calcZm2Om）
   var om9Notes=[];
@@ -13586,26 +13586,27 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
   combo.forEach(function(n){
     var omv=om9[n]||0;
     var curAdd=0;
-    if(omv>=16){curAdd=4;}          // 超长遗漏 → 强加分（突破点）
-    else if(omv>=11){curAdd=3;}
-    else if(omv>=8){curAdd=2;}
-    else if(omv>=6){curAdd=1.5;}
-    else if(omv>=3){curAdd=0.8;}
-    else if(omv===1){curAdd=0.3;}   // 遗漏1期（刚出过）轻微加分
-    else if(omv===0){curAdd=-1.2;}  // 上期正码刚开出 → 降权（参考意见"上期开出-15"）
+    if(omv>=16){curAdd=5;}          // 超长遗漏 → 强加分（突破点）
+    else if(omv>=11){curAdd=4;}
+    else if(omv>=8){curAdd=3;}
+    else if(omv>=6){curAdd=2;}
+    else if(omv>=3){curAdd=1.2;}
+    else if(omv===1){curAdd=0.5;}   // 遗漏1期（刚出过）轻微加分
+    else if(omv===0){curAdd=-2;}    // 上期正码刚开出 → 降权（参考意见"上期开出-15"）
     om9Sum+=curAdd;
     om9Notes.push(n+'遗'+omv+(curAdd>=0?'+'+curAdd:curAdd));
   });
   om9Sum*=srcC;
   var sc9=om9Sum;
   // 近6期未出(NOT)突破点加成：组合中未出号码越多分越高（用户：昨晚开奖正码几乎来自未出号码）
+  // #486增强：未出号码是核心突破点→权重提升(3→6/1.5→3.5/0.5→1/-1.5→-3)
   var notInCombo=combo.filter(function(n){return NOT.indexOf(n)>=0;}).length;
-  if(notInCombo===3){sc9+=3*srcC;om9Notes.push('3号全未出+'+Math.round(3*srcC*10)/10);}
-  else if(notInCombo===2){sc9+=1.5*srcC;om9Notes.push('2号未出+'+Math.round(1.5*srcC*10)/10);}
-  else if(notInCombo===1){sc9+=0.5*srcC;om9Notes.push('1号未出+'+Math.round(0.5*srcC*10)/10);}
-  else{sc9-=1.5*srcC;om9Notes.push('0号未出(全已出)-'+Math.round(1.5*srcC*10)/10);}
+  if(notInCombo===3){sc9+=6*srcC;om9Notes.push('3号全未出⭐+'+Math.round(6*srcC*10)/10);}
+  else if(notInCombo===2){sc9+=3.5*srcC;om9Notes.push('2号未出+'+Math.round(3.5*srcC*10)/10);}
+  else if(notInCombo===1){sc9+=1*srcC;om9Notes.push('1号未出+'+Math.round(1*srcC*10)/10);}
+  else{sc9-=3*srcC;om9Notes.push('0号未出(全已出)-'+Math.round(3*srcC*10)/10);}
   s+=sc9;
-  b.push({label:'未出+遗漏',raw:om9Notes.join(';'),score:(sc9>=0?'+':'')+Math.round(sc9*10)/10});
+  b.push({label:'未出+遗漏⭐',raw:om9Notes.join(';'),score:(sc9>=0?'+':'')+Math.round(sc9*10)/10});
   // 9b. 【v10.0812.08-#527】同肖双码结构优先（基于回测：几乎每期含一个生肖的两个号码）
   // 升级：2同肖+1异肖(理想结构)+5 / 3同肖+2(罕见但有效) / 3异肖(无同肖对)-1(结构不利)
   var zodCnt9={};
@@ -13624,6 +13625,17 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
     sc9b=-1;b.push({label:'同肖双码',raw:'3号3肖(无同肖对)',score:'-1'});
   }
   s+=sc9b;
+  // 9c. 【v10.0812.10-#486】同肖双码+未出号码联动加分（双突破点叠加→额外奖励）
+  // 逻辑：同肖双码结构(9b≥+5)且未出号码≥2个(9.NOT≥2)→组合同时命中两个突破点→+3
+  var sc9c=0;
+  if(twoZod9.length>=1&&notInCombo>=2){
+    sc9c=3;
+    b.push({label:'双突破联动⭐',raw:'同肖对+'+notInCombo+'号未出',score:'+3'});
+  }else if(twoZod9.length>=1&&notInCombo===1){
+    sc9c=1;
+    b.push({label:'双突破联动',raw:'同肖对+1号未出',score:'+1'});
+  }
+  s+=sc9c;
   // 10. 用户自选池加分（自选模式下高分，非自选模式0分）
   if(userPoolSet){
     var poolMatchCnt=combo.filter(function(n){return userPoolSet.has(n);}).length;
