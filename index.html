@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.08</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.09</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -5577,6 +5577,29 @@ function recordLx9SeqHistory(period,date,isConfirm,opts){
     if(idx>=0){hist[idx]=rec;}else{hist.push(rec);}
     UP.lx9_history=hist.slice(-80);
   }catch(e){console.warn('lx9_history record fail',e);}
+}
+// 【v10.0812.09 #485】①序列位置命中率统计（可复用：renderLX面板 + scoreLXCombo评分）
+// 返回 {freq[1-9], pct[1-9], total, hotPos[], coldPos[]} 或 null(数据不足)
+function calcPosFreq(){
+  var hist=UP.lx9_history||[];
+  var freq={};for(var i=1;i<=9;i++)freq[i]=0;
+  var total=0;
+  hist.forEach(function(hh){
+    if(hh.s1HitPos&&hh.s1HitPos.length>0){
+      hh.s1HitPos.forEach(function(pp){if(pp>=1&&pp<=9)freq[pp]++;});
+      total++;
+    }
+  });
+  if(total<3)return null;
+  var pct={};for(var i=1;i<=9;i++)pct[i]=total>0?Math.round(freq[i]/total*100):0;
+  var hotPos=[],coldPos=[];
+  if(total>=5){
+    for(var i=1;i<=9;i++){
+      if(pct[i]>=30)hotPos.push(i);
+      if(pct[i]<15)coldPos.push(i);
+    }
+  }
+  return {freq:freq,pct:pct,total:total,hotPos:hotPos,coldPos:coldPos};
 }
 // 【v10.0805.04】九肖开奖后自动滚动：①(预测期=刚开奖期np) → ②(上期=np)，①清空等待新预测。
 // 规则（用户明确要求）：最新九肖①=预测期(未开奖)；上期九肖②=最新已开奖期。
@@ -14143,6 +14166,30 @@ function scoreLXCombo(combo,zSc){
     var sc22=pair22*1.5;
     if(sc22>0){s+=sc22;b.push({label:'常搭配',raw:pair22Notes.join(','),score:'+'+sc22});}
     else{b.push({label:'常搭配',raw:'近30期无≥3次共现对',score:'0'});}
+  }
+  // 23. 【v10.0812.09 #485】位置命中率：①序列各位置历史命中率→组合中热位生肖加分/冷位生肖降分
+  var posFreq23=null;
+  try{posFreq23=calcPosFreq();}catch(e){}
+  if(posFreq23&&posFreq23.total>=5){
+    var lx9s1_23=UP.lx9_seq1||[];
+    if(lx9s1_23.length>=9){
+      var sc23=0;var pos23Notes=[];
+      combo.forEach(function(item){
+        var pos23=lx9s1_23.indexOf(item.z);
+        if(pos23>=0){
+          var pct23=posFreq23.pct[pos23+1];
+          if(posFreq23.hotPos.indexOf(pos23+1)>=0){sc23+=1.5;pos23Notes.push(EMJ[item.z]+item.z+'#'+(pos23+1)+'🔥'+pct23+'%');}
+          else if(posFreq23.coldPos.indexOf(pos23+1)>=0){sc23-=1.5;pos23Notes.push(EMJ[item.z]+item.z+'#'+(pos23+1)+'❄️'+pct23+'%');}
+        }
+      });
+      sc23=Math.max(-6,Math.min(6,sc23));
+      if(pos23Notes.length>0){
+        b.push({label:'位置命中率',raw:pos23Notes.join(','),score:(sc23>=0?'+':'')+sc23.toFixed(1)});
+      }else{
+        b.push({label:'位置命中率',raw:'无热/冷位生肖',score:'0'});
+      }
+      s+=sc23;
+    }
   }
   return {s:Math.round(s*10)/10,breakdown:b,details:b.map(function(x){return x.label+x.raw+'('+x.score+')';}).join(' · ')};
 }
