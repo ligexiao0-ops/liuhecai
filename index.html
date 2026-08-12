@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.05</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.06</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -4200,6 +4200,8 @@ function scoreTE_full(n,TM,T100){
   var W=SCORE_W;
   const lZ=Array.from(new Set(LAST.n.map(gz))),lTeZ=gz(LAST.t),lT=gtl(LAST.t),lD=gdf(LAST.t);
   const t15c=te15();const exc=[],kp=[];let s=0;
+  // 【v10.0812.06-#525】用户主动排除项收集（排除池/上期正肖正尾/热冷门/遗漏前10/近6期已出）→ 主导降权
+  let uExclHits=0;const uExclLbls=[];
   if(n===LAST.t){s-=4;exc.push("上期特码(降权)");}
   if(LAST.n.includes(n)){s-=2;exc.push("上期正码(降权)");}
   if(lZ.includes(gz(n))){s-=2;exc.push("平肖(降权)");}
@@ -4282,15 +4284,15 @@ function scoreTE_full(n,TM,T100){
     const omSorted=A49.map(x=>({n:x,m:T100[x]||0})).sort((a,b)=>a.m-b.m).slice(0,10);
     if(!omSorted.find(x=>x.n===n)){s-=20;exc.push("不在100期遗漏前10");}
   }
-  // 上期正码生肖排除
+  // 上期正码生肖排除 → 用户主导排除（v10.0812.06-#525：不再轻量-15，收集后统一主导降权）
   if(UP.te_excl_prev_zod){
     var lzSet=Array.from(new Set(LAST.n.map(gz)));
-    if(lzSet.includes(gz(n))){s-=15;exc.push("上期正码生肖(排除)");}
+    if(lzSet.includes(gz(n))){uExclHits++;uExclLbls.push("上期正肖");}
   }
-  // 上期正码尾数排除
+  // 上期正码尾数排除 → 用户主导排除
   if(UP.te_excl_prev_tail){
     var lTails=Array.from(new Set(LAST.n.map(gtl)));
-    if(lTails.includes(gtl(n))){s-=15;exc.push("上期正码尾数(排除)");}
+    if(lTails.includes(gtl(n))){uExclHits++;uExclLbls.push("上期正尾");}
   }
   // 上期正码生肖指定（勾选=只从上期正码生肖中选）
   if(UP.te_pick_prev_zod){
@@ -4311,13 +4313,13 @@ function scoreTE_full(n,TM,T100){
     if(!teHot10.includes(n)){s-=15;exc.push("非100期热门前10("+(T100[n]||0)+")");}
   }
   if(UP.te_excl_t100_hot){
-    if(teHot10.includes(n)){s-=15;exc.push("100期热门前10(排除)");}
+    if(teHot10.includes(n)){uExclHits++;uExclLbls.push("热门前10");}
   }
   if(UP.te_t100_cold){
     if(!teCold10.includes(n)){s-=15;exc.push("非100期冷门前10("+(T100[n]||0)+")");}
   }
   if(UP.te_excl_t100_cold){
-    if(teCold10.includes(n)){s-=15;exc.push("100期冷门前10(排除)");}
+    if(teCold10.includes(n)){uExclHits++;uExclLbls.push("冷门前10");}
   }
   // 100期特码热门前7/冷门后7（Top/Last 7排名）
   var teHot7=A49.map(x=>({n:x,m:T100[x]||0})).sort((a,b)=>b.m-a.m).slice(0,7).map(x=>x.n);
@@ -4327,14 +4329,14 @@ function scoreTE_full(n,TM,T100){
     else{s+=3;kp.push("热门前7");}
   }
   if(UP.te_excl_t100_hot7){
-    if(teHot7.includes(n)){s-=15;exc.push("100期热门前7(排除)");}
+    if(teHot7.includes(n)){uExclHits++;uExclLbls.push("热门前7");}
   }
   if(UP.te_t100_cold7){
     if(!teCold7.includes(n)){s-=6;exc.push("非100期冷门后7("+(T100[n]||0)+")");}
     else{s+=3;kp.push("冷门后7");}
   }
   if(UP.te_excl_t100_cold7){
-    if(teCold7.includes(n)){s-=15;exc.push("100期冷门后7(排除)");}
+    if(teCold7.includes(n)){uExclHits++;uExclLbls.push("冷门后7");}
   }
   // 选中温号码(100期出现2-4次，不太热不太冷，常出现的往往居中)
   if(UP.te_mid_hot){
@@ -4350,19 +4352,19 @@ function scoreTE_full(n,TM,T100){
   if(UP.te_excl_tm_om10){
     const omSorted2b=A49.map(x=>({n:x,m:T100[x]||0})).sort((a,b)=>a.m-b.m);
     const top10oms2=omSorted2b.slice(0,10).map(x=>x.n);
-    if(top10oms2.includes(n)){s-=15;exc.push("100期特码遗漏前10(排除)");}
+    if(top10oms2.includes(n)){uExclHits++;uExclLbls.push("特码遗漏前10");}
   }
-  // 已出/未出 exclude
-  if(UP.te_excl_app&&APP.includes(n)){s-=15;exc.push("近6期已出(排除)");}
-  // 100期遗漏前10 exclude
+  // 已出/未出 exclude → 用户主导排除
+  if(UP.te_excl_app&&APP.includes(n)){uExclHits++;uExclLbls.push("近6期已出");}
+  // 100期遗漏前10 exclude → 用户主导排除
   if(UP.te_excl_om10){
     const omSorted3=A49.map(x=>({n:x,m:T100[x]||0})).sort((a,b)=>a.m-b.m).slice(0,10);
-    if(omSorted3.find(x=>x.n===n)){s-=15;exc.push("100期遗漏前10(排除)");}
+    if(omSorted3.find(x=>x.n===n)){uExclHits++;uExclLbls.push("100期遗漏前10");}
   }
   const tePool=UP.te_pick_pool||[];
   const teExclPool=UP.te_excl_pool||[];
-  // 自选排除池：直接排除
-  if(teExclPool.length>0&&teExclPool.includes(n)){s-=30;exc.push("自选排除池");}
+  // 自选排除池：直接排除 → 用户主导排除
+  if(teExclPool.length>0&&teExclPool.includes(n)){uExclHits++;uExclLbls.push("自选排除池");}
   if(tePool.length>0&&!tePool.includes(n)){s-=20;exc.push("不在候选池");}
   // ===== 统计排除准确率反馈（AI自主分析维度）=====
   // 准确率高的排除项→被排除号码降权；准确率低的排除项→被排除号码反而加分（反向指标）
@@ -4402,10 +4404,22 @@ function scoreTE_full(n,TM,T100){
   // posModelScore 聚合全历史强/中规律，posMBonus 判断候选号是否命中当期有效规律（样本≥10才计分）
   const posB=posMBonus(n,posModelScore());
   if(posB.bonus>0){s+=posB.bonus;posB.rs.forEach(function(t){kp.push(t);});}
+  // ===== 【v10.0812.06-#525】用户排除项主导降权 =====
+  // 问题：原10项用户"🚫排除"开关仅-15/-30轻降权，被排除号命中多个规律加分(位置模型+6/中温+5/指定肖+8/
+  //       上期正码+3/尾数+6等可达+30)会被抵消甚至反超，照常进入推荐top20与复制框→排除意图被规律淹没。
+  // 方案(双保险)：①缩放前大额扣分(同尺度压制规律加分，任何灵敏度下排名显著后移)；
+  //               ②缩放后兜底钳制s=-8：强制进入strong排除区(s<=-8)，绝不泄漏进top20(s>=1)/复制框(s>-8)
+  if(uExclHits>0){
+    var uPen=uExclHits>=3?120:(uExclHits===2?80:50);
+    s-=uPen;
+    exc.push("用户主导排除("+uExclLbls.join("+")+")-"+uPen);
+  }
   // 整体灵敏度权重缩放
   // 【v10.0806.07-#525守卫】滑块min=0，若te_w4=0则全体s清零→-999硬排除与exclAccTE反馈全失效(strong/top20全空)
   // 下限钳制0.05：硬排除号仍为-49.95(≤-8仍入strong)，保证"用户硬排除>任何规律加分"语义在任何权重下成立
   s*=Math.max(parseFloat(W.te_w4)||1,0.05);
+  // 【v10.0812.06-#525兜底】命中用户主导排除的号码：缩放后若仍>-8则强制压入排除区(绝对不进推荐/复制)
+  if(uExclHits>0&&s>-8){s=-8;exc.push("主导兜底(强制排除区)");}
   return {n:n,s:s,exc:exc,kp:kp};
 }
 
