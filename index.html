@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.04</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.05</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -11022,6 +11022,14 @@ function renderLX(){
   }
   function pickN(n,forceList,exclList,topN){
     forceList=forceList||force;exclList=exclList||excl;
+    // 【v10.0812.05修复】TOP-N统一包装：early-return路径(必出肖已满/候选不足/约束回退)返回的是单组合数组，
+    // 若调用方请求topN>1(如五连肖 pickN(5,force,excl,3))则必须包装成"组合的数组"，
+    // 否则 lx5list[0] 会取到单个生肖对象 → 11192行 lx5.slice() 崩溃 → 连肖页面打不开
+    function wrapTopN(res){
+      if(!(topN&&topN>1))return res;
+      if(res&&res.length>0&&Array.isArray(res[0]))return res;
+      return [res];
+    }
     // 禁区生肖：点选后并入排除，包含它们的连肖组合全被剔除
     if(UP.lx_ban_zods&&UP.lx_ban_zods.length){
       exclList=Array.from(new Set(exclList.concat(UP.lx_ban_zods)));
@@ -11089,12 +11097,12 @@ function renderLX(){
       return true;
     }
     var need=n-forceItems.length;
-    if(need<=0)return forceItems.slice(0,n);
+    if(need<=0)return wrapTopN(forceItems.slice(0,n));
     // 扩大候选池到全部12生肖（不再只取前10），确保权重变化时组合真正改变
     var candidates=rem.slice(0,Math.min(12,rem.length));
     if(candidates.length<need){
       // 候选不足，直接返回
-      return forceItems.concat(candidates).slice(0,n);
+      return wrapTopN(forceItems.concat(candidates).slice(0,n));
     }
     // 生成C(candidates.length, need)组合并评分（C(12,5)=792, C(12,4)=495, C(12,3)=220）
     var allCombos=combNK(candidates,need);
@@ -11139,7 +11147,7 @@ function renderLX(){
           fallback.push(it);
         }
       }
-      return fallback.slice(0,n);
+      return wrapTopN(fallback.slice(0,n));
     }
     // 用scoreLXCombo评分全部有效组合并排序（主选TOP1 + 备选TOP2-3由调用方按需取用）
     var scoredCombos=validCombos.map(function(combo){
@@ -11183,7 +11191,7 @@ function renderLX(){
       while(topList.length<topN)topList.push(chosenCombo);
       return topList;
     }
-    return chosenCombo;
+    return wrapTopN(chosenCombo);
   }
   // 【v10.0812.04阶段④】五连肖组合优化：主选TOP1 + 备选TOP2-3 + 四连肖去最弱肖
   const lx5list=pickN(5,force,excl,3);
