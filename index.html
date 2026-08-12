@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.13</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.14</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -4493,7 +4493,11 @@ function scoreZod(useUserPrefs){
   const stks=zStreaks(),abs=zAbsent(),mxs=zMaxStr(),mxAbs=zMaxAbs(),cz=calcCurZhuang();
   const zAF={};ZODS.forEach(z=>zAF[z]=DR.filter(d=>[].concat(d.n,[d.t]).some(n=>gz(n)===z)).length);
   const cur7Z=Array.from(new Set([].concat(LAST.n,[LAST.t]).map(gz)));
-  // ===== 【v10.0730.02新增】特肖冷热 vs 平肖冷热分开统计 =====
+  // 【v10.0812.14-#503】20期出现次数冷热 + 上期出现次数区分
+  const zc20=mzc(DR.slice(-20).map(function(d){return [].concat(d.n,[d.t]);}).reduce(function(a,b){return a.concat(b);},[]));
+  const zc20Avg=ZODS.reduce(function(s,z){return s+zc20[z];},0)/12;
+  // 上期每个生肖出现次数（7码中同肖可能1-3个）
+  const prevZodCnt={};ZODS.forEach(function(z){prevZodCnt[z]=[].concat(LAST.n,[LAST.t]).filter(function(n){return gz(n)===z;}).length;});
   var teZod6=mzc(DR.slice(-6).map(function(d){return d.t;})); // 特码6期各肖出现次数
   var teZod15=mzc(DR.slice(-15).map(function(d){return d.t;})); // 特码15期各肖出现次数
   // 上期7码生肖集合（用于判断"与上期同肖"）
@@ -4562,6 +4566,11 @@ function scoreZod(useUserPrefs){
     if(zfRate>=0.45){d1+=3;rs.push("D1 全局高频+3");}
     else if(zfRate>=0.35){d1+=2;rs.push("D1 全局中频+2");}
     else if(zfRate<0.15){d1+=2;rs.push("D1 全局低频+2");}
+    // 【v10.0812.14-#503】20期中频冷热（弥补6期短期与全局长期的中间段）
+    const zc20v=zc20[z]||0;
+    if(zc20v>=zc20Avg*1.4){d1+=2;rs.push("D1 20期热"+zc20v+"+2");}
+    else if(zc20v>=zc20Avg*1.1){d1+=1;rs.push("D1 20期温"+zc20v+"+1");}
+    else if(zc20v<=zc20Avg*0.6){d1+=1.5;rs.push("D1 20期冷"+zc20v+"+1.5");}
     d1=Math.min(d1,15);s+=d1;
     // ============ D2 遗漏缺口（满分12）============
     let d2=0;
@@ -4634,7 +4643,10 @@ function scoreZod(useUserPrefs){
     // ============ D8 新生肖延续（满分6）============
     let d8=0;
     if(newCurZ.includes(z)){d8+=3;rs.push("D8 新出延续+3");}
-    if(prev7Z.includes(z)){d8+=1.5;rs.push("D8 上期同肖+1.5");}
+    // 【v10.0812.14-#503】上期出现次数区分（原布尔值→计数）
+    var pzc=prevZodCnt[z]||0;
+    if(pzc>=2){d8+=2.5;rs.push("D8 上期"+pzc+"码同肖+2.5");}
+    else if(pzc===1){d8+=1.5;rs.push("D8 上期1码同肖+1.5");}
     if(crossZ.includes(z)){d8+=1.5;rs.push("D8 上下期重合+1.5");}
     d8=Math.min(d8,6);s+=d8;
     // ============ D9 五行平衡（满分8）============
