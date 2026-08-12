@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.02</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.03</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -3193,7 +3193,7 @@ function ruleCard(r){ // 规律卡片：名称/触发/命中/命中率/理论基
   const bd=up>=10?'#1e8449':up<=-10?'#c0392b':'#ddd';
   const bg=up>=10?'#f0fff4':up<=-10?'#fff5f5':'#fff';
   return '<div style="border:1px solid '+bd+';border-radius:6px;padding:5px 7px;margin:3px 0;background:'+bg+';font-size:9px;line-height:1.7">'+
-    '<b>'+r.lbl+' · 第'+(r.p+1)+'正码</b> '+tag(r.from)+' → '+tag(r.to)+'<br>'+
+    '<b>'+r.lbl+(r.p>=0?' · 第'+(r.p+1)+'正码':'')+'</b> '+tag(r.from)+' → '+tag(r.to)+'<br>'+
     '触发 <b>'+r.n+'</b>次 · 命中 <b>'+r.m+'</b> · 命中率 <b style="color:#1a6baa">'+(r.rate*100).toFixed(1)+'%</b> · 理论基准 '+(r.base*100).toFixed(1)+'% · 提升 <b style="color:'+upCol+'">'+upStr+'pp</b> · 置信度 <b>'+r.conf+'</b><br>'+
     '<span style="color:'+g.cls+';font-weight:bold">'+g.lvl+'</span> <span style="color:#999">'+g.desc+'</span></div>';
 }
@@ -3288,6 +3288,190 @@ function posMBonus(n,posM){
   if(Object.keys(hitPos).length>=3&&bonus>0){bonus+=1;rs.push('3位置共振+1');}
   return{bonus:Math.min(bonus,6),rs:rs};
 }
+// ===== 阶段③：尾数条件概率引擎 + 一肖两码→肖内剩余模型（v10.0812.03）=====
+// 需求3：上期6正码尾数"最小覆盖"(去重尾数集合) → 下期6正码尾数最小覆盖，分别统计；
+//        同尾/±1/±2/±3 四个距离档位【分开测试不合并】，每档再细分 from尾→to尾。
+// 需求4：上期6正码恰含某肖2码 → 该肖剩余2码在下期(6正码+特码)出现的条件概率 vs 无条件基准，决定是否加分。
+// 样本保护：复用 sampleGuard(<10样本不足/10-29低权重/≥30正常/≥50高可信)；
+//   强规律=样本≥30且提升≥10pp(+2×样本权重) ｜ 中规律=样本≥10且提升≥5pp(+1×样本权重)。
+const TAIL_DIST_LBL={0:'同尾',1:'±1尾',2:'±2尾',3:'±3尾'};
+function tailDist(a,b){var d=Math.abs(a-b);return d>5?10-d:d;}
+function tailProbEngine(){
+  if(!tailProbEngine._E||tailProbEngine._E.total!==DR.length)tailProbEngine._E=buildTailProb();
+  return tailProbEngine._E;
+}
+function buildTailProb(){
+  const T=Math.max(1,DR.length-1); // 有效转移期数（i→i+1）
+  const periodTails=DR.map(function(d){return Array.from(new Set((d.n||[]).map(gtl))).sort(function(a,b){return a-b;});});
+  const distCov={},marginCov={};        // ① 覆盖度转移 distCov[fromCov][toCov]={m,t}
+  const distTail=[{},{},{},{}];         // ② 距离规律 distTail[d][from][to]={m,t}（t=触发期数，循环后回填）
+  const distAgg=[{},{},{},{}];          // ② 距离聚合 distAgg[d][from]={m,t}：上期含from→下期含任一距离d尾
+  const aggBase=[{},{},{},{}];          // ② 聚合无条件基准：下期含"距f为d"尾数的期数
+  const triggerByFrom={},tailOccur={};  // from触发期数 / to尾在下期出现的期数(基准)
+  for(let i=0;i<DR.length-1;i++){
+    const cur=periodTails[i],next=periodTails[i+1];
+    if(!cur.length||!next.length)continue;
+    // ① 覆盖度转移（最小覆盖=去重尾数集合大小）
+    const fc=cur.length,tc=next.length;
+    if(!distCov[fc])distCov[fc]={};
+    if(!distCov[fc][tc])distCov[fc][tc]={m:0,t:0};
+    distCov[fc][tc].t++;distCov[fc][tc].m++;
+    marginCov[tc]=(marginCov[tc]||0)+1;
+    // ② 距离规律：先按 from 触发，再遍历 to 判定命中（同尾/±1/±2/±3分开，不合并）
+    next.forEach(function(t){tailOccur[t]=(tailOccur[t]||0)+1;});
+    cur.forEach(function(f){
+      triggerByFrom[f]=(triggerByFrom[f]||0)+1;
+      const hasDist=[false,false,false,false];
+      next.forEach(function(t){
+        const d=tailDist(f,t);
+        if(d<=3){
+          hasDist[d]=true;
+          if(!distTail[d][f])distTail[d][f]={};
+          if(!distTail[d][f][t])distTail[d][f][t]={m:0,t:0};
+          distTail[d][f][t].m++;
+        }
+      });
+      for(let d=0;d<4;d++){
+        if(!distAgg[d][f])distAgg[d][f]={m:0,t:0};
+        distAgg[d][f].t++;
+        if(hasDist[d])distAgg[d][f].m++;
+      }
+    });
+  }
+  // 无条件基准：下期尾数集合含"距f为d"的尾数 的期数
+  for(let i=0;i<DR.length-1;i++){
+    const next=periodTails[i+1];
+    if(!next.length)continue;
+    for(let f=0;f<=9;f++){
+      const hasDist=[false,false,false,false];
+      next.forEach(function(t){const d=tailDist(f,t);if(d<=3)hasDist[d]=true;});
+      for(let d=0;d<4;d++){if(!aggBase[d][f])aggBase[d][f]=0;if(hasDist[d])aggBase[d][f]++;}
+    }
+  }
+  // 汇总规律
+  const tailRules=[],aggRules=[],covRules=[];
+  for(let d=0;d<4;d++){
+    const dl=TAIL_DIST_LBL[d],fm=distTail[d];
+    Object.keys(fm).forEach(function(f){
+      const trig=triggerByFrom[f]||0;
+      Object.keys(fm[f]).forEach(function(t){
+        const c=fm[f][t];
+        c.t=trig; // 触发=上期含from的期数
+        const base=(tailOccur[t]||0)/T; // 基准=to尾无条件出现在6正码集合的期占比
+        const rate=c.t>0?c.m/c.t:0;
+        const up=(rate-base)*100;
+        if(c.t>=10&&up>=5){
+          const strong=c.t>=30&&up>=10;
+          tailRules.push({d:d,dLbl:dl,from:Number(f),to:Number(t),n:c.t,m:c.m,rate:rate,base:base,up:up,strong:strong,w:sampleGuard(c.t).w,conf:cpConfidence(c.m,c.t,base)});
+        }
+      });
+    });
+    Object.keys(distAgg[d]).forEach(function(f){
+      const c=distAgg[d][f];
+      const base=(aggBase[d][f]||0)/T;
+      const rate=c.t>0?c.m/c.t:0;
+      const up=(rate-base)*100;
+      if(c.t>=10&&up>=5){
+        const strong=c.t>=30&&up>=10;
+        aggRules.push({d:d,dLbl:dl,from:Number(f),rate:rate,base:base,up:up,n:c.t,m:c.m,strong:strong,w:sampleGuard(c.t).w,conf:cpConfidence(c.m,c.t,base)});
+      }
+    });
+  }
+  Object.keys(distCov).forEach(function(fc){
+    Object.keys(distCov[fc]).forEach(function(tc){
+      const c=distCov[fc][tc];
+      const base=(marginCov[tc]||0)/T;
+      const rate=c.t>0?c.m/c.t:0;
+      const up=(rate-base)*100;
+      if(c.t>=10&&up>=5){
+        const strong=c.t>=30&&up>=10;
+        covRules.push({fromCov:Number(fc),toCov:Number(tc),n:c.t,m:c.m,rate:rate,base:base,up:up,strong:strong,w:sampleGuard(c.t).w,conf:cpConfidence(c.m,c.t,base)});
+      }
+    });
+  });
+  tailRules.sort(function(a,b){return b.up-a.up;});
+  aggRules.sort(function(a,b){return b.up-a.up;});
+  covRules.sort(function(a,b){return b.up-a.up;});
+  // 当期有效：上期(LAST)6正码尾数集合含 from
+  const lastTailSet=Array.from(new Set(((LAST&&LAST.n)||[]).map(gtl)));
+  const curTailRules=tailRules.filter(function(r){return lastTailSet.indexOf(r.from)>=0;});
+  return{distCov:distCov,marginCov:marginCov,tailRules:tailRules,aggRules:aggRules,covRules:covRules,curTailRules:curTailRules,lastTailSet:lastTailSet,total:DR.length,T:T};
+}
+// ---- 一肖两码→肖内剩余号码模型 ----
+function twoCodeZodEngine(){
+  if(!twoCodeZodEngine._E||twoCodeZodEngine._E.total!==DR.length)twoCodeZodEngine._E=buildTwoCodeZod();
+  return twoCodeZodEngine._E;
+}
+function buildTwoCodeZod(){
+  const T=Math.max(1,DR.length-1);
+  const zodTrig={},candCnt={},numOccur={};
+  ZODS.forEach(function(z){zodTrig[z]=0;candCnt[z]={};});
+  for(let i=0;i<DR.length-1;i++){
+    const cur=DR[i].n,next=DR[i+1];
+    if(!cur||cur.length<6)continue;
+    const nextAll=(next.n||[]).concat(next.t!==undefined&&next.t!==null?[next.t]:[]);
+    nextAll.forEach(function(n){numOccur[n]=(numOccur[n]||0)+1;}); // 号码无条件出现基准(6正码+特码)
+    const zc={};ZODS.forEach(function(z){zc[z]=0;});
+    cur.forEach(function(n){zc[gz(n)]=(zc[gz(n)]||0)+1;});
+    ZODS.forEach(function(z){
+      if(zc[z]!==2)return; // 恰好2码才触发
+      zodTrig[z]++;
+      const rem=ZM[z].filter(function(x){return cur.indexOf(x)<0;}); // 剩余2码
+      rem.forEach(function(x){
+        if(!candCnt[z][x])candCnt[z][x]={m:0,t:0};
+        candCnt[z][x].t++;
+        if(nextAll.indexOf(x)>=0)candCnt[z][x].m++;
+      });
+    });
+  }
+  const rules=[],curCands=[];
+  const curN=LAST&&LAST.n?LAST.n:[];
+  const curZc={};ZODS.forEach(function(z){curZc[z]=0;});
+  curN.forEach(function(n){curZc[gz(n)]=(curZc[gz(n)]||0)+1;});
+  ZODS.forEach(function(z){
+    Object.keys(candCnt[z]).forEach(function(x){
+      const c=candCnt[z][x],n=Number(x);
+      const base=(numOccur[n]||0)/T;
+      const rate=c.t>0?c.m/c.t:0;
+      const up=(rate-base)*100;
+      if(c.t>=10&&up>=5)rules.push({z:z,n:n,trig:zodTrig[z],hit:c.m,t:c.t,m:c.m,rate:rate,base:base,up:up,strong:c.t>=30&&up>=10,w:sampleGuard(c.t).w,conf:cpConfidence(c.m,c.t,base)});
+    });
+    if(curZc[z]===2){ // 当期激活：上期恰含该肖2码 → 实际剩余码（非历史累计）全部纳入追踪，是否加分由评分门控
+      ZM[z].filter(function(x){return curN.indexOf(x)<0;}).forEach(function(x){
+        const c=candCnt[z][x]||{m:0,t:0};
+        const base=(numOccur[x]||0)/T;
+        const rate=c.t>0?c.m/c.t:0;
+        const up=(rate-base)*100;
+        curCands.push({z:z,n:x,trig:zodTrig[z],hit:c.m,t:c.t,m:c.m,rate:rate,base:base,up:up,strong:c.t>=30&&up>=10,w:sampleGuard(c.t).w,conf:cpConfidence(c.m,c.t,base)});
+      });
+    }
+  });
+  rules.sort(function(a,b){return b.up-a.up;});
+  curCands.sort(function(a,b){return b.up-a.up;});
+  const curZods=ZODS.filter(function(z){return curZc[z]===2;});
+  return{rules:rules,curCands:curCands,curZods:curZods,total:DR.length,T:T};
+}
+// 阶段③：单号码尾数距离/一肖两码剩余 加分（供 scoreZheng 与 scoreZ3Combo 复用）
+// 门控：仅样本≥10且提升≥5pp的规律加分；强规律(+2×样本权重)/中规律(+1×样本权重)；单号上限+6
+function tailNumBonus(n,TP,TZC){
+  let bonus=0;const rs=[];
+  const t=gtl(n);
+  (TP.curTailRules||[]).forEach(function(r){
+    if(r.to===t){
+      const wAdd=(r.strong?2:1)*r.w;
+      bonus+=wAdd;
+      rs.push('尾数'+r.dLbl+' '+r.from+'→'+r.to+'('+(r.up>=0?'+':'')+r.up.toFixed(0)+'pp,n'+r.n+',+'+wAdd.toFixed(1)+')');
+    }
+  });
+  (TZC.curCands||[]).forEach(function(c){
+    if(c.n===n&&c.t>=10&&c.up>=5){
+      const wAdd=(c.strong?2:1)*c.w;
+      bonus+=wAdd;
+      rs.push('一肖两码'+c.z+'余码'+c.n+'('+(c.up>=0?'+':'')+c.up.toFixed(0)+'pp,n'+c.n+',+'+wAdd.toFixed(1)+')');
+    }
+  });
+  return{bonus:Math.min(bonus,6),rs:rs};
+}
 function buildCondProbEngineBlock(){
   const E=condProbEngine();
   const cur6=(LAST&&LAST.n)?LAST.n.slice(0,6).sort(function(a,b){return a-b;}):[];
@@ -3366,6 +3550,76 @@ function buildCondProbEngineBlock(){
     h+='</div>';
   }
   h+='<div style="font-size:9px;color:#999;margin-top:4px">⚠️ 样本不足(&lt;10)的规律不展示、不进入评分，避免小样本噪声干扰判断。</div>';
+  return h;
+}
+// ===== 阶段③面板：尾数条件概率（上期6正码尾数→下期6正码尾数 · 覆盖度+4档距离+一肖两码）=====
+function buildTailProbBlock(){
+  const TP=tailProbEngine(),TZC=twoCodeZodEngine();
+  const T=TP.T;
+  const lastTailSet=TP.lastTailSet;
+  let h='<div class="sec-title">🔢 尾数条件概率引擎（上期6正码尾数 → 下期6正码尾数 · 同尾/±1/±2/±3分开统计）</div>'+
+    '<div class="card" style="background:#e8f4ff;font-size:10px;line-height:1.9;margin-bottom:6px">'+
+    '<b>📖 说明：</b>统计上期6正码的<b>尾数最小覆盖</b>（去重尾数集合，如 04,16,28,40 → 尾{0,4,6,8}）与下期6正码尾数集合的关系。'+
+    '<b>①覆盖度转移</b>：上期覆盖N个尾 → 下期覆盖M个尾的转移概率 vs 无条件基准。<b>②距离规律</b>：同尾/±1/±2/±3 四档<b>分开测试不合并</b>，'+
+    '上期尾数from → 下期尾数to 命中率 vs 该尾无条件出现基准。<b>③一肖两码</b>：上期6正码恰含某肖2码 → 该肖剩余2码下期出现条件概率。'+
+    '<b>样本保护：</b>&lt;10 不评分｜10-29 低权重×0.5｜≥30 正常｜≥50 高可信。<b>评分门控：</b>仅样本≥10且提升≥5pp的规律加分（【暂不纳入评分】的规律仅展示）。'+
+    '</div>';
+  // ---- ① 覆盖度转移 ----
+  const covFrom=Object.keys(TP.distCov).map(Number).sort(function(a,b){return a-b;});
+  h+='<div class="card" style="border:2px solid #1a6baa;margin-bottom:6px"><b style="color:#1a6baa;font-size:11px">① 尾数最小覆盖度转移（上期N尾 → 下期M尾 · 6正码）</b>'+
+    '<div style="font-size:9px;color:#888;margin:2px 0">行=上期覆盖尾数个数，列=下期覆盖尾数个数；单元格=转移命中率(n=样本)，绿=强提升(≥10pp)。末行=下期覆盖数无条件基准。</div>'+
+    '<table style="border-collapse:collapse;font-size:10px;margin-top:4px"><tr><td></td>';
+  for(let tc=3;tc<=6;tc++)h+='<td style="border:1px solid #ddd;padding:3px 6px;background:#f0f0f0;font-weight:bold">下期'+tc+'尾</td>';
+  h+='</tr>';
+  covFrom.forEach(function(fc){
+    h+='<tr><td style="border:1px solid #ddd;padding:3px 6px;background:#f0f0f0;font-weight:bold">上期'+fc+'尾</td>';
+    for(let tc=3;tc<=6;tc++){
+      const c=TP.distCov[fc]&&TP.distCov[fc][tc];
+      if(!c){h+='<td style="border:1px solid #eee;padding:3px 6px;text-align:center;color:#bbb">-</td>';continue;}
+      const base=(TP.marginCov[tc]||0)/T,rate=c.m/c.t,up=(rate-base)*100;
+      const bg=(c.t>=10&&up>=10)?'#f0fff4':(c.t>=10&&up>=5)?'#fffbea':(c.t<10)?'#f5f5f5':'#fff';
+      const col=(c.t>=10&&up>=10)?'#1e8449':(c.t>=10&&up>=5)?'#7d6608':'#555';
+      h+='<td style="border:1px solid #ddd;padding:3px 6px;background:'+bg+';text-align:center">'+
+        '<b style="color:'+col+'">'+(rate*100).toFixed(0)+'%</b><span style="color:#999;font-size:8px"> n'+c.t+'</span><br>'+
+        '<span style="color:#999;font-size:8px">'+(up>=0?'+':'')+up.toFixed(0)+'pp</span></td>';
+    }
+    h+='</tr>';
+  });
+  h+='<tr><td style="border:1px solid #ddd;padding:3px 6px;background:#f9f9f9;font-weight:bold;color:#666">基准</td>';
+  for(let tc=3;tc<=6;tc++)h+='<td style="border:1px solid #ddd;padding:3px 6px;text-align:center;background:#f9f9f9;color:#666">'+((TP.marginCov[tc]||0)/T*100).toFixed(0)+'%</td>';
+  h+='</tr></table></div>';
+  // ---- ② 距离规律（4档分开）----
+  h+='<div class="card" style="border:2px solid #1a6baa;margin-bottom:6px"><b style="color:#1a6baa;font-size:11px">② 尾数距离规律（4档分开统计 · 上期尾from → 下期尾to）</b>'+
+    '<div style="font-size:9px;color:#888;margin:2px 0">只列出样本≥10且提升≥5pp的规律。当前上期6正码尾数集合：'+
+    (lastTailSet.length>0?lastTailSet.map(function(t){return tag('尾'+t);}).join(''):'<span style="color:#999">无</span>')+
+    ' ｜ 聚合=上期含from时"下期出现任一该距离尾"的命中率 vs 无条件基准。</div>';
+  [0,1,2,3].forEach(function(d){
+    const dl=TAIL_DIST_LBL[d];
+    const rules=TP.tailRules.filter(function(r){return r.d===d;}).slice(0,8);
+    const agg=TP.aggRules.filter(function(r){return r.d===d;}).slice(0,3);
+    const curHit=TP.curTailRules.filter(function(r){return r.d===d;}).length;
+    h+='<div style="border:1px solid '+(curHit>0?'#1a6baa':'#dbe9f7')+';border-radius:6px;padding:4px 6px;margin:4px 0;background:'+(curHit>0?'#eef6ff':'#f7fbff')+'">'+
+      '<b style="font-size:10px">'+dl+'档'+(curHit>0?' 🎯当前'+curHit+'条有效':'')+'</b> '+
+      (agg.length>0?agg.map(function(r){return '尾'+r.from+'<b style="color:'+(r.up>=10?'#1e8449':'#7d6608')+'">'+(r.rate*100).toFixed(0)+'%</b>('+(r.up>=0?'+':'')+r.up.toFixed(0)+'pp,n'+r.n+')';}).join(' · '):'<span style="color:#999;font-size:9px">无显著聚合规律</span>')+
+      (rules.length>0?rules.map(function(r){return ruleCard({p:-1,lbl:dl+'·尾'+r.from,from:r.from,to:r.to,n:r.n,m:r.m,rate:r.rate,base:r.base,conf:r.conf});}).join(''):'')+
+      '</div>';
+  });
+  h+='</div>';
+  // ---- ③ 一肖两码 ----
+  h+='<div class="card" style="border:2px solid #6c3483;margin-bottom:6px"><b style="color:#6c3483;font-size:11px">③ 一肖两码 → 肖内剩余号码模型</b>'+
+    '<div style="font-size:9px;color:#888;margin:2px 0">上期6正码恰含某肖2码 → 该肖剩余2码下期出现条件概率 vs 该号码无条件出现基准（下期6正码+特码）。'+
+    '当期激活肖：'+(TZC.curZods.length>0?TZC.curZods.map(function(z){return ztag(z);}).join(''):'<span style="color:#999">无（上期无生肖恰好2码）</span>')+'</div>'+
+    (TZC.curCands.length>0?'<div style="border:1px solid #e8d5f5;background:#faf5ff;border-radius:6px;padding:4px 6px;margin:4px 0"><b style="font-size:10px;color:#6c3483">🎯 当期追踪（肖内剩余码）</b>'+
+      TZC.curCands.map(function(c){
+        const g=sampleGuard(c.n);
+        const col=c.n>=10&&c.up>=5?(c.up>=10?'#1e8449':'#7d6608'):'#999';
+        return '<div style="font-size:10px;margin:2px 0">'+ball(c.n,18)+' 命中率<b style="color:'+col+'">'+(c.rate*100).toFixed(0)+'%</b>（'+(c.up>=0?'+':'')+c.up.toFixed(0)+'pp vs 基准'+(c.base*100).toFixed(0)+'% · 触发'+c.trig+'次 · 样本'+c.n+'）<span style="color:'+g.cls+'">'+g.lvl+'</span>'+(c.n>=10&&c.up>=5?' ✅纳入评分':c.n>=10?' ⚠️未达提升门槛':' ⚠️样本不足')+'</div>';
+      }).join('')+'</div>':'')+
+    (TZC.rules.length>0?'<div style="margin-top:4px">全历史显著规律（样本≥10且+5pp，按提升排序）：'+TZC.rules.slice(0,6).map(function(r){return ruleCard({p:-1,lbl:'一肖两码·'+r.z,from:r.z+'肖两码',to:r.n,n:r.n,m:r.m,rate:r.rate,base:r.base,conf:r.conf});}).join('')+'</div>':'<div style="font-size:9px;color:#999;margin-top:4px">全历史暂无显著规律（样本≥10且提升≥5pp）【暂不纳入评分】。</div>')+
+    '</div>';
+  // ---- 底部警示 ----
+  h+='<div style="font-size:9px;color:#999;margin-top:2px">⚠️ 距离规律基准=该尾数无条件出现在6正码集合的期占比；覆盖度基准=下期覆盖数无条件分布。'+
+    '所有提升pp均需样本≥30(强)/≥10(中)才纳入评分；无统计证据的规律一律【暂不纳入评分】。</div>';
   return h;
 }
 
@@ -4380,6 +4634,9 @@ function scoreZheng(extraPrefs){
   // ===== 【v10.0730.02移除】上期7码属性比（用户要求去除属性比评分）=====
   // 原代码已注释：lastAll7/attrRatio/isImbalanced/majorityAttr等变量已不使用
 
+  // ===== 【阶段③】尾数条件概率 + 一肖两码剩余模型（v10.0812.03，预测目标=下期6正码，供正码评分加分）=====
+  const TP3=tailProbEngine(),TZC3=twoCodeZodEngine();
+
   return A49.map(n=>{
     let s=0;const rs=[];
 
@@ -4591,6 +4848,10 @@ function scoreZheng(extraPrefs){
       if(zs.wx&&zs.wx.回补&&zs.wx.回补.indexOf(gwx(n))>=0){s+=1.5;rs.push("结构:补"+gwx(n));}
       if(zs.wx&&zs.wx.hot&&zs.wx.hot.indexOf(gwx(n))>=0){s-=0.5;rs.push("结构:"+gwx(n)+"降");}
     }
+
+    // ===== 【阶段③】尾数距离规律 + 一肖两码剩余加分（v10.0812.03）=====
+    var tnb3=tailNumBonus(n,TP3,TZC3);
+    if(tnb3.bonus>0){s+=tnb3.bonus;tnb3.rs.forEach(function(t){rs.push(t);});}
 
     // ===== 返回结果（v10.0730.02：移除属性比majAttr字段）=====
     var isNearTail=hasNearTail;
@@ -7924,6 +8185,9 @@ function renderPosAttr(){
 
   // ===== 【阶段①】条件概率引擎面板（完整分布+样本保护，插在统计排除之前）=====
   h+=buildCondProbEngineBlock();
+
+  // ===== 【阶段③】尾数条件概率引擎面板（上期6正码尾数→下期6正码尾数 · 覆盖度+4档距离+一肖两码剩余）=====
+  h+=buildTailProbBlock();
 
   // ===== 统计排除（提取为独立函数，特码推荐页也调用）=====
   h+=buildStatExcludeBlock();
@@ -13033,6 +13297,14 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
     else if(ptHitCnt===1){s+=1*ptC;b.push({label:'平尾公式',raw:'1号尾数命中',score:'+'+Math.round(ptC*10)/10});}
     else if(ptHitCnt===0&&pingTailPreds.length>=3){s-=1.5*ptC;b.push({label:'平尾公式',raw:'0命中(预测尾:'+pingTailPreds.slice(0,5).join(',')+')',score:'-'+Math.round(1.5*ptC*10)/10});}
   }
+  // 4d. 【阶段③】尾数距离规律 + 一肖两码剩余（v10.0812.03，预测目标=下期6正码，与组合选码正码目标一致）
+  var TP3c=tailProbEngine(),TZC3c=twoCodeZodEngine();
+  var tzB3=0,tzNotes3=[];
+  combo.forEach(function(n){
+    var tb3=tailNumBonus(n,TP3c,TZC3c);
+    if(tb3.bonus>0){tzB3+=tb3.bonus;tzNotes3.push(n+'+'+tb3.bonus.toFixed(1));}
+  });
+  if(tzB3>0){var tzCap=Math.min(tzB3,6);s+=tzCap;b.push({label:'尾数/两码规律',raw:tzNotes3.join(';'),score:'+'+tzCap.toFixed(1)});}
   // 5. 【v10.0728.07新增】正态分布z-score回归分析（从scoreZheng移植）
   var zc=LTP.coef.zscore;
   combo.forEach(function(n){
