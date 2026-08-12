@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.10</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0812.11</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -7761,6 +7761,27 @@ function renderNotOut(){
     h+='<div style="background:#fce4ec;border:2px solid #e91e63;border-radius:8px;padding:6px;margin-top:6px">'+
       '<b style="font-size:10px;color:#c2185b">🚫 未出号码属性排除参考</b>'+
       '<div style="font-size:9px;margin-top:3px">'+noExcl.map(a=>'• '+a).join('<br>')+'</div></div>';
+  }
+  // 【v10.0812.11-#487】近5期未出号码历史对比（翻页查看上一轮）
+  if(DR.length>=7){
+    var notHistN=Math.min(5,DR.length-6);
+    h+='<div class="card" style="border:2px solid #1565c0;background:#e3f2fd;margin-top:8px">'+
+       '<b style="color:#1565c0;font-size:10px">📖 近'+notHistN+'期未出号码历史对比</b>'+
+       '<div style="font-size:9px;color:#555;margin:3px 0">每期开奖时的"近6期未出号码"快照，观察未出号码变化趋势（翻页查看上一轮）</div>';
+    for(var nhi=DR.length-1;nhi>=DR.length-notHistN;nhi--){
+      var winS6=Math.max(0,nhi-5);
+      var d6H=DR.slice(winS6,nhi+1);
+      var a42H=d6H.flatMap(function(d){return [].concat(d.n,[d.t]);});
+      var appH=Array.from(new Set(a42H));
+      var notH=A49.filter(function(n){return appH.indexOf(n)<0;});
+      var drP=DR[nhi].p;
+      h+='<div style="display:flex;align-items:flex-start;gap:6px;margin-top:4px;padding:4px;border:1px solid #bbdefb;border-radius:4px;background:#fff">'+
+         '<span style="font-size:9px;font-weight:bold;color:#1565c0;min-width:56px">#'+drP+'期</span>'+
+         '<span style="font-size:9px;color:#c0392b;min-width:46px">未出'+notH.length+'个</span>'+
+         '<div style="flex:1;display:flex;flex-wrap:wrap;gap:1px">'+notH.map(function(n){return ball(n,14);}).join('')+'</div>'+
+         '</div>';
+    }
+    h+='<div style="font-size:9px;color:#555;margin-top:4px">💡 使用顶部"◀ 上一轮"按钮可查看任意历史轮次的完整未出号码分析（含分类/属性排除）</div></div>';
   }
   return h;
 }
