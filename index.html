@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0814.02</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0814.03</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -8184,48 +8184,82 @@ function renderStats42(){
   const zc6Sorted=ZODS.slice().sort((a,b)=>zc6[b]-zc6[a]);
   const zc15Sorted=ZODS.slice().sort((a,b)=>zc15[b]-zc15[a]);
 
-  // 窗口内未出号码按生肖/五行/波色分类
+  // 【v10.0814.03-#555】特码未出/正码未出 分开计算（用户要求：之前全部是特码，现在要区分正码）
+  var teAPP=Array.from(new Set(winDR.map(function(d){return d.t;}))); // 近6期特码已出(去重)
+  var teNOT=A49.filter(function(n){return teAPP.indexOf(n)<0;});      // 特码未出（号码多→概率分析项多）
+  var teAll=winDR.map(function(d){return d.t;});                       // 近6期特码(含重复)
+  var zmAPP=Array.from(new Set(winDR.flatMap(function(d){return d.n;}))); // 近6期正码已出(去重)
+  var zmNOT=A49.filter(function(n){return zmAPP.indexOf(n)<0;});      // 正码未出
+  var zmAll=winDR.flatMap(function(d){return d.n;});                  // 近6期正码(含重复)
+  // 特码未出按生肖/五行/波色/尾数分类（主视图 — 用户要求"之前全部是特码"）
   const byZ={},byWX={},byWV={},byT={};
-  winNOT.forEach(n=>{
+  teNOT.forEach(function(n){
     if(!byZ[gz(n)])byZ[gz(n)]=[];byZ[gz(n)].push(n);
     if(!byWX[gwx(n)])byWX[gwx(n)]=[];byWX[gwx(n)].push(n);
     if(!byWV[gwv(n)])byWV[gwv(n)]=[];byWV[gwv(n)].push(n);
     if(!byT[gtl(n)])byT[gtl(n)]=[];byT[gtl(n)].push(n);
   });
+  // 正码未出按生肖/五行/波色/尾数分类（辅视图）
+  const zmByZ={},zmByWX={},zmByWV={},zmByT={};
+  zmNOT.forEach(function(n){
+    if(!zmByZ[gz(n)])zmByZ[gz(n)]=[];zmByZ[gz(n)].push(n);
+    if(!zmByWX[gwx(n)])zmByWX[gwx(n)]=[];zmByWX[gwx(n)].push(n);
+    if(!zmByWV[gwv(n)])zmByWV[gwv(n)]=[];zmByWV[gwv(n)].push(n);
+    if(!zmByT[gtl(n)])zmByT[gtl(n)]=[];zmByT[gtl(n)].push(n);
+  });
 
   let h='<div class="sec-title">📊 六合彩号码统计总览</div>';
 
-  // ===== 第一栏：未出号码分类（窗口由顶部横幅全局统一控制）=====
+  // ===== 第一栏：未出号码分类（区分特码/正码/全未出）=====
+  // 【v10.0814.03-#555】teNOT/zmNOT 已在上方定义
   h+='<div class="card" style="border:2px solid #c0392b">'+
-     '<div class="sec-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">📛 未出号码分类（'+(subN===0?'当前近6期':'回退'+subN+'期 · 上一轮')+' · '+winLabel+' · 共'+winNOT.length+'个）'+
-     '<span style="font-size:9px;color:#888;font-weight:normal">回退N期=去掉最近N期开奖，用更早轮次重算；窗口由顶部横幅全局控制，特码/三中三/五连肖同步联动</span></div>'+
+     '<div class="sec-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">📛 未出号码分类（'+(subN===0?'当前近6期':'回退'+subN+'期 · 上一轮')+' · '+winLabel+'）'+
+     '<span style="font-size:9px;color:#888;font-weight:normal">点击下方"上一轮"可回退到之前6期查看历史未出号码</span></div>'+
      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:9px;color:#555">'+
-     '<span>当前窗口：</span>'+
+     '<span>时间窗口：</span>'+
      '<select onchange="setNotSubLatest(parseInt(this.value))" style="font-size:9px;padding:2px 4px;border:1px solid #1a6baa;border-radius:3px">'+
      [0,1,2,3].map(function(k){return '<option value="'+k+'"'+(subN===k?' selected':'')+'>当前近6期'+(k===0?'':('减'+k+'期·上一轮'))+'</option>';}).join('')+
      '</select>'+
-     '<button class="btn btn-blue" style="font-size:10px;padding:3px 10px" onclick="stats42PageNav(-1)"'+(subN===0?' disabled':'')+'>◀ 上一轮(减1期)</button>'+
-     '<button class="btn btn-gray" style="font-size:10px;padding:3px 10px" onclick="stats42PageNav(1)"'+(subN>=winMaxOff()?' disabled':'')+'>下一轮 ▶(加1期)</button>'+
-     '<span style="color:#888">（每一步1期，如210-215→209-214；顶部横幅可快捷跳转）</span></div>'+
-     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">'+
-     '<div style="background:#fee2e2;border-radius:6px;padding:6px"><b style="font-size:10px">🔴 窗口未出'+winNOT.length+'个</b><div style="display:flex;flex-wrap:wrap;gap:1px;margin-top:3px">'+winNOT.map(n=>ball(n,18)).join('')+'</div></div>'+
-     '<div style="background:#e8f5e9;border-radius:6px;padding:6px"><b style="font-size:10px">🟢 窗口已出'+winAPP.length+'个</b><div style="display:flex;flex-wrap:wrap;gap:1px;margin-top:3px">'+winAPP.slice().sort((a,b)=>a-b).map(n=>ball(n,18)).join('')+'</div></div></div>';
+     '<button class="btn btn-blue" style="font-size:10px;padding:3px 10px" onclick="stats42PageNav(-1)"'+(subN===0?' disabled':'')+'>◀ 上一轮</button>'+
+     '<button class="btn btn-gray" style="font-size:10px;padding:3px 10px" onclick="stats42PageNav(1)"'+(subN>=winMaxOff()?' disabled':'')+'>下一轮 ▶</button>'+
+     '<span style="color:#888">（回退=用更早的6期重算未出号码）</span></div>'+
+     // ===== 三栏：特码未出 / 正码未出 / 全未出 =====
+     '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">'+
+     // 特码未出（最多号码）
+     '<div style="background:#fff3e0;border:2px solid #e65100;border-radius:6px;padding:6px">'+
+     '<b style="font-size:10px;color:#e65100">🎯 特码未出 '+teNOT.length+'个</b>'+
+     '<div style="font-size:8px;color:#888;margin:2px 0">近6期'+winDR.length+'个特码中未出现的号码</div>'+
+     '<div style="display:flex;flex-wrap:wrap;gap:1px;margin-top:3px">'+teNOT.map(function(n){return ball(n,16);}).join('')+'</div></div>'+
+     // 正码未出
+     '<div style="background:#e3f2fd;border:2px solid #1565c0;border-radius:6px;padding:6px">'+
+     '<b style="font-size:10px;color:#1565c0">📝 正码未出 '+zmNOT.length+'个</b>'+
+     '<div style="font-size:8px;color:#888;margin:2px 0">近6期'+(winDR.length*6)+'个正码中未出现的号码</div>'+
+     '<div style="display:flex;flex-wrap:wrap;gap:1px;margin-top:3px">'+zmNOT.map(function(n){return ball(n,16);}).join('')+'</div></div>'+
+     // 全未出（正码+特码都没出，即原有逻辑）
+     '<div style="background:#fee2e2;border:2px solid #c0392b;border-radius:6px;padding:6px">'+
+     '<b style="font-size:10px;color:#c0392b">📦 全未出 '+winNOT.length+'个</b>'+
+     '<div style="font-size:8px;color:#888;margin:2px 0">正码和特码都没出现过的号码</div>'+
+     '<div style="display:flex;flex-wrap:wrap;gap:1px;margin-top:3px">'+winNOT.map(function(n){return ball(n,16);}).join('')+'</div></div>'+
+     '</div>'+
+     // 已出总览
+     '<div style="background:#e8f5e9;border-radius:6px;padding:6px;margin-bottom:6px"><b style="font-size:10px;color:#2e7d32">🟢 全部已出 '+winAPP.length+'个</b><div style="display:flex;flex-wrap:wrap;gap:1px;margin-top:3px">'+winAPP.slice().sort(function(a,b){return a-b;}).map(function(n){return ball(n,16);}).join('')+'</div></div>';
 
-  // 按生肖分类未出号（含全部已出概率分析）
+  // 按生肖分类未出号（特码未出 — 用户要求"之前全部是特码"）
   var zodZeroProb=calcZodZeroProb();
   var zodZeroPct=zodZeroProb&&zodZeroProb.total>0?Math.round(zodZeroProb.hit/zodZeroProb.total*100):null;
-  var zeroZods=[]; // 记录未出=0的生肖
+  var zeroZods=[]; // 记录特码未出=0的生肖
   h+='<div class="grid2" style="margin-top:6px">'+
-     '<div style="background:#fff;border-radius:6px;padding:8px"><b style="font-size:10px;color:#1a6baa">按生肖分类（含特码遗漏'+(zodZeroPct!==null?' + 全出概率':'')+'）</b>';
+     '<div style="background:#fff;border-radius:6px;padding:8px"><b style="font-size:10px;color:#e65100">🎯 按生肖分类（特码未出'+(zodZeroPct!==null?' + 全出概率':'')+'）</b>'+
+     '<div style="font-size:8px;color:#888;margin:2px 0">以下号码=近6期特码中未开出的号码，按生肖归类</div>';
   if(zodZeroPct!==null){
-    h+='<div style="font-size:9px;color:#888;margin:3px 0">📊 历史统计：某生肖近6期号码全部已出(未出=0)时，下期该生肖出现概率=<b style="color:'+((zodZeroPct>=60)?'#c0392b':(zodZeroPct>=50?'#e67e22':'#888'))+'">'+zodZeroPct+'%</b>（'+zodZeroProb.hit+'/'+zodZeroProb.total+'次）</div>';
+    h+='<div style="font-size:9px;color:#888;margin:3px 0">📊 历史统计：某生肖近6期42码全部已出(未出=0)时，下期该生肖出现概率=<b style="color:'+((zodZeroPct>=60)?'#c0392b':(zodZeroPct>=50?'#e67e22':'#888'))+'">'+zodZeroPct+'%</b>（'+zodZeroProb.hit+'/'+zodZeroProb.total+'次）</div>';
   }
-  ZODS.forEach(z=>{
+  ZODS.forEach(function(z){
     const nums=byZ[z]||[],cnt=nums.length;
     if(cnt===0)zeroZods.push(z);
     h+='<div style="display:flex;align-items:center;flex-wrap:wrap;gap:3px;margin-top:'+(cnt>0?'5px':'2px')+';opacity:'+(cnt>0?'1':'0.4')+'">'+
        '<span style="min-width:50px;font-size:10px;font-weight:bold">'+EMJ[z]+z+'：</span>'+
-       (cnt>0?nums.map(n=>'<span style="display:inline-flex;flex-direction:column;align-items:center;margin:1px;background:rgba(255,0,0,.08);border-radius:3px;padding:1px 2px">'+ball(n,18)+'<span style="font-size:7px;color:'+((TM2[n]||0)>30?'#c0392b':'#888')+'">遗'+(TM2[n]||0)+'</span></span>').join(''):'<span style="font-size:8px;color:#27ae60;font-weight:bold">✅ 全部已出</span>')+
+       (cnt>0?nums.map(function(n){return '<span style="display:inline-flex;flex-direction:column;align-items:center;margin:1px;background:rgba(255,0,0,.08);border-radius:3px;padding:1px 2px">'+ball(n,18)+'<span style="font-size:7px;color:'+((TM2[n]||0)>30?'#c0392b':'#888')+'">遗'+(TM2[n]||0)+'</span></span>';}).join(''):'<span style="font-size:8px;color:#27ae60;font-weight:bold">✅ 全部已出</span>')+
        '</div>';
   });
   // 全出概率分析面板
@@ -8247,8 +8281,8 @@ function renderStats42(){
   }
   h+='</div>';
 
-  // 按五行/波色分类
-  h+='<div style="background:#fff;border-radius:6px;padding:8px"><b style="font-size:10px;color:#1a6baa">按五行 / 波色分类</b>';
+  // 按五行/波色分类（特码未出）
+  h+='<div style="background:#fff;border-radius:6px;padding:8px"><b style="font-size:10px;color:#e65100">🎯 按五行 / 波色分类（特码未出）</b>';
   ["金","木","水","火","土"].forEach(w=>{
     const arr=byWX[w]||[];
     h+='<div style="display:flex;align-items:center;gap:3px;margin-top:4px">'+
@@ -8266,12 +8300,44 @@ function renderStats42(){
   });
   h+='</div></div></div>';
 
-  // 按尾数分类（含连续遗漏期数）
-  h+='<div style="background:#fff;border-radius:6px;padding:8px;margin-top:6px"><b style="font-size:10px;color:#1a6baa">按尾数分类（近6期出/未出 + 连续遗漏期数）</b>'+
-     '<div style="font-size:9px;color:#888;margin:3px 0">「遗漏N期」= 该尾数连续N期未在7个开奖号码中出现，遗漏越多→下期出现概率越高</div>'+
+  // ===== 【v10.0814.03-#555】正码未出速览（用户要求区分正码和特码）=====
+  h+='<div style="background:#e3f2fd;border:2px solid #1565c0;border-radius:6px;padding:8px;margin-top:6px">'+
+     '<b style="font-size:10px;color:#1565c0">📝 正码未出速览（近6期正码中未开出的号码）</b>'+
+     '<div style="font-size:8px;color:#888;margin:2px 0">以下为正码未出号码分类，与上方特码未出独立分析，不要混淆</div>';
+  // 正码未出生肖
+  h+='<div style="margin-top:4px"><b style="font-size:9px;color:#1565c0">按生肖：</b>';
+  ZODS.forEach(function(z){
+    var nums=zmByZ[z]||[];
+    if(nums.length>0){
+      h+='<span style="margin-right:6px;font-size:9px">'+EMJ[z]+z+'('+nums.length+')'+nums.map(function(n){return ball(n,14);}).join('')+'</span>';
+    }
+  });
+  h+='</div>';
+  // 正码未出五行/波色
+  h+='<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">';
+  ['金','木','水','火','土'].forEach(function(w){
+    var arr=zmByWX[w]||[];
+    h+='<span style="font-size:9px;color:'+WXC[w]+'">'+w+'('+arr.length+')</span>';
+  });
+  ['红','蓝','绿'].forEach(function(v){
+    var arr=zmByWV[v]||[];
+    h+='<span style="font-size:9px;color:'+WVB[v]+'">'+v+'('+arr.length+')</span>';
+  });
+  h+='</div>';
+  // 正码未出尾数
+  h+='<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px">';
+  for(var tt=0;tt<=9;tt++){
+    var tn=zmByT[tt]||[];
+    h+='<span style="font-size:9px;color:'+(tn.length>=3?'#c0392b':'#555')+'">尾'+tt+'('+tn.length+')</span>';
+  }
+  h+='</div></div>';
+
+  // 按尾数分类（特码未出 — 含连续遗漏期数）
+  h+='<div style="background:#fff;border-radius:6px;padding:8px;margin-top:6px"><b style="font-size:10px;color:#e65100">🎯 按尾数分类（特码未出 + 连续遗漏期数）</b>'+
+     '<div style="font-size:9px;color:#888;margin:3px 0">「出」=近6期特码中该尾数开出次数，「未」=特码未出号码中该尾数个数；「遗漏N期」=连续N期未在7个开奖号码中出现该尾数</div>'+
      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:4px">';
   for(let t=0;t<=9;t++){
-    const apCnt=ALL42.filter(n=>gtl(n)===t).length,noList=byT[t]||[];
+    const apCnt=teAll.filter(function(n){return gtl(n)===t;}).length,noList=byT[t]||[];
     const streak=tailStreak[t]||0;
     const streakColor=streak>=8?'#c0392b':streak>=5?'#e67e22':streak>=3?'#f39c12':'#888';
     const streakBg=streak>=8?'#fff3e0':streak>=5?'#fff8e1':'';
@@ -8293,23 +8359,23 @@ function renderStats42(){
        ' → 这些尾数多期未出，下期开出概率较高，可重点关注</div>';
   }
   h+='</div>';
-  const zeroTails=[];for(let t=0;t<=9;t++)if(ALL42.filter(n=>gtl(n)===t).length===0)zeroTails.push(t);
-  const maxNoZ=Object.keys(byZ).sort((a,b)=>(byZ[b]||[]).length-(byZ[a]||[]).length)[0];
-  h+=concl('未出最多生肖：'+(maxNoZ?EMJ[maxNoZ]+maxNoZ+'('+(byZ[maxNoZ]||[]).length+'个)':'无')+'。'+(zeroTails.length>0?'当前窗口完全未出尾数：'+zeroTails.map(t=>'尾'+t).join('、')+'→优先考虑。':'各尾均有出现。'));
+  const zeroTails=[];for(let t=0;t<=9;t++)if(teAll.filter(function(n){return gtl(n)===t;}).length===0)zeroTails.push(t);
+  const maxNoZ=Object.keys(byZ).sort(function(a,b){return (byZ[b]||[]).length-(byZ[a]||[]).length;})[0];
+  h+=concl('【特码未出】最多生肖：'+(maxNoZ?EMJ[maxNoZ]+maxNoZ+'('+(byZ[maxNoZ]||[]).length+'个)':'无')+'。'+(zeroTails.length>0?'特码完全未出尾数：'+zeroTails.map(function(t){return '尾'+t;}).join('、')+'→优先考虑。':'各尾均有特码开出。'));
 
   // ===== 【v10.0802.04】绝顶规律：未出数量→特码命中率(按彩种独立) =====
   h+=renderAttrOmitHit();
 
-  // ===== 未出号码属性排除参考 =====
+  // ===== 特码未出号码属性排除参考（用户要求：之前全部指特码）=====
   var exclAdvices=[];
-  var exclTotal=winNOT.length;
+  var exclTotal=teNOT.length;
   // 波色排除参考
   var wvNot={};['红','蓝','绿'].forEach(function(v){wvNot[v]=(byWV[v]||[]).length;});
   var wvAll={红:26,蓝:12,绿:10}; // 49码中各波色总数
   var wvNotPct={};['红','蓝','绿'].forEach(function(v){wvNotPct[v]=Math.round(wvNot[v]/wvAll[v]*100);});
   var wvMaxNot=Object.keys(wvNot).sort(function(a,b){return wvNot[b]-wvNot[a];})[0];
   if(wvNot[wvMaxNot]>=exclTotal*0.5){
-    exclAdvices.push({attr:'波色='+wvMaxNot,cnt:wvNot[wvMaxNot],pct:wvNotPct[wvMaxNot],advice:'未出号码中'+wvMaxNot+'色占比'+wvNotPct[wvMaxNot]+'%（'+wvNot[wvMaxNot]+'/'+wvAll[wvMaxNot]+'），'+wvMaxNot+'色号码整体偏冷，可考虑排除部分'+wvMaxNot+'色'});
+    exclAdvices.push({attr:'波色='+wvMaxNot,cnt:wvNot[wvMaxNot],pct:wvNotPct[wvMaxNot],advice:'特码未出号码中'+wvMaxNot+'色占比'+wvNotPct[wvMaxNot]+'%（'+wvNot[wvMaxNot]+'/'+wvAll[wvMaxNot]+'），'+wvMaxNot+'色号码整体偏冷，可考虑排除部分'+wvMaxNot+'色'});
   }
   // 五行排除参考
   var wxNot={};['金','木','水','火','土'].forEach(function(w){wxNot[w]=(byWX[w]||[]).length;});
@@ -8317,26 +8383,26 @@ function renderStats42(){
   var wxNotPct={};['金','木','水','火','土'].forEach(function(w){wxNotPct[w]=Math.round(wxNot[w]/wxAll[w]*100);});
   var wxMaxNot=Object.keys(wxNot).sort(function(a,b){return wxNot[b]-wxNot[a];})[0];
   if(wxNot[wxMaxNot]>=exclTotal*0.35){
-    exclAdvices.push({attr:'五行='+wxMaxNot,cnt:wxNot[wxMaxNot],pct:wxNotPct[wxMaxNot],advice:'未出号码中'+wxMaxNot+'行占比'+wxNotPct[wxMaxNot]+'%（'+wxNot[wxMaxNot]+'/'+wxAll[wxMaxNot]+'），'+wxMaxNot+'行号码集中未出，可考虑排除'+wxMaxNot+'行'});
+    exclAdvices.push({attr:'五行='+wxMaxNot,cnt:wxNot[wxMaxNot],pct:wxNotPct[wxMaxNot],advice:'特码未出号码中'+wxMaxNot+'行占比'+wxNotPct[wxMaxNot]+'%（'+wxNot[wxMaxNot]+'/'+wxAll[wxMaxNot]+'），'+wxMaxNot+'行号码集中未出，可考虑排除'+wxMaxNot+'行'});
   }
   // 尾数排除参考
   var tailNot={};for(var te=0;te<=9;te++){tailNot[te]=(byT[te]||[]).length;}
-  var tailAll={};for(var te2=0;te2<=9;te2++){tailAll[te2]=ALL42.filter(function(n){return gtl(n)===te2;}).length;}
+  var tailAll={};for(var te2=0;te2<=9;te2++){tailAll[te2]=teAll.filter(function(n){return gtl(n)===te2;}).length;}
   var tailMaxNot=Object.keys(tailNot).sort(function(a,b){return tailNot[b]-tailNot[a];})[0];
   if(tailNot[tailMaxNot]>=exclTotal*0.2){
-    exclAdvices.push({attr:'尾数='+tailMaxNot,cnt:tailNot[tailMaxNot],pct:Math.round(tailNot[tailMaxNot]/tailAll[tailMaxNot]*100),advice:'未出号码中尾'+tailMaxNot+'占比偏高（'+tailNot[tailMaxNot]+'/'+tailAll[tailMaxNot]+'），尾'+tailMaxNot+'整体偏冷，可考虑排除尾'+tailMaxNot});
+    exclAdvices.push({attr:'尾数='+tailMaxNot,cnt:tailNot[tailMaxNot],pct:Math.round(tailNot[tailMaxNot]/tailAll[tailMaxNot]*100),advice:'特码未出号码中尾'+tailMaxNot+'占比偏高（'+tailNot[tailMaxNot]+'/'+tailAll[tailMaxNot]+'），尾'+tailMaxNot+'整体偏冷，可考虑排除尾'+tailMaxNot});
   }
   // 生肖排除参考
   var zodNot={};ZODS.forEach(function(z){zodNot[z]=(byZ[z]||[]).length;});
   var zodAll={};ZODS.forEach(function(z){zodAll[z]=ZM[z].length;});
   var zodMaxNot=Object.keys(zodNot).sort(function(a,b){return zodNot[b]-zodNot[a];})[0];
   if(zodNot[zodMaxNot]>=4){
-    exclAdvices.push({attr:'生肖='+zodMaxNot,cnt:zodNot[zodMaxNot],pct:Math.round(zodNot[zodMaxNot]/zodAll[zodMaxNot]*100),advice:'未出号码中'+zodMaxNot+'('+zodNot[zodMaxNot]+'/'+zodAll[zodMaxNot]+')占比最高，'+zodMaxNot+'号码整体偏冷，可考虑排除'+zodMaxNot});
+    exclAdvices.push({attr:'生肖='+zodMaxNot,cnt:zodNot[zodMaxNot],pct:Math.round(zodNot[zodMaxNot]/zodAll[zodMaxNot]*100),advice:'特码未出号码中'+zodMaxNot+'('+zodNot[zodMaxNot]+'/'+zodAll[zodMaxNot]+')占比最高，'+zodMaxNot+'号码整体偏冷，可考虑排除'+zodMaxNot});
   }
   // 渲染排除参考面板
   h+='<div style="background:#fce4ec;border:2px solid #e91e63;border-radius:8px;padding:8px;margin-top:8px">'+
-    '<b style="font-size:11px;color:#c2185b">🚫 未出号码属性排除参考</b>'+
-    '<div style="font-size:9px;color:#666;margin:2px 0">分析未出号码的属性集中度，过度集中的属性→整体偏冷→可考虑排除</div>';
+    '<b style="font-size:11px;color:#c2185b">🚫 特码未出号码属性排除参考</b>'+
+    '<div style="font-size:9px;color:#666;margin:2px 0">分析<b>特码</b>未出号码的属性集中度，过度集中的属性→整体偏冷→可考虑排除（正码未出见上方速览）</div>';
   if(exclAdvices.length>0){
     h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">';
     exclAdvices.forEach(function(a){
@@ -8418,22 +8484,23 @@ function renderStats42(){
      (notZods15.length>0?'❄️ 完全未开特码生肖：'+notZods15.map(z=>EMJ[z]+z).join('、')+'→需关注是否庄家长期压住或即将补出。':'所有生肖均有特码开出。')+
      '对比近6期42码生肖次数，可判断庄家动向：若某肖42码热但特码冷，说明庄家在正码中放该肖但特码压住。')+'</div>';
 
-  // ===== 第四栏：近6期冷热号速览 =====
-  const hot6=APP.slice().sort((a,b)=>{
-    return (ALL42.filter(n=>n===b).length)-(ALL42.filter(n=>n===a).length);
+  // ===== 第四栏：近6期特码冷热号速览（用户要求：之前全部指特码）=====
+  var teHot=teAPP.slice().sort(function(a,b){
+    return (teAll.filter(function(n){return n===b;}).length)-(teAll.filter(function(n){return n===a;}).length);
   });
-  h+='<div class="card" style="border:2px solid #1a6baa;margin-top:10px">'+
-     '<div class="sec-title">🌡️ 近6期冷热号速览</div>'+
+  h+='<div class="card" style="border:2px solid #e65100;margin-top:10px">'+
+     '<div class="sec-title">🌡️ 近6期特码冷热号速览</div>'+
+     '<div style="font-size:9px;color:#888;margin-bottom:6px">基于特码(每期1个)统计，热号=近6期特码已出的号码，冷号=特码未出的号码</div>'+
      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
-     '<div style="background:#fff5f5;border-radius:6px;padding:8px"><b style="font-size:10px;color:#c0392b">🔥 热号（近6期已出，按频次排序）</b>'+
+     '<div style="background:#fff5f5;border-radius:6px;padding:8px"><b style="font-size:10px;color:#c0392b">🔥 特码热号（近6期特码已出 '+teAPP.length+'个，按频次排序）</b>'+
      '<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:4px">'+
-     hot6.map(n=>{
-       const cnt=ALL42.filter(x=>x===n).length;
-       return '<div style="text-align:center;margin:1px">'+ball(n,20)+'<div style="font-size:7px;color:'+(cnt>=3?'#c0392b':'#555')+'">'+cnt+'次</div></div>';
+     teHot.map(function(n){
+       var cnt=teAll.filter(function(x){return x===n;}).length;
+       return '<div style="text-align:center;margin:1px">'+ball(n,20)+'<div style="font-size:7px;color:'+(cnt>=2?'#c0392b':'#555')+'">'+cnt+'次</div></div>';
      }).join('')+'</div></div>'+
-     '<div style="background:#f0f7ff;border-radius:6px;padding:8px"><b style="font-size:10px;color:#1a6baa">❄️ 冷号（近6期未出，共'+NOT.length+'个）</b>'+
+     '<div style="background:#f0f7ff;border-radius:6px;padding:8px"><b style="font-size:10px;color:#1a6baa">❄️ 特码冷号（近6期特码未出 '+teNOT.length+'个）</b>'+
      '<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:4px">'+
-     NOT.map(n=>'<div style="text-align:center;margin:1px">'+ball(n,18,true)+'</div>').join('')+'</div></div>'+
+     teNOT.map(function(n){return '<div style="text-align:center;margin:1px">'+ball(n,18,true)+'</div>';}).join('')+'</div></div>'+
      '</div></div>';
 
   return h;
