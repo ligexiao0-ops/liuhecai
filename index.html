@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0814.04</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0814.05</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -578,6 +578,8 @@ function refreshFromServer(){
     if(newFromServer.length>0){
       newFromServer.forEach(function(sr){DR.push(sr);});
       DR.sort(function(a,b){return a.p-b.p;});
+      // 【v10.0814.05-#557】合并云端数据后立即落盘，确保跨设备/刷新后数据自愈（不再仅依赖会话内存）
+      try{var cfg2=LOTTERIES[CUR_LOT];localStorage.setItem(cfg2.dr_key,JSON.stringify(DR));localStorage.setItem(cfg2.dr_key+'_safe',JSON.stringify(DR));}catch(e){}
     }
     // 强制推送所有本地数据到服务器（修正云端错误数据）
     if(sb&&DR.length>0){
@@ -589,12 +591,14 @@ function refreshFromServer(){
       });
       Promise.all(pushPromises).then(function(){
         SYNC_STATUS='synced';SYNC_MSG='';updateSyncUI();
-        // 安全清理：仅当服务器数据远超过本地（相差>10期，可能是测试/错误数据）时才清理
+        // 【v10.0814.05-#557】安全清理：只删除明显异常的超前期号（base_p+50 之外），绝不删除用户真实录入的近期数据
+        // 旧逻辑用 localLastP+10 作阈值，一旦本地DR被截断就会误删用户真实开奖数据，造成"数据会乱/被删"
         if(sb&&serverData.length>0){
+          var validMax=LOTTERIES[CUR_LOT].base_p+50;
           var serverLastP=serverData[serverData.length-1].p;
-          if(serverLastP>localLastP+10){
-            sb.from('lottery_records').delete().eq('lot_type',CUR_LOT).gt('period',localLastP+10).then(function(){
-              console.log('Cleaned up anomalous future periods for',CUR_LOT,'beyond',localLastP+10);
+          if(serverLastP>validMax){
+            sb.from('lottery_records').delete().eq('lot_type',CUR_LOT).gt('period',validMax).then(function(){
+              console.log('Cleaned up anomalous future periods beyond',validMax);
             }).catch(function(e){console.warn('Cleanup failed:',e);});
           }
         }
@@ -2677,10 +2681,17 @@ function scoreZhengAI(){
 }
 // NOTE: loadData() is sync now (defined earlier), refreshFromServer() runs in background
 
-function saveData(){if(!_isAdmin)return;
-  // 【v10.0805.03】窗口模式下DR被临时截断，此时绝不能落盘（否则会丢失最近N期开奖数据）
+function saveData(){
+  // 【v10.0814.05-#557】数据录入与权限解耦：所有者（含访问码登录的日常使用）的录入/排除/修改
+  // 必须始终落盘并同步云端，不再被 _isAdmin 会话门控。否则访问码登录或会话过期时 saveData 静默
+  // 返回，导致开奖录入、排除设定全部丢失，数据只剩 INIT_DR 基期（表现为"只剩221期/改了不变/刷新即丢"）。
   if(__winActive){console.warn('[窗口回退模式] 已跳过saveData，防止截断后的DR覆盖真实数据');return;}
-  const cfg=LOTTERIES[CUR_LOT];localStorage.setItem(cfg.up_key,JSON.stringify(UP));localStorage.setItem(cfg.dr_key,JSON.stringify(DR));try{localStorage.setItem(cfg.dr_key+'_safe',JSON.stringify(DR));}catch(e){}syncAllToServer();}
+  const cfg=LOTTERIES[CUR_LOT];
+  try{localStorage.setItem(cfg.up_key,JSON.stringify(UP));}catch(e){}
+  try{localStorage.setItem(cfg.dr_key,JSON.stringify(DR));}catch(e){}
+  try{localStorage.setItem(cfg.dr_key+'_safe',JSON.stringify(DR));}catch(e){}
+  syncAllToServer();
+}
 function resetData(){if(!requireAdmin())return;if(!confirm('确认恢复'+LOTTERIES[CUR_LOT].name+'初始数据？'))return;const cfg=LOTTERIES[CUR_LOT];localStorage.removeItem(cfg.dr_key);localStorage.removeItem(cfg.up_key);loadData();calcDerived();render();}
 function switchLottery(lot){
   CUR_LOT=lot;
@@ -5332,7 +5343,8 @@ function mkNLBox(key,placeholder,applyFnName){
 }
 function mkPoolBox(key,label,placeholder){
   const pool=UP[key]||[];
-  const exclKey=key.replace('_pick_pool','_excl_pool');
+  // 【v10.0814.05-#557】排除池文本框直接写入评分读取的权威字段 _excl_nums（原 _excl_pool 评分未读取，导致"粘贴排除仍被选中/评第一"）
+  const exclKey=key.replace('_pick_pool','_excl_nums');
   const exclPool=UP[exclKey]||[];
   return '<div class="grid2" style="gap:6px;margin:8px 0">'+
     '<div style="background:#f0fff4;border:2px dashed #1e8449;border-radius:8px;padding:10px">'+
