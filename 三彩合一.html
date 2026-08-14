@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0813.02</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0814.01</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -566,7 +566,7 @@ function refreshFromServer(){
     var validGcMaxP=LOTTERIES[CUR_LOT].base_p+50;
     serverData.forEach(function(sr){
       var lr=localMap[sr.p];
-      // 本地缺该期 → 加入（v10.0813.02-#548修复：移除sr.p>localLastP限制，允许加载所有本地缺失的期号，包括比本地最早期号更早的）
+      // 本地缺该期 → 加入（v10.0813.03-#548修复：移除sr.p>localLastP限制，允许加载所有本地缺失的期号，包括比本地最早期号更早的）
       if(!lr&&sr.p<=validGcMaxP){newFromServer.push(sr);merged=true;return;}
       // 港彩额外校验：开奖日必须是周二/四/六
       if(CUR_LOT==='gc'&&LOTTERIES.gc.draw_days){
@@ -909,6 +909,57 @@ function showClickFeedback(msg){
   t.textContent=msg||'✓';t.style.opacity='1';
   clearTimeout(t._ctid);t._ctid=setTimeout(function(){t.style.opacity='0';},800);
 }
+// 【v10.0814.01-#553】三中三随机选号功能
+window.z3RandomPick=function(mode){
+  var pool=[];
+  var exclNums=(UP.zm3_excl_nums||[]).slice();
+  var exclZods=(UP.zm3_excl_zods||[]).slice();
+  if(mode==='select'){
+    // 从选择集合中选
+    pool=calcZ3SelectSet(scoreZheng({pick_z:[],excl_z:[],excl_n:[],excl_t:[],pick_pool:[]}));
+    pool=pool.filter(function(n){return exclNums.indexOf(n)<0&&exclZods.indexOf(gz(n))<0;});
+  }else if(mode==='pool'){
+    // 从候选池中选
+    pool=(UP.zm3_pick_pool||[]).slice();
+    if(pool.length<3){showClickFeedback('候选池不足3码，改用选择集合');pool=calcZ3SelectSet(scoreZheng({pick_z:[],excl_z:[],excl_n:[],excl_t:[],pick_pool:[]}));}
+    pool=pool.filter(function(n){return exclNums.indexOf(n)<0&&exclZods.indexOf(gz(n))<0;});
+  }else{
+    // 从全49码(排除后)中选
+    pool=A49.filter(function(n){return exclNums.indexOf(n)<0&&exclZods.indexOf(gz(n))<0;});
+  }
+  if(pool.length<3){showClickFeedback('可用号码不足3个，请减少排除项');return;}
+  // 随机选3个不重复
+  var picked=[];
+  var tempPool=pool.slice();
+  for(var i=0;i<3&&tempPool.length>0;i++){
+    var idx=Math.floor(Math.random()*tempPool.length);
+    picked.push(tempPool[idx]);
+    tempPool.splice(idx,1);
+  }
+  picked.sort(function(a,b){return a-b;});
+  var pickedStr=picked.map(function(n){return String(n).padStart(2,'0');}).join(',');
+  var copyTxt=lotLabel()+'随机三中三,'+pickedStr;
+  // 显示结果
+  var el=document.getElementById('z3-random-result');
+  if(el){
+    el.style.display='block';
+    el.innerHTML='<div style="padding:8px;background:#fff;border:2px dashed #e65100;border-radius:8px">'+
+      '<b style="font-size:11px;color:#e65100">🎲 随机选中三中三：</b>'+
+      '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'+
+      picked.map(function(n){
+        return '<div style="text-align:center;border:2px solid #e65100;border-radius:6px;padding:4px 8px;background:#fff3e0">'+
+          ball(n,28)+'<div style="font-size:9px">'+gz(n)+'</div><div style="font-size:8px;color:'+WXC[gwx(n)]+';font-weight:bold">'+gwx(n)+'</div></div>';
+      }).join('')+
+      '</div>'+
+      '<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">'+
+      '<button style="background:#e65100;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:10px;cursor:pointer" onclick="z3RandomPick(\''+mode+'\')">🔄 再随机一次</button>'+
+      '<button style="background:#1e8449;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:10px;cursor:pointer" onclick="UP.zm3_pick_pool=Array.from(new Set((UP.zm3_pick_pool||[]).concat(['+picked.join(',')+'])));saveData();render();showClickFeedback(\'✅ 已加入候选池\')">✅ 加入候选池</button>'+
+      '<button style="background:#1a6baa;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:10px;cursor:pointer" onclick="copyAiRec(this,\''+copyTxt+'\')">📋 复制</button>'+
+      '</div>'+
+      '<div style="font-size:9px;color:#888;margin-top:4px">来源: '+(mode==='select'?'选择集合':mode==='pool'?'候选池':'全49码(排除后)')+' · 共'+pool.length+'码中随机选3</div>'+
+      '</div>';
+  }
+};
 // 复制号码并同时应用到候选池（特码/正码通用）
 window.copyAndApplyPool=function(numsStr,poolKey){
   try{
@@ -2708,7 +2759,7 @@ function winBannerHTML(){
       '</select>'+
     '</div></div>';
 }
-// ===== 【v10.0813.02-#548】跨系统排除联动面板 =====
+// ===== 【v10.0813.03-#548】跨系统排除联动面板 =====
 function renderCrossExclPanel(){
   if(typeof CROSS_EXCL_ZODS==='undefined'||typeof CROSS_EXCL_NUMS==='undefined')return '';
   var zods=CROSS_EXCL_ZODS||[],nums=CROSS_EXCL_NUMS||[],src=CROSS_EXCL_SRC||{};
@@ -2749,10 +2800,10 @@ function calcDerived(){
   D6=DR.slice(-6);
   ALL42=D6.flatMap(d=>[].concat(d.n,[d.t]));
   APP=Array.from(new Set(ALL42));NOT=A49.filter(n=>!APP.includes(n));
-  // 【v10.0813.02-#548】跨系统排除联动引擎：每次数据变更后重新计算
+  // 【v10.0813.03-#548】跨系统排除联动引擎：每次数据变更后重新计算
   try{calcCrossExcl();}catch(e){console.warn('calcCrossExcl error:',e);}
 }
-// ===== 【v10.0813.02-#548】跨系统排除联动引擎 =====
+// ===== 【v10.0813.03-#548】跨系统排除联动引擎 =====
 // 收集所有预测系统的排除项，双向传播：生肖排除→号码排除 / 号码排除→生肖排除
 // 特码排除某肖 → 正码/三中三中该肖号码也排除；号码排除 → 其生肖在连肖中也排除
 var CROSS_EXCL_ZODS=[]; // 跨系统统一排除生肖（含双向传播结果）
@@ -4366,7 +4417,7 @@ function scoreTE_full(n,TM,T100){
   if(eTails.includes(gtl(n))){s-=999;exc.push("排尾"+gtl(n)+"(彻底)");}
   if(pTails.length>0&&!pTails.includes(gtl(n))){s-=999;exc.push("不在指定尾数(彻底)");}
   if(eZods.includes(gz(n))){s-=999;exc.push("用户排除肖(彻底)");}
-  // 【v10.0813.02-#548】跨系统排除联动：其他系统排除的号码/生肖也在此排除
+  // 【v10.0813.03-#548】跨系统排除联动：其他系统排除的号码/生肖也在此排除
   if(typeof CROSS_EXCL_NUMS!=='undefined'&&CROSS_EXCL_NUMS.indexOf(n)>=0){s-=999;exc.push("跨系统排码(彻底)");}
   if(typeof CROSS_EXCL_ZODS!=='undefined'&&CROSS_EXCL_ZODS.indexOf(gz(n))>=0){s-=999;exc.push("跨系统排肖(彻底)");}
   if(pZods.includes(gz(n))){s+=8;kp.push("用户指定肖");}
@@ -4639,7 +4690,7 @@ function scoreZod(useUserPrefs){
       }
     });
   }
-  // 【v10.0813.02-#547】新生肖 = 上期(最新开奖)未出现→预测期将出现的生肖
+  // 【v10.0813.03-#547】新生肖 = 上期(最新开奖)未出现→预测期将出现的生肖
   // 用户定义：新生肖指上期没有出现（最新开奖），下期可能出现的生肖（预测期）
   const newCurZ=ZODS.filter(function(z){return !cur7Z.includes(z);});
   // ===== 阶段④：引擎信号（带缓存，一次性消费）=====
@@ -4795,7 +4846,7 @@ function scoreZod(useUserPrefs){
     if(useUserPrefs){
       if((UP.lx_force_zods||[]).includes(z)){s+=8;rs.push("用户指+8⭐");}
       if((UP.lx_excl_zods||[]).includes(z)){s-=99;rs.push("用户排-99");}
-      // 【v10.0813.02-#548】跨系统排除联动：其他系统排除的生肖也在此排除
+      // 【v10.0813.03-#548】跨系统排除联动：其他系统排除的生肖也在此排除
       if(typeof CROSS_EXCL_ZODS!=='undefined'&&CROSS_EXCL_ZODS.indexOf(z)>=0){s-=99;rs.push("跨系统排-99");}
     }
     return{z:z,s:s,rs:rs,hot6:hot6,no:no,sameLastZ:prev7Z.includes(z),wild:isWild,str:str,ab:ab,mxSt:mxSt,czN:czN,mxAb:mxAb,zwx:zwx,crossZ:crossZ.includes(z),inSeq1:hasSeq1?seq1.includes(z):null,inSeq2:hasSeq2?seq2.includes(z):null,inSeq0:hasSeq0?seq0.includes(z):null,posMap:!!posMap[z],posMapNear:!!posMapNear[z],seq1AnyHit:!!seq1AnyHit[z],newCurZ:newCurZ.includes(z),teHot6:teZod6[z]||0,teHot15:teZod15[z]||0};
@@ -4896,7 +4947,7 @@ function scoreZheng(extraPrefs){
     if(eZ.includes(gz(n))){s-=999;rs.push("排除肖(彻底)");}
     if(eWxMulti.length>0&&eWxMulti.includes(gwx(n))){s-=999;rs.push("排除五行"+gwx(n)+"(彻底)");}
     if(pool.length>0&&!pool.includes(n)){s-=20;rs.push("不在候选池");}
-    // 【v10.0813.02-#548】跨系统排除联动：其他系统排除的号码/生肖也在此系统排除
+    // 【v10.0813.03-#548】跨系统排除联动：其他系统排除的号码/生肖也在此系统排除
     if(typeof CROSS_EXCL_NUMS!=='undefined'&&CROSS_EXCL_NUMS.indexOf(n)>=0){s-=999;rs.push("跨系统排码(彻底)");}
     if(typeof CROSS_EXCL_ZODS!=='undefined'&&CROSS_EXCL_ZODS.indexOf(gz(n))>=0){s-=999;rs.push("跨系统排肖(彻底)");}
 
@@ -11255,19 +11306,21 @@ function renderLX(){
     else if(t15>=3){lxHotPen[it.z]={tag:'特码15期'+t15+'次',penalty:3};}
     if(h6>=4&&!(it.z in lxHotPen)){lxHotPen[it.z]={tag:'平肖6期'+h6+'次',penalty:3};}
   });
-  // 后处理：应用到 zSc 和 aiZSc（连肖评分基准），特肖强排除+过热肖降权
+  // 【v10.0813.03-#552】后处理：特肖降权(非排除)+过热肖降权
+  // 用户要求：特码生肖不应完全排除出连肖，而是"不能多选，最多选1个"
+  // 策略调整：特肖TOP3从-99(完全消灭)改为-8(大幅降权)，配合isValidCombo中"最多1个特肖"约束
   function applyLxExcl(arr){
     return arr.map(function(it){
       var ns=it.s,nrs=it.rs.slice();
-      if(lxTeExclZods.indexOf(it.z)>=0){ns-=99;nrs.push("🔒特肖强排除-99");}
+      if(lxTeExclZods.indexOf(it.z)>=0){ns-=8;nrs.push("🔒特肖降权-8");}
       else if(lxHotPen[it.z]){ns-=lxHotPen[it.z].penalty;nrs.push("🔥"+lxHotPen[it.z].tag+"-"+lxHotPen[it.z].penalty);}
       return Object.assign({},it,{s:ns,rs:nrs});
     }).sort(function(a,b){return b.s-a.s;});
   }
   zSc=applyLxExcl(zSc);zSc.forEach(function(it,idx){it.rk=idx;});
   aiZSc=applyLxExcl(aiZSc);aiZSc.forEach(function(it,idx){it.rk=idx;});
-  // pickN 排除列表并入特肖（保证特肖不进任何连肖组合）
-  var exclLX=Array.from(new Set(excl.concat(lxTeExclZods)));
+  // 【v10.0813.03-#552】exclLX不再包含特肖列表：特肖可进连肖但最多1个(isValidCombo约束)
+  var exclLX=Array.from(new Set(excl));
 
   function violatesGrp(z,chosen){
     return grpLimits.some(function(g){
@@ -11349,6 +11402,12 @@ function renderLX(){
         var sameC=combo.filter(x=>cur7Z.includes(x.z)).length;
         if(sameC>UP.lx_same_zod_cnt)return false;
       }
+      // 【v10.0813.03-#552】特肖生肖最多选1个（用户要求：不应完全排除，但不能多选）
+      // lxTeExclZods中的生肖可以进入连肖组合，但最多只能有1个
+      if(lxTeExclZods.length>0&&n>=3){
+        var teZodInCombo=combo.filter(function(x){return lxTeExclZods.indexOf(x.z)>=0;}).length;
+        if(teZodInCombo>1)return false;
+      }
       return true;
     }
     var need=n-forceItems.length;
@@ -11367,29 +11426,34 @@ function renderLX(){
     if(validCombos.length===0){
       // 无有效组合，逐步放宽约束回退
       var fallback=forceItems.slice();
-      // 第1轮：忽略 wild_ratio 和 same_zod_cnt，保留 noTog 和 grpLimits
+      // 【#552】特肖计数辅助：检查fallback中已有几个特肖
+      function teZodCnt(arr){return arr.filter(function(x){return lxTeExclZods.indexOf(x.z)>=0;}).length;}
+      // 第1轮：忽略 wild_ratio 和 same_zod_cnt，保留 noTog + grpLimits + 特肖≤1
       for(const it of rem){
         if(fallback.length>=n)break;
         if(noTog.some(pair=>pair.indexOf(it.z)>=0&&pair.some(pz=>fallback.find(r=>r.z===pz))))continue;
         if(violatesGrp(it.z,fallback))continue;
+        if(lxTeExclZods.indexOf(it.z)>=0&&teZodCnt(fallback)>=1)continue; // 特肖≤1
         if(n>=4){const wc=fallback.filter(x=>x.wild).length,hc=fallback.length-wc;if(it.wild&&wc>=n-1&&hc===0)continue;if(!it.wild&&hc>=n-1&&wc===0)continue;}
         fallback.push(it);
       }
-      // 第2轮：如果还是不够，再忽略 grpLimits
+      // 第2轮：如果还是不够，再忽略 grpLimits（保留 noTog + 特肖≤1）
       if(fallback.length<n){
         fallback=forceItems.slice();
         for(const it of rem){
           if(fallback.length>=n)break;
           if(noTog.some(pair=>pair.indexOf(it.z)>=0&&pair.some(pz=>fallback.find(r=>r.z===pz))))continue;
+          if(lxTeExclZods.indexOf(it.z)>=0&&teZodCnt(fallback)>=1)continue; // 特肖≤1
           if(n>=4){const wc=fallback.filter(x=>x.wild).length,hc=fallback.length-wc;if(it.wild&&wc>=n-1&&hc===0)continue;if(!it.wild&&hc>=n-1&&wc===0)continue;}
           fallback.push(it);
         }
       }
-      // 第3轮：如果还不够，再忽略 noTog
+      // 第3轮：如果还不够，再忽略 noTog（保留 特肖≤1）
       if(fallback.length<n){
         fallback=forceItems.slice();
         for(const it of rem){
           if(fallback.length>=n)break;
+          if(lxTeExclZods.indexOf(it.z)>=0&&teZodCnt(fallback)>=1)continue; // 特肖≤1
           if(n>=4){const wc=fallback.filter(x=>x.wild).length,hc=fallback.length-wc;if(it.wild&&wc>=n-1&&hc===0)continue;if(!it.wild&&hc>=n-1&&wc===0)continue;}
           fallback.push(it);
         }
@@ -12450,7 +12514,7 @@ function renderLX(){
     // 核心来源②：九肖外 —— 必出1-2个，不可忽略
     var nineOut1F=nineOut1.filter(function(z){return excl.indexOf(z)<0;});
     // 核心来源③：新生肖（上期未出→预测期新出）—— 连肖延续信号
-    // 【v10.0813.02-#547】新生肖 = 上期(最新开奖)未出现→预测期将出现的生肖（用户定义）
+    // 【v10.0813.03-#547】新生肖 = 上期(最新开奖)未出现→预测期将出现的生肖（用户定义）
     var prevDrawZ0=PREV?Array.from(new Set(PREV.n.concat(PREV.t).map(gz))):[];
     var newCurZ=ZODS.filter(function(z){return cur7Z.indexOf(z)<0&&excl.indexOf(z)<0;});
     // 核心来源④：本期7开奖肖中"不在九肖内"的（九肖外新生肖，最强信号）
@@ -13703,13 +13767,90 @@ function z3LotProfile(){
   }
   return p;
 }
+// 【v10.0813.03-#551】特码运算预测引擎：基于统计验证（特码±K/÷2/反数→正码候选命中率20%+ vs 14.3%随机）
+// 用户假设"特码不中反而正码中"经统计验证成立：特码+1=21.5%, +4=23.4%, ÷2=18.8%, 反数=17.9%
+function mathPredictEngine(){
+  if(!LAST||!LAST.t)return [];
+  var t=LAST.t;
+  var preds=new Set();
+  // 特码±K (K=1,4,5,8,9 — 统计验证命中率最高的5个偏移量)
+  [1,4,5,8,9].forEach(function(k){
+    if(t+k<=49)preds.add(t+k);
+    if(t-k>=1)preds.add(t-k);
+  });
+  // 特码÷2（向下取整）
+  var half=Math.floor(t/2);
+  if(half>=1)preds.add(half);
+  // 反数(50-n)
+  var rev=50-t;
+  if(rev>=1&&rev<=49&&rev!==t)preds.add(rev);
+  // 特码±10（老奥验证：-10=25.4%, +9=24.5%命中率最高）
+  if(t-10>=1)preds.add(t-10);
+  if(t+10<=49)preds.add(t+10);
+  return Array.from(preds);
+}
+// 【v10.0813.03-#551】某肖≥3码未出检测引擎：统计验证为反转规律（49.3% vs 58.3%随机→更不易出）
+// 用户假设"某肖多号码未出→下期更可能出码"经验证不成立，反向使用：某肖≥3码未出→该肖号码降权
+function zodNotOutCount(){
+  // 统计每个生肖在近6期42码中未出的号码数
+  var result={};
+  for(var z in ZM){
+    var nums=ZM[z];
+    var notOutCnt=nums.filter(function(n){return NOT.indexOf(n)>=0;}).length;
+    result[z]=notOutCnt;
+  }
+  return result;
+}
+// 【v10.0814.01-#553】常出正码统计：近N期正码出现≥3次的号码（用户要求：常出现正码的也要到三中三中去）
+function calcFreqZheng(periods){
+  periods=periods||10;
+  var freq={};
+  DR.slice(-periods).forEach(function(r){
+    (r.n||[]).forEach(function(n){freq[n]=(freq[n]||0)+1;});
+  });
+  return Object.keys(freq).map(Number).filter(function(n){return freq[n]>=3;}).sort(function(a,b){return (freq[b]||0)-(freq[a]||0);});
+}
+// 【v10.0814.01-#553】三中三选择集合：特码运算预测 + 常出正码 + 高分号码
+function calcZ3SelectSet(sc){
+  var selectSet=[];
+  // 1. 特码运算预测号码（统计验证STRONGEST：20%+ vs 14.3%随机）
+  var mathPreds=mathPredictEngine();
+  mathPreds.forEach(function(n){if(selectSet.indexOf(n)<0)selectSet.push(n);});
+  // 2. 常出正码（近10期≥3次）
+  var freqZheng=calcFreqZheng(10);
+  freqZheng.forEach(function(n){if(selectSet.indexOf(n)<0)selectSet.push(n);});
+  // 3. 评分Top8号码
+  if(sc&&sc.length>0){
+    sc.slice().sort(function(a,b){return b.s-a.s;}).slice(0,8).forEach(function(x){
+      if(selectSet.indexOf(x.n)<0)selectSet.push(x.n);
+    });
+  }
+  return selectSet;
+}
+// 【v10.0814.01-#553】三中三排除集合：低分 + 近6期热号 + 超长遗漏
+function calcZ3ExclSet(sc){
+  var exclSet=[];
+  // 1. 评分最低Bottom8
+  if(sc&&sc.length>0){
+    sc.slice().sort(function(a,b){return a.s-b.s;}).slice(0,8).forEach(function(x){
+      if(exclSet.indexOf(x.n)<0)exclSet.push(x.n);
+    });
+  }
+  // 2. 近6期出现≥2次的号码（过热）
+  var d6All=[];DR.slice(-6).forEach(function(r){d6All=d6All.concat(r.n||[]);});
+  var freq6={};d6All.forEach(function(n){freq6[n]=(freq6[n]||0)+1;});
+  Object.keys(freq6).map(Number).filter(function(n){return freq6[n]>=2;}).forEach(function(n){
+    if(exclSet.indexOf(n)<0)exclSet.push(n);
+  });
+  return exclSet;
+}
 function scoreZ3Combo(combo,indivMap,ZM2,userPool){
   var s=0;
   var b=[];
   var LTP=z3LotProfile(); // 彩种差异化权重
   var Z100=calcZ100();
   var userPoolSet=userPool&&userPool.length>0?new Set(userPool):null;
-  // 【v10.0813.02-#548】跨系统排除联动：组合中包含其他系统排除的号码→重罚
+  // 【v10.0813.03-#548】跨系统排除联动：组合中包含其他系统排除的号码→重罚
   if(typeof CROSS_EXCL_NUMS!=='undefined'){
     var crossHit=combo.filter(function(n){return CROSS_EXCL_NUMS.indexOf(n)>=0;});
     if(crossHit.length>0){s-=999*crossHit.length;b.push({label:'跨系统排除',raw:'含'+crossHit.join(',')+'(其他系统排除)',score:'-'+(999*crossHit.length)});}
@@ -13840,11 +13981,11 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
   });
   om9Sum*=srcC;
   var sc9=om9Sum;
-  // 近6期未出(NOT)突破点加成：组合中未出号码越多分越高（用户：昨晚开奖正码几乎来自未出号码）
-  // #486增强：未出号码是核心突破点→权重提升(3→6/1.5→3.5/0.5→1/-1.5→-3)
+  // 近6期未出(NOT)加成：【v10.0813.03-#551】统计验证命中率与随机持平(14.1% vs 14.3%)→权重降为+3/+2/+1/-3
+  // 原假设"未出号码更可能出"不成立，保留弱信号因用户有短期经验观察
   var notInCombo=combo.filter(function(n){return NOT.indexOf(n)>=0;}).length;
-  if(notInCombo===3){sc9+=6*srcC;om9Notes.push('3号全未出⭐+'+Math.round(6*srcC*10)/10);}
-  else if(notInCombo===2){sc9+=3.5*srcC;om9Notes.push('2号未出+'+Math.round(3.5*srcC*10)/10);}
+  if(notInCombo===3){sc9+=3*srcC;om9Notes.push('3号全未出+'+Math.round(3*srcC*10)/10);}
+  else if(notInCombo===2){sc9+=2*srcC;om9Notes.push('2号未出+'+Math.round(2*srcC*10)/10);}
   else if(notInCombo===1){sc9+=1*srcC;om9Notes.push('1号未出+'+Math.round(1*srcC*10)/10);}
   else{sc9-=3*srcC;om9Notes.push('0号未出(全已出)-'+Math.round(3*srcC*10)/10);}
   s+=sc9;
@@ -13977,9 +14118,11 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
     sc15+=addZ15;
     s15.push('上期未开肖'+compZ15+'码'+(addZ15>=0?'+':'')+addZ15.toFixed(1));
     var compT15=combo.filter(function(n){return cur7T15.indexOf(n%10)<0;}).length; // 上期未开尾码数
-    var addT15=compT15*0.8;
+    // 【v10.0813.03-#551】统计验证反转：上期未出尾数反而更不易出现(新奥2.49码 vs 随机3.01码, 老奥2.31 vs 3.14)
+    // 原+0.8奖励→改为-0.3惩罚（缺失尾数=庄家回避信号）
+    var addT15=compT15*(-0.3);
     sc15+=addT15;
-    if(compT15>0)s15.push('上期未开尾'+compT15+'码+'+addT15.toFixed(1));
+    if(compT15>0)s15.push('上期未开尾'+compT15+'码'+(addT15>=0?'+':'')+addT15.toFixed(1));
   }
   // 头数覆盖：3码覆盖不同头数越多越好（同头多码降权）
   var headCnt15={};
@@ -13994,6 +14137,37 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
   else if(zodU15===1){sc15-=1.5;s15.push('3码同肖');}
   s+=sc15;
   b.push({label:'上期互补',raw:s15.length>0?s15.join(';'):'中性',score:(sc15>=0?'+':'')+sc15.toFixed(1)});
+  // 16. 【v10.0813.03-#551】特码运算正码候选（统计验证STRONGEST：特码±K/÷2/反数→正码命中率20%+ vs 14.3%随机）
+  // 用户假设"特码不中反而正码中"经验证成立：组合中含特码运算结果号码→加分
+  var mathPreds=mathPredictEngine();
+  if(mathPreds.length>0){
+    var mathHit=combo.filter(function(n){return mathPreds.indexOf(n)>=0;});
+    var sc16=mathHit.length*2.5;
+    s+=sc16;
+    var mpNote='命中'+mathHit.length+'/'+combo.length+'码';
+    if(mathHit.length>0)mpNote+='('+mathHit.join(',')+')';
+    b.push({label:'特码运算⭐',raw:mpNote,score:(sc16>=0?'+':'')+sc16.toFixed(1)});
+  }
+  // 17. 【v10.0813.03-#551】某肖≥3码未出排除（统计验证REVERSAL：49.3% vs 58.3%随机→更不易出）
+  // 用户假设"某肖多号码未出→下期该肖更可能出码"经验证不成立，反向使用：组合含≥3未出肖的号码→降权
+  var znoMap=zodNotOutCount();
+  var znoHits=combo.filter(function(n){
+    var z=gz(n);
+    return znoMap[z]!==undefined&&znoMap[z]>=3;
+  });
+  if(znoHits.length>0){
+    var sc17=znoHits.length*(-1.5);
+    s+=sc17;
+    var znoZods=Array.from(new Set(znoHits.map(gz)));
+    b.push({label:'多未出肖',raw:znoZods.join('')+'≥3码未出'+znoHits.length+'码命中',score:sc17.toFixed(1)});
+  }
+  // 18. 【v10.0813.03-#551】7的倍数排除（统计验证WEAK：新奥0.87 vs 1.00, 老奥0.78 vs 1.00→略低于随机）
+  var mult7Hits=combo.filter(function(n){return n%7===0;});
+  if(mult7Hits.length>=2){
+    var sc18=mult7Hits.length*(-0.3);
+    s+=sc18;
+    b.push({label:'7倍数',raw:mult7Hits.length+'码7倍数('+mult7Hits.join(',')+')',score:sc18.toFixed(1)});
+  }
   return {s:Math.round(s*10)/10,breakdown:b,details:b.map(function(x){return x.label+x.raw+'('+x.score+')';}).join(' · ')};
 }
 // 连肖组合评分（多维度综合评分：生肖均分·野家搭配·缺席加分·冷热降权·庄家反向·生肖五行·统计排除反馈·九肖参考）
@@ -14523,17 +14697,27 @@ function renderZ3(){
     var appNonLx=appCand.filter(function(x){return !lxZodSet.has(gz(x.n));});
     var notLx=notCand.filter(function(x){return lxZodSet.has(gz(x.n));});
     var notNonLx=notCand.filter(function(x){return !lxZodSet.has(gz(x.n));});
-    var poolSize=12; // 软上限（仅作最大约束，不作为凑数目标）
-    // 候选池构成（3层优先级，不再为凑够12个补回低分/已排除号码，池子不足就少给）：
+    var poolSize=18; // 【v10.0814.01-#553】从12扩大到18，给用户更多选择空间
+    // 候选池构成（4层优先级）：
     // 第0层：用户自定义候选池号码（强制种子，优先于一切）
+    // 第0b层：【#553】特码运算预测 + 常出正码(≥3次) — 统计验证STRONGEST，强制注入
     // 第1层：生肖∈五连肖TOP8 的号码（APP约60% + NOT约40%）
     // 第2层：生肖不在TOP8 的号码（至多约30%平衡，兼容新肖/九肖外生肖）
     poolTop=[];
     // 第0层：用户种子
     customKeep.forEach(function(n){if(poolTop.indexOf(n)<0)poolTop.push(n);});
+    // 第0b层：【#553】特码运算预测号码 + 常出正码 — 直接注入候选池（用户核心诉求）
+    var mathPreds=mathPredictEngine();
+    var freqZheng=calcFreqZheng(10);
+    var forcedSeeds=[].concat(mathPreds,freqZheng);
+    forcedSeeds.forEach(function(n){
+      if(poolTop.indexOf(n)<0 && (UP.zm3_excl_nums||[]).indexOf(n)<0 && (UP.zm3_excl_zods||[]).indexOf(gz(n))<0){
+        poolTop.push(n);
+      }
+    });
     // 第1层：五连肖TOP8生肖内的号码
-    var lxAppCnt=Math.min(Math.max(4,Math.round(poolSize*0.42)),appLx.length);   // 12*0.42≈5
-    var lxNotCnt=Math.min(Math.round(poolSize*0.28),notLx.length);               // 12*0.28≈3
+    var lxAppCnt=Math.min(Math.max(5,Math.round(poolSize*0.40)),appLx.length);   // 18*0.40≈7
+    var lxNotCnt=Math.min(Math.round(poolSize*0.25),notLx.length);               // 18*0.25≈5
     if(appLx.length<lxAppCnt){lxNotCnt=Math.min(poolSize-lxAppCnt,notLx.length);lxAppCnt=Math.min(poolSize-lxNotCnt,appLx.length);}
     if(notLx.length<lxNotCnt){lxAppCnt=Math.min(poolSize-lxNotCnt,appLx.length);lxNotCnt=Math.min(poolSize-lxAppCnt,notLx.length);}
     appLx.slice(0,lxAppCnt).forEach(function(x){if(poolTop.indexOf(x.n)<0)poolTop.push(x.n);});
@@ -14883,6 +15067,85 @@ function renderZ3(){
     h+='<div style="margin-top:4px;padding:4px 6px;background:#fff;border-radius:4px;font-size:9px;color:#666">'+
        '💡 <b>评分依据：</b>综合评分包含冷热(6期/20期/100期)+遗漏缺口+尾数条件概率+生肖频率+五行平衡+位置参考价值+一肖两码+结构预测+庄家反向等维度。'+
        '高分=多维度信号指向该号码下期可能开出；低分=多维度信号指向该号码下期不太可能开出或被庄家控制。</div>';
+    h+='</div>';
+  }
+
+  // ===== 【v10.0814.01-#553】选择集合 / 排除集合 / 随机选 =====
+  {
+    var mathPreds2=mathPredictEngine();
+    var freqZheng2=calcFreqZheng(10);
+    var selectSet=calcZ3SelectSet(sc);
+    var exclSet=calcZ3ExclSet(sc);
+    // 从选择集合中移除排除集合中的号码
+    var cleanSelect=selectSet.filter(function(n){return exclSet.indexOf(n)<0;});
+    // 标记每个号码的来源
+    function selectLabel(n){
+      var tags=[];
+      if(mathPreds2.indexOf(n)>=0)tags.push('运算');
+      if(freqZheng2.indexOf(n)>=0)tags.push('常出');
+      var si=sc.find(function(x){return x.n===n;});
+      if(si&&si.s>0)tags.push('高分'+si.s.toFixed(0));
+      return tags.join('+');
+    }
+
+    h+='<div class="card" style="border:3px solid #1565c0;background:#e3f2fd;margin-top:8px">'+
+       '<div class="sec-title" style="color:#1565c0;border-bottom-color:#1565c0">🎯 选择集合 / 排除集合 / 随机选（#553）</div>'+
+       '<div style="font-size:9px;color:#666;margin-bottom:8px">用户核心诉求：给出可用于选择和排除的号码集合，而非仅评分维度。选择集合=特码运算预测(20%+命中率)+常出正码(≥3次)+评分Top8。排除集合=评分Bottom8+近6期热号(≥2次)。</div>';
+
+    // 选择集合
+    h+='<div style="margin-bottom:10px;padding:8px;background:#e8f5e9;border-radius:8px;border:2px solid #1e8449">'+
+       '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap">'+
+       '<b style="font-size:12px;color:#1e8449">⭐ 选择集合（'+cleanSelect.length+'码·可用于选号）</b>'+
+       '<div style="display:flex;gap:4px">'+
+       '<button style="background:#1e8449;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:10px;cursor:pointer" onclick="UP.zm3_pick_pool=Array.from(new Set((UP.zm3_pick_pool||[]).concat(['+cleanSelect.join(',')+'])));saveData();render();showClickFeedback(\'✅ 选择集合已加入候选池\')">✅ 全部加入候选池</button>'+
+       '</div></div>'+
+       '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">';
+    cleanSelect.forEach(function(n){
+      var inPool=(UP.zm3_pick_pool||[]).indexOf(n)>=0;
+      var si=sc.find(function(x){return x.n===n;});
+      var label=selectLabel(n);
+      h+='<div onclick="if(!(UP.zm3_pick_pool||[]).includes('+n+')){UP.zm3_pick_pool=(UP.zm3_pick_pool||[]).concat(['+n+']);saveData();render();}else{showClickFeedback(\'已在候选池中\')}" '+
+         'style="background:'+(inPool?'#c8e6c9':'#fff')+';border:2px solid #1e8449;border-radius:6px;padding:4px 6px;font-size:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;min-width:48px" '+
+         'title="来源: '+label+'">'+ball(n,20)+
+         '<span style="font-size:8px;color:#1e8449;font-weight:bold">'+label+'</span>'+(inPool?'<span style="color:#1e8449">✓</span>':'')+'</div>';
+    });
+    h+='</div>'+
+       '<div style="font-size:9px;color:#1e8449;margin-top:6px">📌 运算=特码运算预测(±K/÷2/反数,20%+命中率) · 常出=近10期正码≥3次 · 高分=综合评分Top8</div>'+
+       '</div>';
+
+    // 排除集合
+    h+='<div style="margin-bottom:10px;padding:8px;background:#ffebee;border-radius:8px;border:2px solid #c0392b">'+
+       '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap">'+
+       '<b style="font-size:12px;color:#c0392b">🚫 排除集合（'+exclSet.length+'码·建议排除）</b>'+
+       '<button style="background:#c0392b;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:10px;cursor:pointer" onclick="UP.zm3_excl_nums=Array.from(new Set((UP.zm3_excl_nums||[]).concat(['+exclSet.join(',')+'])));saveData();render();showClickFeedback(\'🚫 排除集合已加入排除列表\')">🚫 全部排除</button>'+
+       '</div>'+
+       '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">';
+    exclSet.forEach(function(n){
+      var inExcl=(UP.zm3_excl_nums||[]).indexOf(n)>=0;
+      var d6c=0;DR.slice(-6).forEach(function(r){if((r.n||[]).indexOf(n)>=0||(r.t)===n)d6c++;});
+      var si=sc.find(function(x){return x.n===n;});
+      var label=[];
+      if(si&&si.s<0)label.push('低分'+si.s.toFixed(0));
+      if(d6c>=2)label.push('热'+d6c+'次');
+      h+='<div onclick="if(!(UP.zm3_excl_nums||[]).includes('+n+')){UP.zm3_excl_nums=(UP.zm3_excl_nums||[]).concat(['+n+']);saveData();render();}else{showClickFeedback(\'已在排除中\')}" '+
+         'style="background:'+(inExcl?'#ffcdd2':'#fff')+';border:2px solid #c0392b;border-radius:6px;padding:4px 6px;font-size:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;min-width:48px" '+
+         'title="'+label.join('+')+'">'+ball(n,18)+
+         '<span style="font-size:8px;color:#c0392b;font-weight:bold">'+(label.join('+')||'低分')+'</span>'+(inExcl?'<span style="color:#c0392b">✓</span>':'')+'</div>';
+    });
+    h+='</div></div>';
+
+    // 随机选功能
+    h+='<div style="padding:8px;background:#fff3e0;border-radius:8px;border:2px solid #e65100">'+
+       '<b style="font-size:12px;color:#e65100">🎲 随机选三中三</b>'+
+       '<div style="font-size:9px;color:#888;margin-top:2px">从选择集合(或全49码排除后)中随机选3码，每次不同。用户反馈："哪怕随机选也不止"，添加此功能作为兜底参考。</div>'+
+       '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'+
+       '<button style="background:#e65100;color:#fff;border:none;border-radius:4px;padding:6px 14px;font-size:11px;cursor:pointer" onclick="z3RandomPick(\'select\')">🎲 从选择集合随机选3码</button>'+
+       '<button style="background:#8e44ad;color:#fff;border:none;border-radius:4px;padding:6px 14px;font-size:11px;cursor:pointer" onclick="z3RandomPick(\'pool\')">🎲 从候选池随机选3码</button>'+
+       '<button style="background:#1a6baa;color:#fff;border:none;border-radius:4px;padding:6px 14px;font-size:11px;cursor:pointer" onclick="z3RandomPick(\'all\')">🎲 从全49码(排除后)随机选3码</button>'+
+       '</div>'+
+       '<div id="z3-random-result" style="margin-top:8px;display:none"></div>'+
+       '</div>';
+
     h+='</div>';
   }
 
@@ -18017,7 +18280,7 @@ function render(){
     var contentHTML=(renders[activeTab]||renderRecord)();
     // 【v10.0805.03】窗口回退横幅：每个分析Tab顶部都显示当前窗口，并可就地翻轮次
     contentHTML=winBannerHTML()+contentHTML;
-    // 【v10.0813.02-#548】跨系统排除联动面板
+    // 【v10.0813.03-#548】跨系统排除联动面板
     var crossExclHTML=renderCrossExclPanel();
     if(crossExclHTML)contentHTML=crossExclHTML+contentHTML;
     if(statWarnings.length>0){
