@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0814.05</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0815.01</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -13507,6 +13507,8 @@ function renderHotCold(){
   return h;
 }
 
+// 【v10.0815.01-性能】renderZ3 整体结果缓存（详见 renderZ3 函数内）
+var _renderZ3Cache=null;
 // ===== Tab: 三中三/二中二/特串（含子页签 + 自定义评分 + 复制框）=====
 let zm3SubTab='z3';
 function renderZM3(){
@@ -15003,6 +15005,11 @@ function weightSliders(group,items){
 }
 
 function renderZ3(){
+  // 【v10.0815.01-性能】整体结果缓存：当输入(彩种+当前期+数据指纹+zm3用户设置+复式码数+子tab)不变时直接返回
+  // 上次生成的HTML，避免每次render全量重算(scoreZheng 49码×18维 + combNK(18,3)=816组合×scoreZ3Combo 18维
+  // + scoreZod/mathPredictEngine/zhengFormulaEngine等)，这是正码栏目卡顿的根因。
+  var _zk=JSON.stringify({lot:CUR_LOT,p:LAST.p,dr:(DR.length>0?(DR[0].p+'~'+DR[DR.length-1].p+'_'+DR[DR.length-1].d+'_'+JSON.stringify(DR[DR.length-1].n)+'_'+DR[DR.length-1].t):'empty'),cx:window._z3ComplexN||6,sub:zm3SubTab,zm3:(function(){var o={};for(var k in UP){if(String(k).indexOf('zm3')===0)o[k]=UP[k];}return o;})()});
+  if(_renderZ3Cache&&_renderZ3Cache.k===_zk)return _renderZ3Cache.h;
   const ZM2=calcZm2Om(),Z100=calcZ100();
   const lastN=LAST.n;
   const wxC={};["金","木","水","火","土"].forEach(w=>wxC[w]=lastN.filter(n=>gwx(n)===w).length);
@@ -16413,6 +16420,7 @@ function renderZ3(){
     h+='</details>';
   }
 
+  _renderZ3Cache={k:_zk,h:h};
   return h;
 }
 // 三中三回测：检查TOP推荐组合对近期开奖的命中率
