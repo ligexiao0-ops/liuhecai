@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0815.01</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0820.01</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -2837,8 +2837,8 @@ function renderCrossExclPanel(){
   if(zods.length===0&&nums.length===0&&dZods.length===0&&dNums.length===0)return '';
   var h='<div class="card" style="background:linear-gradient(135deg,#1e1b4b,#312e81);color:#e0e7ff;border:2px solid #6366f1;padding:10px 12px;margin-bottom:8px;font-size:11px;line-height:1.8">';
   h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">';
-  h+='<b style="color:#a5b4fc;font-size:12px">🔗 跨系统排除联动</b>';
-  h+='<span style="font-size:9px;opacity:.7">（生肖排除→号码排除 / 号码全排→生肖排除 + 🔄动态排除）</span>';
+  h+='<b style="color:#a5b4fc;font-size:12px">🔗 跨系统排除联动〔'+LOTTERIES[CUR_LOT].name+'〕</b>';
+  h+='<span style="font-size:9px;opacity:.7">（仅本彩种数据·不与另两彩混算；生肖排除→号码排除 / 号码全排→生肖排除 + 🔄动态排除）</span>';
   h+='</div>';
   if(zods.length>0){
     h+='<div style="margin-bottom:4px"><b style="color:#f87171">排除生肖：</b>';
@@ -2888,7 +2888,7 @@ function renderCrossExclPanel(){
     }
     h+='</div>';
   }
-  h+='<div style="font-size:9px;opacity:.6;margin-top:4px">💡 静态排除=你手动设置的排除项（-999彻底排除）；🔄动态排除=系统按近期开奖自动计算（-8轻度降权，非彻底排除，仅降温参考）</div>';
+  h+='<div style="font-size:9px;opacity:.6;margin-top:4px">💡 静态排除=你手动设置的排除项（-999彻底排除，改排除池即变）；🔄动态排除=系统按【本彩种】近期开奖自动计算（-8轻度降权，非永久封杀，每录入一期即重算变化）。三种彩数据严格隔离，互不串用。</div>';
   h+='</div>';
   return h;
 }
@@ -2904,6 +2904,8 @@ function calcDerived(){
 // ===== 【v10.0813.03-#548】跨系统排除联动引擎 =====
 // 收集所有预测系统的排除项，双向传播：生肖排除→号码排除 / 号码排除→生肖排除
 // 特码排除某肖 → 正码/三中三中该肖号码也排除；号码排除 → 其生肖在连肖中也排除
+// ⚠️ 作用域铁律【v10.0820】：本引擎只读【当前彩种 CUR_LOT】的 UP/DR（switchLottery 已按彩种重新加载），
+//    新奥/老奥/港彩三种彩数据严格隔离，绝不互相串用；任何"跨系统"都只发生在同一彩种内部的子系统之间。
 var CROSS_EXCL_ZODS=[]; // 跨系统统一排除生肖（含双向传播结果）
 var CROSS_EXCL_NUMS=[]; // 跨系统统一排除号码（含双向传播结果）
 var CROSS_EXCL_SRC={};  // 排除来源记录 {zod或'#'+num: [来源系统]}
@@ -2978,8 +2980,9 @@ function calcCrossExcl(){
       }
     });
   }
-  // 5.【v10.0814.04-#556】动态排除：随开奖/窗口回退自动变化（DR已被winApply截断，天然联动窗口）
-  //    用户反馈："跨系统排除号码基本不会动，必须动态"
+  // 5.【v10.0814.04-#556 增强 v10.0820】动态排除：随开奖/窗口回退自动变化（DR已被winApply截断，天然联动窗口）
+  //    用户反馈（v10.0820）："跨系统排除号码基本不会动，必须动态"——故每次录入开奖后本区都会变化。
+  //    注意：动态排除=轻度降权(-8)，非彻底排除(-999)，每期按近期开奖重算，绝不"永久封杀"。
   CROSS_DYN_NUMS=[];CROSS_DYN_ZODS=[];CROSS_DYN_SRC={};
   if(typeof DR!=='undefined'&&DR.length>=2){
     // 5a. 近3期特码号码（刚开过的特码→短期降温）
@@ -2990,11 +2993,11 @@ function calcCrossExcl(){
         CROSS_DYN_SRC['#'+t]=['近3期特码(p'+d.p+')'];
       }
     });
-    // 5b. 近6期正码出现≥3次的过热号（正码刚连开→过热降温）
+    // 5b. 近6期正码出现≥2次的过热号（正码刚连开→过热降温；阈值3→2提升灵敏度，录入后更易变化）
     var zmCnt={};
     DR.slice(-6).forEach(function(d){(d.n||[]).forEach(function(n){zmCnt[n]=(zmCnt[n]||0)+1;});});
     Object.keys(zmCnt).map(Number).forEach(function(n){
-      if(zmCnt[n]>=3&&CROSS_DYN_NUMS.indexOf(n)<0){
+      if(zmCnt[n]>=2&&CROSS_DYN_NUMS.indexOf(n)<0){
         CROSS_DYN_NUMS.push(n);
         CROSS_DYN_SRC['#'+n]=['近6期正码'+zmCnt[n]+'次'];
       }
@@ -3006,6 +3009,19 @@ function calcCrossExcl(){
         CROSS_DYN_ZODS.push(z);
         CROSS_DYN_SRC[z]=['近2期特肖(p'+d.p+')'];
       }
+    });
+    // 5d.【v10.0820 新增】近3期全部开奖号码（特+正）→ "近期已出"降温参考
+    //     作用：每录入一期，本区号码必然随窗口滚动而变化，直观体现"跨系统排除随开奖动态更新、绝不永久"。
+    var winStartP=DR[Math.max(0,DR.length-3)].p;
+    var winEndP=DR[DR.length-1].p;
+    DR.slice(-3).forEach(function(d){
+      var all=[].concat([d.t],d.n||[]);
+      all.forEach(function(n){
+        if(CROSS_DYN_NUMS.indexOf(n)<0){
+          CROSS_DYN_NUMS.push(n);
+          CROSS_DYN_SRC['#'+n]=['近3期已开(p'+winStartP+'~'+winEndP+')'];
+        }
+      });
     });
   }
 }
