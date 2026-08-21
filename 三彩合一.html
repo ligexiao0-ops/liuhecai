@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0821.01</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0821.02</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -4557,10 +4557,63 @@ function teTailRelEngine(DR){
   return r;
 }
 
+// ===== 【v10.0821.02-#567】上期头数关联引擎 =====
+// 分析"上期特头→下期特头/正头"的数据驱动关系，按彩种差异化。
+// 用户原话三次均为"头数"(上期正码头数→下期特码头数/正码头数)，v10.0821.01 误实现为尾数，本轮纠正。
+// 实测：下期特头∈上期正头集 69-90%（强信号，印证"特码几乎都在上期正码头数"）；
+//       同头率 XA/LA≈26%(>基线20%)、GC≈15%(样本仅28期噪声大)；特→正头同头率16-21%(偏弱)。
+// 三彩隔离：只读当前彩种 DR。缓存：key='H'+DR.length+'|'+DR末期间号。头数=ghd(n)=floor(n/10)∈0-4，故基线 1/5=0.2，Δ取 mod 5。
+var _TH_CACHE=null,_TH_KEY=null;
+function teHeadRelEngine(DR){
+  if(!DR||DR.length<8)return null;
+  var key='H'+DR.length+'|'+DR[DR.length-1].p;
+  if(_TH_CACHE&&_TH_KEY===key)return _TH_CACHE;
+  var teTeSame=0,teTeTot=0;        // 下期特头==上期特头（同头率）
+  var teInZSet=0,teInZSetTot=0;    // 下期特头∈上期6正头集（用户直觉"特码几乎都在上期正码头数"）
+  var teZhengSame=0,teZhengTot=0;  // 下期某正头==上期特头
+  var deltaCnt=[0,0,0,0,0];        // (下期特头-上期特头) mod 5
+  var zDeltaCnt=[0,0,0,0,0];       // (下期某正头-上期特头) mod 5
+  for(var i=1;i<DR.length;i++){
+    var prev=DR[i-1],cur=DR[i];
+    var pT=ghd(prev.t),cT=ghd(cur.t);
+    teTeTot++;
+    if(cT===pT)teTeSame++;
+    deltaCnt[((cT-pT)%5+5)%5]++;
+    var prevZH=[];for(var zz=0;zz<prev.n.length;zz++)prevZH.push(ghd(prev.n[zz]));
+    teInZSetTot++;
+    if(prevZH.indexOf(cT)>=0)teInZSet++;
+    for(var k=0;k<cur.n.length;k++){
+      var czh=ghd(cur.n[k]);
+      teZhengTot++;
+      if(czh===pT)teZhengSame++;
+      zDeltaCnt[((czh-pT)%5+5)%5]++;
+    }
+  }
+  var N=teTeTot||1;
+  var sameRate=teTeSame/N;
+  var inZSetRate=teInZSet/(teInZSetTot||1);
+  var zhengSameRate=teZhengSame/(teZhengTot||1);
+  var deltaLift=deltaCnt.map(function(c){return (c/N)/0.2;});        // 0.2=随机基线(头数5种)
+  var zDeltaLift=zDeltaCnt.map(function(c){return (c/(teZhengTot||1))/0.2;});
+  var r={
+    sameRate:sameRate,
+    inZSetRate:inZSetRate,
+    zhengSameRate:zhengSameRate,
+    deltaLift:deltaLift,
+    zDeltaLift:zDeltaLift,
+    // 同头是否值得奖励：>22%才奖（基线20%），GC样本小(15%)不奖也不惩
+    sameHeadBonus:sameRate>=0.22,
+    // 落上期正头集是否值得奖励：>0.60才奖（实测69-90%，强信号）
+    inZSetBonus:inZSetRate>=0.60
+  };
+  _TH_CACHE=r;_TH_KEY=key;
+  return r;
+}
+
 // ===== 评分：特码（含庄家+候选池+生肖+反向思维加成）=====
 function scoreTE_full(n,TM,T100){
   var W=SCORE_W;
-  const lZ=Array.from(new Set(LAST.n.map(gz))),lTeZ=gz(LAST.t),lT=gtl(LAST.t),lD=gdf(LAST.t);
+  const lZ=Array.from(new Set(LAST.n.map(gz))),lTeZ=gz(LAST.t),lT=gtl(LAST.t),lD=gdf(LAST.t),lH=ghd(LAST.t);
   const t15c=te15();const exc=[],kp=[];let s=0;
   // 【v10.0812.06-#525】用户主动排除项收集（排除池/上期正肖正尾/热冷门/遗漏前10/近6期已出）→ 主导降权
   let uExclHits=0;const uExclLbls=[];
@@ -4587,6 +4640,21 @@ function scoreTE_full(n,TM,T100){
       else{s-=1;exc.push("同尾"+lT+"冷");}
     }
   }else if(gtl(n)===lT){s-=2;exc.push("同尾"+lT);}
+  // 【v10.0821.02-#567】数据驱动头数关联（用户原话"上期正码头数→下期特码头数/正码头数"，此前误做成尾数）
+  // 实测：下期特头∈上期正头集 69-90%（强信号，印证"特码几乎都在上期正码头数"）；同头率XA/LA≈26%(>基线20%)
+  var TH=teHeadRelEngine(DR);
+  if(TH){
+    var _cH=ghd(n);
+    var _lastZH=LAST.n.map(ghd);
+    // 1) 落上期6正头集：强信号（69-90%），与尾数版同理但更强
+    if(TH.inZSetBonus&&_lastZH.indexOf(_cH)>=0){s+=3;kp.push("落上期正头集"+_cH);}
+    // 2) 特头Δ偏置：下期特头相对上期特头的Δ是否落在高频方向
+    var _dlH=((_cH-lH)%5+5)%5;
+    if(TH.deltaLift[_dlH]>1.15){s+=2;kp.push("特头Δ"+_dlH+"偏置");}
+    else if(TH.deltaLift[_dlH]<0.6){s-=1;exc.push("特头Δ"+_dlH+"冷向");}
+    // 3) 同头：按彩种差异——XA/LA≈26%(奖励)，GC样本小不奖不惩
+    if(_cH===lH&&TH.sameHeadBonus){s+=2;kp.push("同头"+lH);}
+  }
   if(lD>0&&gdf(n)===lD){s-=1;exc.push("同差"+lD);}
   if((T100[n]||0)===0){s-=2;exc.push("100期未出");}
   const tc=T100[n]||0;
@@ -4812,7 +4880,7 @@ function scoreTE_full(n,TM,T100){
 // 与scoreTE_full刻意保持分离（#434决策）：full=用户完整评分(权重缩放+全部筛选维度)，
 // pure=AI独立统计基准(固定分值+冲煞加分)，合并需引入多配置辅助函数，收益<回归风险
 function scoreTE_pure(n,TM,T100){
-  const lZ=Array.from(new Set(LAST.n.map(gz))),lTeZ=gz(LAST.t),lT=gtl(LAST.t),lD=gdf(LAST.t);
+  const lZ=Array.from(new Set(LAST.n.map(gz))),lTeZ=gz(LAST.t),lT=gtl(LAST.t),lD=gdf(LAST.t),lH=ghd(LAST.t);
   const t15c=te15();let s=0;
   if(n===LAST.t)s-=4;
   if(LAST.n.includes(n))s-=2;
@@ -4828,6 +4896,15 @@ function scoreTE_pure(n,TM,T100){
     if(TTp.deltaLift[_dlTp]>1.15)s+=2;else if(TTp.deltaLift[_dlTp]<0.6)s-=1;
     if(_cpT===lT){if(TTp.sameTailBonus)s+=2;else s-=1;}
   }else if(gtl(n)===lT)s-=2;
+  // 【v10.0821.02-#567】数据驱动头数关联（纯净评分版，无标签）
+  var THp=teHeadRelEngine(DR);
+  if(THp){
+    var _cpH=ghd(n),_lastZHp=LAST.n.map(ghd);
+    if(THp.inZSetBonus&&_lastZHp.indexOf(_cpH)>=0)s+=3;
+    var _dlHp=((_cpH-lH)%5+5)%5;
+    if(THp.deltaLift[_dlHp]>1.15)s+=2;else if(THp.deltaLift[_dlHp]<0.6)s-=1;
+    if(_cpH===lH&&THp.sameHeadBonus)s+=2;
+  }
   if(lD>0&&gdf(n)===lD)s-=1;
   if((T100[n]||0)===0)s-=2;
   const tc=T100[n]||0;
@@ -5165,7 +5242,9 @@ function scoreZheng(extraPrefs){
   try{posM500=posModelScore();}catch(e){posM500=null;}
 
   const lTeTail=gtl(LAST.t);
+  const lTeHead=ghd(LAST.t);
   const TTz=teTailRelEngine(DR);
+  const THz=teHeadRelEngine(DR);
   return A49.map(n=>{
     let s=0;const rs=[];
 
@@ -5221,6 +5300,13 @@ function scoreZheng(extraPrefs){
       var _zt=gtl(n);
       var _zd=((_zt-lTeTail)%10+10)%10;
       if(TTz.zDeltaLift[_zd]>1.2){s+=1;rs.push("特→正尾Δ"+_zd+"偏置+1");}
+    }
+    // ===== 【v10.0821.02-#567】上期特头→下期正头弱关联 =====
+    // 实测各彩种"特头→正头"同头率16-21%≈随机，关系偏弱，仅做小权重方向性加分
+    if(THz){
+      var _zh=ghd(n);
+      var _zdH=((_zh-lTeHead)%5+5)%5;
+      if(THz.zDeltaLift[_zdH]>1.2){s+=1;rs.push("特→正头Δ"+_zdH+"偏置+1");}
     }
 
     // ===== 【v10.0730.02移除】上期7码属性比（用户要求去除属性比评分）=====
