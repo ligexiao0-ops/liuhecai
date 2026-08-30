@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0830.03</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0830.04</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -6340,11 +6340,13 @@ function addRecord(){
 }
 
 // ===== Tab: 开奖记录（全部历史 + 切换近10/全部）=====
-let recordShowAll=false;
+// 【v10.0830.04】改为分批加载：原"显示全部240期"会一次性渲染 240行×20列(每号一个球)，
+// 手机端必然卡死。改为增量显示：默认10期，每次再加载50期。
+let recordShowCount=10;
 let recordSortAsc=true; // 正码排序：true=从小到大，false=从大到小
 let recordSortDrop=false; // 正码排序：true=落球顺序
 function renderRecord(){
-  const rows=recordShowAll?DR.slice():DR.slice(-10);
+  const rows=DR.slice(-Math.min(recordShowCount,DR.length));
   let h='<div class="sec-title">📋 开奖记录（共'+DR.length+'期，'+DR[0].p+'-'+LAST.p+'期）</div>';
   // ===== 智能搜索问答 =====
   h+='<div class="card" style="border:2px solid #1a6baa;background:linear-gradient(135deg,#0d1117,#161b22);color:#fff;margin-bottom:8px">'+
@@ -6362,8 +6364,8 @@ function renderRecord(){
     '<div id="searchResult" style="margin-top:8px"></div>'+
     '</div>';
   h+='<div style="margin-bottom:8px">'+
-     '<button class="btn '+(recordShowAll?'btn-gray':'btn-blue')+'" onclick="recordShowAll=false;render();">显示近10期</button> '+
-     '<button class="btn '+(recordShowAll?'btn-blue':'btn-gray')+'" onclick="recordShowAll=true;render();">显示全部'+DR.length+'期</button> '+
+     '<button class="btn '+(recordShowCount<=10?'btn-blue':'btn-gray')+'" onclick="recordShowCount=10;render();">显示近10期</button> '+
+     '<button class="btn '+(recordShowCount<DR.length?'btn-blue':'btn-gray')+'" onclick="recordShowCount=Math.min(DR.length,recordShowCount+50);render();">再多50期（已显'+Math.min(recordShowCount,DR.length)+'/'+DR.length+'）</button> '+
      '<button class="btn '+(recordSortDrop?'btn-gray':'btn-green')+'" onclick="recordSortAsc=!recordSortDrop?recordSortAsc:!recordSortAsc;recordSortDrop=!recordSortDrop;render();">'+(recordSortDrop?'正码'+(recordSortAsc?'小→大':'大→小'):'落球顺序')+'</button>'+
      '<button class="btn '+(recordSortDrop?'btn-blue':'btn-gray')+'" onclick="recordSortDrop=!recordSortDrop;render();">'+(recordSortDrop?'落球中':'落球顺序')+'</button>'+
      (LOTTERIES[CUR_LOT].draw_days?'<button class="btn btn-blue" onclick="fixDatesNow()" style="margin-left:4px">🔧 验证/修复日期</button>':'')+
@@ -6372,7 +6374,7 @@ function renderRecord(){
   h+='<div style="overflow-x:auto"><table>'+
     '<tr><th>期</th><th>日期</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th><th>⑥</th><th>+</th><th>特码</th><th>生肖</th><th>五行</th><th>波色</th><th>大小</th><th>单双</th><th>合数</th><th>家野</th><th>尾</th><th>差</th><th>操作</th></tr>';
   rows.forEach((d,i)=>{
-    const realIdx=recordShowAll?i:(DR.length-rows.length+i);
+    const realIdx=DR.length-rows.length+i; // 【v10.0830.04】rows 恒为 DR.slice(-N)，索引统一按此换算
     var sortedN;
     if(recordSortDrop){
       // 落球顺序：优先用drop字段，没有则用排序后的n
@@ -6411,7 +6413,13 @@ function renderRecord(){
 
 // ===== 计算特码属性分布（用于统计排除） =====
 function calcTeAttrCounts(){
-  var rows=DR.map(r=>({heVal:ghesum(r.t),wx:gwx(r.t),wv:gwv(r.t),tail:r.t%10,zod:gz(r.t),fam:gfam(r.t),sz:gsz(r.t),par:gpar(r.t),he:ghe(r.t)}));
+  // 【v10.0830.04】改为"最近 N 期"滚动统计（N=min(DR.length,100)）：
+  // 原为全量 DR 累计——240 期里新增 1 期只占 0.4%，而排除阈值又随总期数同步放大
+  // （如 thZod=240/12×1.2=24），两者相互抵消，筛出的排除项几乎恒定，
+  // 这正是"统计排除每期都一样"的真正根因（比"没重算"更本质）。
+  // 改为固定长度滚动窗口后，每录入一期窗口滑动一格，计数真实反映近期冷热变化。
+  var N=Math.min(DR.length,100);
+  var rows=DR.slice(-N).map(r=>({heVal:ghesum(r.t),wx:gwx(r.t),wv:gwv(r.t),tail:r.t%10,zod:gz(r.t),fam:gfam(r.t),sz:gsz(r.t),par:gpar(r.t),he:ghe(r.t)}));
   var heValCount={};for(var v=1;v<=13;v++)heValCount[v]=0;
   var wxCount={金:0,木:0,水:0,火:0,土:0};
   var wvCount={红:0,蓝:0,绿:0};
@@ -6430,7 +6438,9 @@ function calcTeAttrCounts(){
   window._lastTailCnt=Object.assign({},tailCount);
   window._lastZodCnt=Object.assign({},zodCount);
   // 【v10.0830.03】记录本次统计对应的 DR 指纹，供调用方判断数据是否已变、是否需要重算
-  window._teAttrKey=DR.length+'|'+(DR.length?DR[0].p:0)+'|'+(DR.length?DR[DR.length-1].p:0)+'|'+CUR_LOT;
+  // 【v10.0830.04】指纹加入窗口大小 N，并记录窗口供阈值计算使用
+  window._teAttrN=N;
+  window._teAttrKey=N+'|'+DR.length+'|'+(DR.length?DR[0].p:0)+'|'+(DR.length?DR[DR.length-1].p:0)+'|'+CUR_LOT;
 }
 
 // ===== Tab: 特码分析表（独立栏目，含6期生肖统计）=====
@@ -6450,11 +6460,13 @@ function buildStatExcludeBlock(){
   // 【v10.0830.03】修复"统计排除每一期都一样"：原判断只看缓存是否存在，一旦算过就永不重算，
   // 于是录入新开奖后 DR 已增加、切换彩种后 DR 已更换，统计排除仍显示首次算出的那一份分布。
   // 现改为比对 DR 指纹（条数+首末期号+彩种），数据一变立即重算。
-  var _teKey=DR.length+'|'+(DR.length?DR[0].p:0)+'|'+(DR.length?DR[DR.length-1].p:0)+'|'+CUR_LOT;
+  var _teKey=Math.min(DR.length,100)+'|'+DR.length+'|'+(DR.length?DR[0].p:0)+'|'+(DR.length?DR[DR.length-1].p:0)+'|'+CUR_LOT;
   if(!window._lastHeCnt||!window._lastWxCnt||!window._lastWvCnt||!window._lastTailCnt||!window._lastZodCnt||window._teAttrKey!==_teKey) calcTeAttrCounts();
   var h='';
   var meanExcludes=[];
-  var dataN=DR.length||30;
+  // 【v10.0830.04】阈值必须基于滚动窗口大小(固定≈100)，不能再用 DR 总长：
+  // 否则窗口每滑动一格、阈值就同步抬升，把近期冷热的变化又抵消掉，回到"每期都一样"。
+  var dataN=window._teAttrN||Math.min(DR.length,100)||30;
   var multiplier=dataN>=50?1.2:1.35;
   var thHe=Math.max(4,Math.round(dataN/13*multiplier));
   var thWx=Math.max(3,Math.round(dataN/5*multiplier));
@@ -14455,14 +14467,11 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
     if(dynZodHit.length>0){var dynZPen=8*dynZodHit.length;s-=dynZPen;b.push({label:'动态排除',raw:'含近特肖'+dynZodHit.map(gz).join(''),score:'-'+dynZPen});}
   }
   // 1. 单号均分（正码评分，已含用户筛选，权重最高）
-  // 【v10.0830.01-#575】三中三要求三个号码全部命中，组合成色其实由"最弱的一码"决定：
-  // 原只用均分，会选出"1个高分+2个低分"的偏科组合（均分不低，但三码全中概率很低），
-  // 这正是"中3个都难"的成因。现改为 均分*0.7 + 下限*0.3，抑制偏科、奖励三码均衡。
-  // 例：[20,5,5] 均分10/下限5→8.5；[12,10,8] 均分10/下限8→9.4，均衡组合胜出。
+  // 【v10.0830.04 回退】v10.0830.02 曾改为 均分*0.7+下限*0.3 以抑制"一高两低"偏科组合，
+  // 但用户实测反馈"三中三运算不如之前准确"——使用者体感优先于理论推断，故回退为纯均分。
   var avg=combo.reduce(function(sum,n){return sum+(indivMap[n]||0);},0)/combo.length;
-  var mnScore=Math.min.apply(null,combo.map(function(n){return indivMap[n]||0;}));
-  var sc1=(avg*0.7+mnScore*0.3)*LTP.coef.avg; s+=sc1;
-  b.push({label:'均分+下限',raw:avg.toFixed(1)+'/'+mnScore.toFixed(1),score:sc1.toFixed(1)});
+  var sc1=avg*LTP.coef.avg; s+=sc1;
+  b.push({label:'均分',raw:avg.toFixed(1),score:sc1.toFixed(1)});
   // 2. 【v10.0728.07移除】生肖覆盖 — 用户要求去除同肖评分
   // 3. 五行覆盖（弱化：不强排除/降权，仅做展示和轻微参考）
   var wxc=LTP.coef.wx;
