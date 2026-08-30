@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0830.02</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0830.03</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -579,6 +579,21 @@ function loadData(){
 }
 // 同步状态: idle/syncing/synced/error
 var SYNC_STATUS='idle',SYNC_MSG='';
+// 【v10.0830.03】分块批量 upsert：把 N 条记录切成每块 100 条顺序提交。
+// 原实现是"每条记录一个并发请求"——DR 到 240 期就是 240 个并发 Promise.all，
+// 受浏览器每域名并发上限(约6)与 Supabase 限流影响，极易部分失败，且 Promise.all
+// 一失败就整体 reject，表现为"手机端明明录入成功，电脑端却始终看不到"。
+function _upsertChunked(recs,chunk){
+  chunk=chunk||100;
+  var chunks=[];
+  for(var i=0;i<recs.length;i+=chunk)chunks.push(recs.slice(i,i+chunk));
+  if(chunks.length===0)return Promise.resolve();
+  return chunks.reduce(function(chain,ck){
+    return chain.then(function(){
+      return sb.from('lottery_records').upsert(ck,{onConflict:'lot_type,period'});
+    });
+  },Promise.resolve());
+}
 function syncAllToServer(){
   if(!sb)return;
   SYNC_STATUS='syncing';
@@ -586,11 +601,7 @@ function syncAllToServer(){
     lot_type:CUR_LOT,period:r.p,date:r.d,
     n1:r.n[0],n2:r.n[1],n3:r.n[2],n4:r.n[3],n5:r.n[4],n6:r.n[5],t:r.t
   };});
-  // 批量upsert
-  var promises=recs.map(function(r){
-    return sb.from('lottery_records').upsert(r,{onConflict:'lot_type,period'});
-  });
-  Promise.all(promises).then(function(){
+  _upsertChunked(recs).then(function(){
     // 【v10.0803.01】同步用户偏好UP到user_prefs表（手机和电脑两端共享）
     if(typeof UP!=='undefined'){
       sb.from('user_prefs').upsert({lot_type:CUR_LOT,prefs:UP,updated_at:new Date().toISOString()},{onConflict:'lot_type'}).then(function(){
@@ -646,13 +657,13 @@ function refreshFromServer(){
     }
     // 强制推送所有本地数据到服务器（修正云端错误数据）
     if(sb&&DR.length>0){
-      var pushPromises=DR.map(function(r){
-        return sb.from('lottery_records').upsert({
+      // 【v10.0830.03】同样改为分块批量提交（原为每条一个并发请求，易被限流导致整体失败）
+      _upsertChunked(DR.map(function(r){
+        return {
           lot_type:CUR_LOT,period:r.p,date:r.d,
           n1:r.n[0],n2:r.n[1],n3:r.n[2],n4:r.n[3],n5:r.n[4],n6:r.n[5],t:r.t
-        },{onConflict:'lot_type,period'});
-      });
-      Promise.all(pushPromises).then(function(){
+        };
+      })).then(function(){
         SYNC_STATUS='synced';SYNC_MSG='';updateSyncUI();
         // 【v10.0830.01】修复"手机端240期、电脑端231期"的双向伤害：
         // 原逻辑会 sb.delete().gt('period', base_p+50) 主动删除云端 232 期之后的数据——
@@ -6418,6 +6429,8 @@ function calcTeAttrCounts(){
   window._lastWvCnt=Object.assign({},wvCount);
   window._lastTailCnt=Object.assign({},tailCount);
   window._lastZodCnt=Object.assign({},zodCount);
+  // 【v10.0830.03】记录本次统计对应的 DR 指纹，供调用方判断数据是否已变、是否需要重算
+  window._teAttrKey=DR.length+'|'+(DR.length?DR[0].p:0)+'|'+(DR.length?DR[DR.length-1].p:0)+'|'+CUR_LOT;
 }
 
 // ===== Tab: 特码分析表（独立栏目，含6期生肖统计）=====
@@ -6434,8 +6447,11 @@ function buildStatExcludeBlock(){
       '<td style="padding:3px"><div style="background:#eee;height:10px;border-radius:3px;overflow:hidden;width:80px"><div style="background:'+barColor+';height:10px;width:'+barW+'%"></div></div></td>'+
       '<td style="padding:3px;font-size:9px;color:#555">'+advice+'</td></tr>';
   }
-  // 如果还没计算过，先兜底计算一次（保证特码Tab也能显示）
-  if(!window._lastHeCnt||!window._lastWxCnt||!window._lastWvCnt||!window._lastTailCnt||!window._lastZodCnt) calcTeAttrCounts();
+  // 【v10.0830.03】修复"统计排除每一期都一样"：原判断只看缓存是否存在，一旦算过就永不重算，
+  // 于是录入新开奖后 DR 已增加、切换彩种后 DR 已更换，统计排除仍显示首次算出的那一份分布。
+  // 现改为比对 DR 指纹（条数+首末期号+彩种），数据一变立即重算。
+  var _teKey=DR.length+'|'+(DR.length?DR[0].p:0)+'|'+(DR.length?DR[DR.length-1].p:0)+'|'+CUR_LOT;
+  if(!window._lastHeCnt||!window._lastWxCnt||!window._lastWvCnt||!window._lastTailCnt||!window._lastZodCnt||window._teAttrKey!==_teKey) calcTeAttrCounts();
   var h='';
   var meanExcludes=[];
   var dataN=DR.length||30;
