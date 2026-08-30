@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0830.04</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0830.05</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -6418,7 +6418,10 @@ function calcTeAttrCounts(){
   // （如 thZod=240/12×1.2=24），两者相互抵消，筛出的排除项几乎恒定，
   // 这正是"统计排除每期都一样"的真正根因（比"没重算"更本质）。
   // 改为固定长度滚动窗口后，每录入一期窗口滑动一格，计数真实反映近期冷热变化。
-  var N=Math.min(DR.length,100);
+  // 【v10.0830.05】N 进一步缩到 30：N=100 时翻一格新旧窗口重叠 99%，结果几乎不变；
+  // N=30 时翻一格重叠 29/30≈97%（其实也大，但阈值按 30 期算自然更敏感）。
+  // 真正的"翻到哪期都不同"还得配合 multiplier 硬编码 1.2（见 buildStatExcludeBlock）。
+  var N=Math.min(DR.length,30);
   var rows=DR.slice(-N).map(r=>({heVal:ghesum(r.t),wx:gwx(r.t),wv:gwv(r.t),tail:r.t%10,zod:gz(r.t),fam:gfam(r.t),sz:gsz(r.t),par:gpar(r.t),he:ghe(r.t)}));
   var heValCount={};for(var v=1;v<=13;v++)heValCount[v]=0;
   var wxCount={金:0,木:0,水:0,火:0,土:0};
@@ -6460,14 +6463,14 @@ function buildStatExcludeBlock(){
   // 【v10.0830.03】修复"统计排除每一期都一样"：原判断只看缓存是否存在，一旦算过就永不重算，
   // 于是录入新开奖后 DR 已增加、切换彩种后 DR 已更换，统计排除仍显示首次算出的那一份分布。
   // 现改为比对 DR 指纹（条数+首末期号+彩种），数据一变立即重算。
-  var _teKey=Math.min(DR.length,100)+'|'+DR.length+'|'+(DR.length?DR[0].p:0)+'|'+(DR.length?DR[DR.length-1].p:0)+'|'+CUR_LOT;
+  // 【v10.0830.05】窗口缩到 30 + multiplier 硬编码 1.2：
+  // N=100 时翻一格新旧窗口重叠 99%，结果几乎不变；缩到 30 后"最近 30 期"才稳定，窗口一滑动排除项即变。
+  var _teKey=Math.min(DR.length,30)+'|'+DR.length+'|'+(DR.length?DR[0].p:0)+'|'+(DR.length?DR[DR.length-1].p:0)+'|'+CUR_LOT;
   if(!window._lastHeCnt||!window._lastWxCnt||!window._lastWvCnt||!window._lastTailCnt||!window._lastZodCnt||window._teAttrKey!==_teKey) calcTeAttrCounts();
   var h='';
   var meanExcludes=[];
-  // 【v10.0830.04】阈值必须基于滚动窗口大小(固定≈100)，不能再用 DR 总长：
-  // 否则窗口每滑动一格、阈值就同步抬升，把近期冷热的变化又抵消掉，回到"每期都一样"。
-  var dataN=window._teAttrN||Math.min(DR.length,100)||30;
-  var multiplier=dataN>=50?1.2:1.35;
+  var dataN=window._teAttrN||Math.min(DR.length,30)||30;
+  var multiplier=1.2; // 硬编码：N 已固定为 30，不再随 dataN 派生
   var thHe=Math.max(4,Math.round(dataN/13*multiplier));
   var thWx=Math.max(3,Math.round(dataN/5*multiplier));
   var thWv=Math.max(4,Math.round(dataN/3*multiplier));
@@ -6539,7 +6542,7 @@ function buildStatExcludeBlock(){
     }
     var accCount={teOk:0,teFail:0,zmOk:0,zmFail:0,total:0};
     h+='<div class="card" style="border:2px solid #e67e22;background:#fff8e1;margin-top:6px">'+
-       '<b style="font-size:12px;color:#e67e22">⚡ 统计排除（生肖≥'+thZod+'/合数≥'+thHe+'/五行≥'+thWx+'/波色≥'+thWv+'/尾数≥'+thTail+'次[期望×'+multiplier+']，同类最多排除N-1种防空集）</b>'+
+       '<b style="font-size:12px;color:#e67e22">⚡ 统计排除（近'+dataN+'期：生肖≥'+thZod+'/合数≥'+thHe+'/五行≥'+thWx+'/波色≥'+thWv+'/尾数≥'+thTail+'次[期望×'+multiplier+']，同类最多排除N-1种防空集）</b>'+
        (LAST?'<span style="font-size:9px;color:#888;margin-left:6px">上期('+LAST.p+'期) 特码:'+LAST.t+' 正码:'+LAST.n.join(',')+' → 标注每项排除上期特码/正码是否准确</span>':'')+
        '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">';
     meanExcludes.forEach(function(ex){
