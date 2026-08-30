@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0830.05</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0830.06</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -6633,7 +6633,7 @@ function buildStatExcludeBlock(){
       {cat:'波色',attrFn:function(n){return gwv(n);},allVals:['红','蓝','绿']},
       {cat:'尾数',attrFn:function(n){return String(n%10);},allVals:['0','1','2','3','4','5','6','7','8','9']}
     ];
-    var btSampleN=Math.min(DR.length-1,50);
+    var btSampleN=Math.min(DR.length-1,100); // 【v10.0830.06】50→100：回测样本应随开奖增长而扩展，固定 50 让240期数据形同浪费
     catDefs.forEach(function(cd){
       var teOk=0,teTotal=0,zmOk=0,zmTotal=0;
       for(var bi=DR.length-btSampleN;bi<DR.length;bi++){
@@ -6718,7 +6718,7 @@ function buildStatExcludeBlock(){
   if(DR.length>=10){
     var srcStats={sameZod:0,sameTail:0,fromApp:0,fromNot:0,fromPrev7:0,fromPrevT:0,total:0};
     var srcDetails=[];
-    var sampleN=Math.min(DR.length-1,50); // 统计最近50期
+    var sampleN=Math.min(DR.length-1,100); // 【v10.0830.06】50→100：来源分析样本同样应随开奖增长
     for(var si=DR.length-sampleN;si<DR.length;si++){
       if(si<1)continue;
       var cur=DR[si],prev=DR[si-1];
