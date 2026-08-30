@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0830.01</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0830.02</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -14439,9 +14439,14 @@ function scoreZ3Combo(combo,indivMap,ZM2,userPool){
     if(dynZodHit.length>0){var dynZPen=8*dynZodHit.length;s-=dynZPen;b.push({label:'动态排除',raw:'含近特肖'+dynZodHit.map(gz).join(''),score:'-'+dynZPen});}
   }
   // 1. 单号均分（正码评分，已含用户筛选，权重最高）
+  // 【v10.0830.01-#575】三中三要求三个号码全部命中，组合成色其实由"最弱的一码"决定：
+  // 原只用均分，会选出"1个高分+2个低分"的偏科组合（均分不低，但三码全中概率很低），
+  // 这正是"中3个都难"的成因。现改为 均分*0.7 + 下限*0.3，抑制偏科、奖励三码均衡。
+  // 例：[20,5,5] 均分10/下限5→8.5；[12,10,8] 均分10/下限8→9.4，均衡组合胜出。
   var avg=combo.reduce(function(sum,n){return sum+(indivMap[n]||0);},0)/combo.length;
-  var sc1=avg*LTP.coef.avg; s+=sc1;
-  b.push({label:'均分',raw:avg.toFixed(1),score:sc1.toFixed(1)});
+  var mnScore=Math.min.apply(null,combo.map(function(n){return indivMap[n]||0;}));
+  var sc1=(avg*0.7+mnScore*0.3)*LTP.coef.avg; s+=sc1;
+  b.push({label:'均分+下限',raw:avg.toFixed(1)+'/'+mnScore.toFixed(1),score:sc1.toFixed(1)});
   // 2. 【v10.0728.07移除】生肖覆盖 — 用户要求去除同肖评分
   // 3. 五行覆盖（弱化：不强排除/降权，仅做展示和轻微参考）
   var wxc=LTP.coef.wx;
@@ -15381,7 +15386,10 @@ function renderZ3(){
     // 优先取同肖对组合（≥70%），不足时用无对组合补
     var pairTake=Math.min(pairCands.length,Math.max(1,Math.ceil(candidates.length*0.7)));
     candidates=pairCands.slice(0,pairTake).concat(noPairCands.slice(0,Math.min(noPairCands.length,Math.floor(candidates.length*0.3))));
-    candidates=candidates.slice(0,Math.min(12,candidates.length)); // 最多取12组候选
+    // 【v10.0830.01-#575】收窄轮选池：原为最多12组，按 LAST.p 轮选可能取到第10名开外的次优组合，
+    // 等于为了"每期看起来不一样"而牺牲最优解，是"中3个都难"的成因之一。
+    // 现改为只在 TOP5 高分组合中轮选：既保留跨期变化，又确保取到的都是真正的高分组合。
+    candidates=candidates.slice(0,Math.min(5,candidates.length)); // 最多取5组高分候选
     // 用当前期数作为种子确定性轮选（同期同权重同结果，跨期不同）
     var seed=LAST.p;
     var idx=seed%candidates.length;
