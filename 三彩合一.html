@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0821.02</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0830.01</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -622,7 +622,11 @@ function refreshFromServer(){
     var merged=false;
     var newFromServer=[];
     // 港彩日期校验：排除非开奖日和不合理的高期号
-    var validGcMaxP=LOTTERIES[CUR_LOT].base_p+50;
+    // 【v10.0830.01】修复"电脑端停在231期、手机电脑不同步"：
+    // 原为 base_p+50，但期号随时间持续增长（新奥/老奥 base_p=181，现已到 240+ 期），
+    // 固定 +50 冗余早已过期 → 上限 231 会把云端 232 期之后的真实开奖数据全部过滤掉，
+    // 导致电脑端永远拉不到新期号。改为 +365（约一年期数），既能容纳未来增长又可过滤明显异常期号。
+    var validGcMaxP=LOTTERIES[CUR_LOT].base_p+365;
     serverData.forEach(function(sr){
       var lr=localMap[sr.p];
       // 本地缺该期 → 加入（v10.0813.03-#548修复：移除sr.p>localLastP限制，允许加载所有本地缺失的期号，包括比本地最早期号更早的）
@@ -650,15 +654,16 @@ function refreshFromServer(){
       });
       Promise.all(pushPromises).then(function(){
         SYNC_STATUS='synced';SYNC_MSG='';updateSyncUI();
-        // 【v10.0814.05-#557】安全清理：只删除明显异常的超前期号（base_p+50 之外），绝不删除用户真实录入的近期数据
-        // 旧逻辑用 localLastP+10 作阈值，一旦本地DR被截断就会误删用户真实开奖数据，造成"数据会乱/被删"
+        // 【v10.0830.01】修复"手机端240期、电脑端231期"的双向伤害：
+        // 原逻辑会 sb.delete().gt('period', base_p+50) 主动删除云端 232 期之后的数据——
+        // 即手机录入的真实开奖记录，一旦电脑端刷新就被删掉，且不可逆。
+        // 期号已从 181 增长到 240+，+50 的护栏早已过期并变成数据杀手。
+        // 现改为：仅对"明显不可能"的期号保留检测，且不再自动删除云端数据，只记录警告。
         if(sb&&serverData.length>0){
-          var validMax=LOTTERIES[CUR_LOT].base_p+50;
+          var validMax=LOTTERIES[CUR_LOT].base_p+365;
           var serverLastP=serverData[serverData.length-1].p;
           if(serverLastP>validMax){
-            sb.from('lottery_records').delete().eq('lot_type',CUR_LOT).gt('period',validMax).then(function(){
-              console.log('Cleaned up anomalous future periods beyond',validMax);
-            }).catch(function(e){console.warn('Cleanup failed:',e);});
+            console.warn('检测到异常超前云端期号',serverLastP,'> 上限',validMax,'（已保留不删，避免误删真实开奖数据）');
           }
         }
       }).catch(function(e){SYNC_STATUS='error';SYNC_MSG='推送失败';updateSyncUI();});
@@ -716,10 +721,12 @@ function fixWrongLotData(){
     la:{min:0,max:1000,name:'老奥彩',base_p:181},
     gc:{min:0,max:1000,name:'港彩',base_p:71}
   };
-  // 实际更严格的范围：base_p - 200 到 base_p + 50
+  // 【v10.0830.01】原范围 base_p-200 ~ base_p+50：期号已增长到 240+，
+  // +50 会把 232 期之后的真实开奖记录误判成"异种数据"并提示删除（用户点确认即真实数据丢失）。
+  // 放宽为 base_p-200 ~ base_p+365，仅拦截真正离谱的期号。
   Object.keys(validRanges).forEach(function(k){
     validRanges[k].min=validRanges[k].base_p-200;
-    validRanges[k].max=validRanges[k].base_p+50;
+    validRanges[k].max=validRanges[k].base_p+365;
   });
   var myRange=validRanges[CUR_LOT];
   var removed=[];
@@ -3025,13 +3032,28 @@ function calcCrossExcl(){
     });
   }
 }
+// ===== 【v10.0830.01】统计记忆化缓存（修复"全系统非常卡顿/手机端卡死"）=====
+// 以下纯统计函数只依赖 DR（开奖记录），却被反复重算，部分还被放进 49 码循环里：
+//   如 A49.map(n=>scoreTE_full(n,calcTmOm(),calcT100())) —— 对每个号码都重算一整张表；
+//   calcZm2Om 单次约 49×DR×6 次运算，×49 个号码即百万级，手机必然卡死。
+// 现按"数据指纹"缓存：DR 未变直接复用；彩种/期数/首末期号任一变化则自动失效。
+var _STAT_CACHE=null,_STAT_KEY=null;
+function _statKey(){
+  return CUR_LOT+'|'+DR.length+'|'+(DR.length?DR[0].p:0)+'|'+(DR.length?DR[DR.length-1].p:0)+'|'+((LAST&&LAST.p)||0);
+}
+function _memo(name,fn){
+  var k=_statKey();
+  if(!_STAT_CACHE||_STAT_KEY!==k){_STAT_CACHE={};_STAT_KEY=k;}
+  if(!(name in _STAT_CACHE))_STAT_CACHE[name]=fn();
+  return _STAT_CACHE[name];
+}
 function mzc(arr){const c={};ZODS.forEach(z=>c[z]=0);arr.forEach(n=>{const z=gz(n);if(z in c)c[z]++;});return c;}
-function te15(){const c={};ZODS.forEach(z=>c[z]=0);DR.slice(-15).forEach(d=>c[gz(d.t)]++);return c;}
-function te6(){const c={};ZODS.forEach(z=>c[z]=0);DR.slice(-6).forEach(d=>c[gz(d.t)]++);return c;}
-function calcTmOm(){const om={};A49.forEach(n=>{let m=0,f=false;for(let i=DR.length-1;i>=0;i--){if(DR[i].t===n){f=true;break;}m++;}om[n]=f?m:DR.length;});return om;}
-function calcZm2Om(){const om={};A49.forEach(n=>{let m=0,f=false;for(let i=DR.length-1;i>=0;i--){if(DR[i].n.includes(n)){f=true;break;}m++;}om[n]=f?m:DR.length;});return om;}
+function te15(){return _memo('te15',function(){const c={};ZODS.forEach(z=>c[z]=0);DR.slice(-15).forEach(d=>c[gz(d.t)]++);return c;});}
+function te6(){return _memo('te6',function(){const c={};ZODS.forEach(z=>c[z]=0);DR.slice(-6).forEach(d=>c[gz(d.t)]++);return c;});}
+function calcTmOm(){return _memo('TmOm',function(){const om={};A49.forEach(n=>{let m=0,f=false;for(let i=DR.length-1;i>=0;i--){if(DR[i].t===n){f=true;break;}m++;}om[n]=f?m:DR.length;});return om;});}
+function calcZm2Om(){return _memo('Zm2Om',function(){const om={};A49.forEach(n=>{let m=0,f=false;for(let i=DR.length-1;i>=0;i--){if(DR[i].n.includes(n)){f=true;break;}m++;}om[n]=f?m:DR.length;});return om;});}
 // ===== 【v10.0730.02新增】特码生肖遗漏分析：计算每个生肖在特码中的当前遗漏期数 =====
-function calcTeZodOm(){const om={};ZODS.forEach(z=>om[z]={om:0,lastP:null,hitP:[]});for(let i=DR.length-1;i>=0;i--){var z=gz(DR[i].t);om[z].hitP.push(DR[i].p);if(om[z].lastP===null)om[z].lastP=DR[i].p;if(om[z].om===0&&i<DR.length-1)om[z].om=DR.length-1-i;}return om;}
+function calcTeZodOm(){return _memo('TeZodOm',function(){const om={};ZODS.forEach(z=>om[z]={om:0,lastP:null,hitP:[]});for(let i=DR.length-1;i>=0;i--){var z=gz(DR[i].t);om[z].hitP.push(DR[i].p);if(om[z].lastP===null)om[z].lastP=DR[i].p;if(om[z].om===0&&i<DR.length-1)om[z].om=DR.length-1-i;}return om;});}
 // ===== 【v10.0730.02新增】特码生肖历史遗漏命中率：按开奖前当前遗漏分档统计 =====
 function calcTeZodMissHitRate(){
   var ret={};
@@ -3051,7 +3073,7 @@ function calcTeZodMissHitRate(){
   return ret;
 }
 // 尾数连续遗漏期数：每个尾数从最新期往前连续多少期未在7个开奖号中出现
-function calcTailStreak(){
+function calcTailStreak(){return _memo('TailStreak',function(){
   var streak={};
   for(var t=0;t<=9;t++){
     var s=0;
@@ -3065,7 +3087,7 @@ function calcTailStreak(){
     streak[t]=s;
   }
   return streak;
-}
+});}
 // 生肖全部已出(未出=0)时下期出现概率统计
 function calcZodZeroProb(){
   if(DR.length<12)return null;
@@ -3092,72 +3114,33 @@ function _getBaseKey(){ if(CUR_LOT==='xa') return '新奥'; if(CUR_LOT==='la') r
 function _getBaseEndP(){ return _getBaseKey()==='港彩'?80:207; }
 // 新增开奖期数（在BASE100快照之后的DR记录数）
 function _getNewDraws(){ var ep=_getBaseEndP(); return DR.filter(d=>d.p>ep); }
-// 动态统计总期数 = 100 + 新增期数
-function _getDynN(){ return 100; } // 固定100期统计，不叠加额外数据
+// 【v10.0830.01】冷热遗漏统一口径（修复"时而显示几次、时而显示10多次"）:
+// 原实现有两套互不相容的口径——DR>=100期时统计"最近100期"；DR<100期时却改成
+// "BASE100硬编码快照(100期) + 207期之后所有新增期累加"，窗口随新增期数无限增大(100→133→…)，
+// 且遗漏固定按 N=100 去减，次数与遗漏口径互相打架，数字因此忽大忽小，甚至可能算出负数。
+// 现统一为：完全基于真实开奖记录 DR 滚动统计"最近 N 期"，N=min(DR.length,100)。
+// 次数与遗漏同源同窗口，只与开奖记录有关，不再掺入硬编码快照。
+function _getDynN(){ return Math.min(DR.length,100); }
 function calcZ100(){
-  if(DR.length>=100){
-    const c={}; A49.forEach(n=>c[n]=0);
-    DR.slice(-100).forEach(d=>d.n.forEach(n=>c[n]++));
-    return c;
-  }
-  var key=_getBaseKey();
-  if(BASE100&&BASE100[key]&&BASE100[key].Z100){
-    var c=Object.assign({},BASE100[key].Z100);
-    // 动态累加：BASE100快照之后的新开奖记录
-    _getNewDraws().forEach(d=>d.n.forEach(n=>c[n]++));
-    return c;
-  }
-  const c2={}; A49.forEach(n=>c2[n]=0);
-  DR.forEach(d=>d.n.forEach(n=>c2[n]++));
-  return c2;
+  const c={}; A49.forEach(n=>c[n]=0);
+  DR.slice(-_getDynN()).forEach(d=>d.n.forEach(n=>c[n]++));
+  return c;
 }
 function calcT100(){
-  if(DR.length>=100){
-    const c={}; A49.forEach(n=>c[n]=0);
-    DR.slice(-100).forEach(d=>c[d.t]++);
-    return c;
-  }
-  var key=_getBaseKey();
-  if(BASE100&&BASE100[key]&&BASE100[key].T100){
-    var c=Object.assign({},BASE100[key].T100);
-    // 动态累加：BASE100快照之后的新开奖记录
-    _getNewDraws().forEach(d=>c[d.t]++);
-    return c;
-  }
-  const c2={}; A49.forEach(n=>c2[n]=0);
-  DR.forEach(d=>c2[d.t]++);
-  return c2;
+  const c={}; A49.forEach(n=>c[n]=0);
+  DR.slice(-_getDynN()).forEach(d=>c[d.t]++);
+  return c;
 }
-// 100期遗漏(未出现次数) = 动态统计期数 - 出现次数
+// 遗漏(未出现次数) = 同期窗口 N - 出现次数（与次数同源同窗口，口径一致）
 function calcT100Om(){
-  if(DR.length<100){
-    var key=_getBaseKey();
-    if(BASE100&&BASE100[key]&&BASE100[key].T100om){
-      var T100=calcT100();
-      var N=_getDynN();
-      var om={}; A49.forEach(n=>om[n]=N-(T100[n]||0));
-      return om;
-    }
-  }
-  var T100b=calcT100();
-  var N=Math.min(DR.length>=100?100:DR.length,100);
-  A49.forEach(n=>T100b[n]=N-(T100b[n]||0));
-  return T100b;
+  var T100=calcT100(),N=_getDynN();
+  var om={}; A49.forEach(n=>om[n]=N-(T100[n]||0));
+  return om;
 }
 function calcZ100Om(){
-  if(DR.length<100){
-    var key=_getBaseKey();
-    if(BASE100&&BASE100[key]&&BASE100[key].Z100om){
-      var Z100=calcZ100();
-      var N=_getDynN();
-      var om={}; A49.forEach(n=>om[n]=N-(Z100[n]||0));
-      return om;
-    }
-  }
-  var Z100b=calcZ100();
-  var N=Math.min(DR.length>=100?100:DR.length,100);
-  A49.forEach(n=>Z100b[n]=N-(Z100b[n]||0));
-  return Z100b;
+  var Z100=calcZ100(),N=_getDynN();
+  var om={}; A49.forEach(n=>om[n]=N-(Z100[n]||0));
+  return om;
 }
 // ===== 概率统计模型 #343-345 =====
 
@@ -3313,7 +3296,7 @@ function zStreaks(){const r={};ZODS.forEach(z=>{let c=0;for(let i=DR.length-1;i>
 // 冷门追号：某生肖连续未出特码的期数（越久没出→庄家越可能出→追冷）
 // 热门杀号：某生肖连续出特码的期数（一直出→庄家越可能停→杀热）
 // 返回: { [zod]: {cold:期数, hot:期数, score:综合反庄家分} }
-function calcCurZhuang(){
+function calcCurZhuang(){return _memo('CurZhuang',function(){
   const r={};
   ZODS.forEach(z=>{
     var cold=0, hot=0;
@@ -3336,7 +3319,7 @@ function calcCurZhuang(){
     r[z]={cold:cold,hot:hot,score:score};
   });
   return r;
-}
+});}
 // 兼容旧代码：返回{生肖:连续期数}格式（用于calcCurZhuangAt和cz[z]>=1判断）
 function calcCurZhuangCold(){
   const cz=calcCurZhuang();
@@ -13339,9 +13322,9 @@ function renderHotCold(){
   var T100=calcT100(),Z100=calcZ100();
   var T100om=calcT100Om(),Z100om=calcZ100Om();
   var N100=_getDynN();
-  var newDraws=_getNewDraws().length;
   var lotName=LOTTERIES[CUR_LOT].name;
-  let h='<div class="sec-title">🔥 正特码冷热遗漏统计（'+lotName+'，共'+N100+'期数据，数据源：BASE100.'+_getBaseKey()+(newDraws>0?' + 新增'+newDraws+'期':'')+'）</div>';
+  // 【v10.0830.01】数据源改为统一的真实开奖记录滚动统计，不再掺入 BASE100 硬编码快照
+  let h='<div class="sec-title">🔥 正特码冷热遗漏统计（'+lotName+'，共'+N100+'期数据，数据源：最近'+N100+'期开奖记录）</div>';
 
   // ===== 【v10.0730.02更新】冷热遗漏概念说明 =====
   h+='<div class="card" style="background:#fffde7;border:2px solid #f39c12;font-size:11px;line-height:1.9">'+
