@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0901.01</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0901.02</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -579,6 +579,15 @@ function loadData(){
 }
 // 同步状态: idle/syncing/synced/error
 var SYNC_STATUS='idle',SYNC_MSG='';
+// 【v10.0901.02】跨彩种串号防护：三个彩种共用一张 lottery_records 表，
+// 一旦把 A 彩种的 DR 误标成 B 彩种的 lot_type 推送，就会互相污染。
+// 实际已发生过：港彩被塞进新奥的 154~243 期、新奥/老奥被塞进港彩的 44~94 期。
+// 港彩期号增长慢(每周3期)、新奥/老奥增长快(每天1期)，两者的期号段天然分离，
+// 据此在推送前过滤掉不属于当前彩种的期号，宁可不推也不能推错。
+function _periodBelongsToLot(lot,p){
+  if(lot==='gc') return p>0 && p<=130;  // 港彩期号段
+  return p>=140;                        // 新奥/老奥期号段
+}
 // 【v10.0830.03】分块批量 upsert：把 N 条记录切成每块 100 条顺序提交。
 // 原实现是"每条记录一个并发请求"——DR 到 240 期就是 240 个并发 Promise.all，
 // 受浏览器每域名并发上限(约6)与 Supabase 限流影响，极易部分失败，且 Promise.all
@@ -597,7 +606,8 @@ function _upsertChunked(recs,chunk){
 function syncAllToServer(){
   if(!sb)return;
   SYNC_STATUS='syncing';
-  var recs=DR.map(function(r){return {
+  // 【v10.0901.02】推送前过滤掉不属于本彩种期号段的记录，防止串号污染
+  var recs=DR.filter(function(r){return _periodBelongsToLot(CUR_LOT,r.p);}).map(function(r){return {
     lot_type:CUR_LOT,period:r.p,date:r.d,
     n1:r.n[0],n2:r.n[1],n3:r.n[2],n4:r.n[3],n5:r.n[4],n6:r.n[5],t:r.t
   };});
@@ -658,7 +668,8 @@ function refreshFromServer(){
     // 强制推送所有本地数据到服务器（修正云端错误数据）
     if(sb&&DR.length>0){
       // 【v10.0830.03】同样改为分块批量提交（原为每条一个并发请求，易被限流导致整体失败）
-      _upsertChunked(DR.map(function(r){
+      // 【v10.0901.02】同样加串号过滤，防止把别彩种的期号推进来
+      _upsertChunked(DR.filter(function(r){return _periodBelongsToLot(CUR_LOT,r.p);}).map(function(r){
         return {
           lot_type:CUR_LOT,period:r.p,date:r.d,
           n1:r.n[0],n2:r.n[1],n3:r.n[2],n4:r.n[3],n5:r.n[4],n6:r.n[5],t:r.t
