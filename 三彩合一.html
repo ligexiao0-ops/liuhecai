@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0830.06</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0901.01</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -2793,7 +2793,7 @@ function renderLotteryBar(){
 }
 
 // ===== 衍生数据 =====
-let LAST,NEXT,D6,ALL42,APP,NOT,PREV;
+let LAST,NEXT,D6,ALL42,APP,NOT,PREV,ZM42,ZM_APP,ZM_NOT;
 // ========== 【v10.0805.03】统一窗口回退引擎 ==========
 // 需求：翻"上一轮"= 期数减1（最新210-215 → 上一轮209-214），且特码/三中三/五连肖推荐必须跟着重算。
 // 实现：渲染期间把 DR 临时截断掉最近 N 期，则所有下游统计（含8处硬编码 DR.slice(-6)、
@@ -2916,6 +2916,12 @@ function calcDerived(){
   D6=DR.slice(-6);
   ALL42=D6.flatMap(d=>[].concat(d.n,[d.t]));
   APP=Array.from(new Set(ALL42));NOT=A49.filter(n=>!APP.includes(n));
+  // 【v10.0901.01】正码专用集合（供三中三使用）：
+  // 原 APP 来自 ALL42(正码+特码)，会把"只开过特码、没开过正码"的号码误判为"已出正码"，
+  // 导致三中三误加分、或把它当作"近6期已出"而排除。但特码出现过的号码仍可能开正码，
+  // 三中三只应关心"是否真的开过正码"，故单独维护 ZM_APP/ZM_NOT（不含特码）。
+  ZM42=D6.flatMap(d=>(d.n||[]).slice());
+  ZM_APP=Array.from(new Set(ZM42));ZM_NOT=A49.filter(n=>!ZM_APP.includes(n));
   // 【v10.0813.03-#548】跨系统排除联动引擎：每次数据变更后重新计算
   try{calcCrossExcl();}catch(e){console.warn('calcCrossExcl error:',e);}
 }
@@ -5212,7 +5218,10 @@ function scoreZheng(extraPrefs){
   });
 
   // 近6期号码出现次数
-  var d6Cnt2={};DR.slice(-6).forEach(function(d){[].concat(d.n,[d.t]).forEach(function(n){d6Cnt2[n]=(d6Cnt2[n]||0)+1;});});
+  // 【v10.0901.01】三中三(正码)的"近6期出现次数"改为只统计正码，不再混入特码：
+  // 原为 [].concat(d.n,[d.t])，把特码也算进正码热度，导致"只开过特码"的号码被误判为过热
+  // 而被排除——但它仍可能开正码。三中三只应依据"是否真的开过正码"来判断冷热。
+  var d6Cnt2={};DR.slice(-6).forEach(function(d){(d.n||[]).forEach(function(n){d6Cnt2[n]=(d6Cnt2[n]||0)+1;});});
   const atF={大小:gsz,单双:gpar,合数:ghe,家野:gfam,五行:gwx,波色:gwv};
 
   // ===== 【v10.0730.02移除】上期7码属性比（用户要求去除属性比评分）=====
@@ -5243,7 +5252,9 @@ function scoreZheng(extraPrefs){
     let s=0;const rs=[];
 
     // ===== 【核心1】已出/未出基础分（基于60.1%正码来自APP的统计事实）=====
-    if(APP.includes(n)){s+=3;rs.push("已出(基础+3)");}
+    // 【v10.0901.01】三中三改用 ZM_APP(仅正码)：特码出现过的号码仍可能开正码，
+    // 用含特码的 APP 判断会让它被误加"已出"分或误判冷热。
+    if(ZM_APP.includes(n)){s+=3;rs.push("已出(基础+3)");}
     else{s-=2;rs.push("未出(基础-2)");}
 
     // ===== 用户强排除（三中三排除号码必须彻底排除，-999确保永不超过其他号码）=====
@@ -5269,8 +5280,9 @@ function scoreZheng(extraPrefs){
     // ===== 用户属性筛选 =====
     Object.keys(pAttrs).forEach(k=>{const v=pAttrs[k];if(v&&atF[k]&&atF[k](n)!==v){s-=8;rs.push("不符必须"+v);}});
     Object.keys(eAttrs).forEach(k=>{const v=eAttrs[k];if(v&&atF[k]&&atF[k](n)===v){s-=8;rs.push("排除"+v);}});
-    if(appMode==='app'&&!APP.includes(n)){s-=20;rs.push("不在已出号");}
-    if(appMode==='not'&&APP.includes(n)){s-=20;rs.push("不在未出号");}
+    // 【v10.0901.01】三中三的已出/未出筛选同样改用 ZM_APP(仅正码)，理由同上
+    if(appMode==='app'&&!ZM_APP.includes(n)){s-=20;rs.push("不在已出号");}
+    if(appMode==='not'&&ZM_APP.includes(n)){s-=20;rs.push("不在未出号");}
 
     // ===== 【核心2】100期正码频率（综合冷热）=====
     var zc=(Z100[n]||0);
@@ -5433,7 +5445,10 @@ function scoreZheng(extraPrefs){
     if(z100Cold7&&!zCold7.includes(n)){s-=10;rs.push("非100期冷门后7");}
     if(exclZ100Hot7&&zHot7.includes(n)){s-=15;rs.push("100期热门前7(排除)");}
     if(exclZ100Cold7&&zCold7.includes(n)){s-=15;rs.push("100期冷门后7(排除)");}
-    if(exclApp&&APP.includes(n)){s-=15;rs.push("近6期已出(排除)");}
+    // 【v10.0901.01】三中三的"近6期已出(排除)"改为只看正码 ZM_APP：
+    // 原先若某号码只是开过特码(没开正码)也会被这条 -15 排除，但它仍可能开正码，
+    // 这正是用户反馈"排除了出现两次的号码…不稳定"的根因。
+    if(exclApp&&ZM_APP.includes(n)){s-=15;rs.push("近6期已出(排除)");}
     if(exclOm7){
       var curOm=calcZm2Om();
       var curOmTop7=A49.map(function(x){return{n:x,om:curOm[x]||0};}).sort(function(a,b){return b.om-a.om;}).slice(0,7).map(function(x){return x.n;});
@@ -6513,15 +6528,19 @@ function buildStatExcludeBlock(){
   var catCounts={};
   meanExcludes.forEach(function(ex){catCounts[ex.cat]=(catCounts[ex.cat]||0)+1;});
   var finalExcludes=[];
-  // 每类精华保留数配置：生肖3个、合数3个、五行2个、波色1个、尾数3个
-  var eliteKeep={生肖:3,合数:3,五行:2,波色:1,尾数:3};
+  // 【v10.0901.01】原为固定数量 {生肖:3,合数:3,五行:2,波色:1,尾数:3}——
+  // 无论开奖怎么变，永远只显示固定条数、且Top N长期稳定，用户看到的就是
+  // "永远都是那几个生肖/合数/五行"。改为按达标数量动态浮动：每类保留达标项的
+  // 一定比例，达标多则多排除、达标少则少排除，面板才会随开奖真实变化。
+  var ELITE_RATIO=0.7;
+  var eliteKeep={生肖:0,合数:0,五行:0,波色:0,尾数:0}; // 0=按 ELITE_RATIO 动态算
   Object.keys(catCounts).forEach(function(cat){
     var catItems=meanExcludes.filter(function(ex){return ex.cat===cat;});
     catItems.sort(function(a,b){return b.cnt-a.cnt;});
     // 互斥保护上限
     var maxKeep=catItems[0]?catItems[0].catN-1:catItems.length;
-    // 精华提取上限（取互斥保护和精华配置的较小值）
-    var eliteLimit=eliteKeep[cat]||3;
+    // 精华提取上限：eliteKeep 为 0 时按达标数量动态算（至少1条），随开奖浮动
+    var eliteLimit=eliteKeep[cat]>0?eliteKeep[cat]:Math.max(1,Math.ceil(catItems.length*ELITE_RATIO));
     var actualKeep=Math.min(maxKeep,eliteLimit,catItems.length);
     finalExcludes=finalExcludes.concat(catItems.slice(0,actualKeep));
   });
