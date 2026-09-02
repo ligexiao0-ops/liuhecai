@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0901.04</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0902.01</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -6599,6 +6599,27 @@ function _teAttrCountsOf(rows){
   });
   return {he:heValCount,wx:wxCount,wv:wvCount,tail:tailCount,zod:zodCount};
 }
+// 【v10.0902.01】各类别"理论期望"改用真实号码数占比（原先简单用 1÷类别数，
+// 但五行/波色/尾数/合数在 1-49 里的号码数并不均等，如尾数0只有4个而其它尾数5个）。
+// 期望 = 窗口期数 × 该类号码数 ÷ 49，判定更公平。
+var _TE_BASE=null;
+function teAttrBase(){
+  if(_TE_BASE)return _TE_BASE;
+  var wx={},wv={},tail={},zod={},he={};
+  try{
+    A49.forEach(function(n){
+      wx[gwx(n)]=(wx[gwx(n)]||0)+1;
+      wv[gwv(n)]=(wv[gwv(n)]||0)+1;
+      tail[n%10]=(tail[n%10]||0)+1;
+      zod[gz(n)]=(zod[gz(n)]||0)+1;
+      var hv=ghesum(n); if(hv>=1&&hv<=13) he[hv]=(he[hv]||0)+1;
+    });
+  }catch(e){}
+  _TE_BASE={wx:wx,wv:wv,tail:tail,zod:zod,he:he,total:(typeof A49!=='undefined'?A49.length:49)};
+  return _TE_BASE;
+}
+var TE_SHORT=6; // 短窗口期数：少类别维度(波色3类/五行5类)在长窗口下阈值高、变化迟钝，
+                // 实测新奥连续10期锁定"绿(12→8)"。短窗口每进一期变化 1/6≈17%，足够灵敏。
 // 按窗口 N + 偏移 offset 统计（offset=0 当前窗口，offset=1 上一期窗口，用于算"较上期变化"）
 function calcTeAttrCounts(winN,offset){
   var N=winN||Math.min(DR.length,30);
@@ -6608,7 +6629,13 @@ function calcTeAttrCounts(winN,offset){
   var start=Math.max(0,end-N);
   var rows=DR.slice(start,end).map(r=>({heVal:ghesum(r.t),wx:gwx(r.t),wv:gwv(r.t),tail:r.t%10,zod:gz(r.t),fam:gfam(r.t),sz:gsz(r.t),par:gpar(r.t),he:ghe(r.t)}));
   var c=_teAttrCountsOf(rows);
+  // 【v10.0902.01】近6期短窗口（与长窗口同口径、同终点），用于"近期过热"判定
+  var sStart=Math.max(0,end-TE_SHORT);
+  var sRows=DR.slice(sStart,end).map(r=>({heVal:ghesum(r.t),wx:gwx(r.t),wv:gwv(r.t),tail:r.t%10,zod:gz(r.t)}));
+  var c6=_teAttrCountsOf(sRows);
   var C={he:c.he,wx:c.wx,wv:c.wv,tail:c.tail,zod:c.zod,n:rows.length,off:off,
+         he6:c6.he,wx6:c6.wx,wv6:c6.wv,tail6:c6.tail,zod6:c6.zod,n6:sRows.length,
+         sFrom:sRows.length?DR[sStart].p:0,
          winN:N,
          from:rows.length?DR[start].p:0,
          to:end>0?DR[end-1].p:0,
@@ -6651,6 +6678,7 @@ function buildStatExcludeBlock(){
   if(WIN_OPTS.indexOf(selN)<0) selN=20; // 默认近20期（比30更敏感，翻一格即明显变化）
   var A=getTeAttrCounts(selN);
   var Aprev=calcTeAttrCounts(selN,1); // 上一期同长度窗口，用于算"较上期变化"
+  var BASE=teAttrBase();              // 各属性值在1-49中的号码数（用于算精确期望）
   var cntOf=function(cat,val){
     if(cat==='生肖')return (A.zod||{})[val]||0;
     if(cat==='合数')return (A.he||{})[val]||0;
@@ -6659,12 +6687,29 @@ function buildStatExcludeBlock(){
     if(cat==='尾数')return (A.tail||{})[val]||0;
     return 0;
   };
+  // 【v10.0902.01】近6期短窗口计数
+  var cnt6Of=function(cat,val){
+    if(cat==='生肖')return (A.zod6||{})[val]||0;
+    if(cat==='合数')return (A.he6||{})[val]||0;
+    if(cat==='五行')return (A.wx6||{})[val]||0;
+    if(cat==='波色')return (A.wv6||{})[val]||0;
+    if(cat==='尾数')return (A.tail6||{})[val]||0;
+    return 0;
+  };
   var prevCntOf=function(cat,val){
     if(cat==='生肖')return (Aprev.zod||{})[val]||0;
     if(cat==='合数')return (Aprev.he||{})[val]||0;
     if(cat==='五行')return (Aprev.wx||{})[val]||0;
     if(cat==='波色')return (Aprev.wv||{})[val]||0;
     if(cat==='尾数')return (Aprev.tail||{})[val]||0;
+    return 0;
+  };
+  var prevCnt6Of=function(cat,val){
+    if(cat==='生肖')return (Aprev.zod6||{})[val]||0;
+    if(cat==='合数')return (Aprev.he6||{})[val]||0;
+    if(cat==='五行')return (Aprev.wx6||{})[val]||0;
+    if(cat==='波色')return (Aprev.wv6||{})[val]||0;
+    if(cat==='尾数')return (Aprev.tail6||{})[val]||0;
     return 0;
   };
   var h='';
@@ -6676,17 +6721,42 @@ function buildStatExcludeBlock(){
   var thWv=Math.max(2,Math.round(dataN/3*multiplier));
   var thTail=Math.max(2,Math.round(dataN/10*multiplier));
   var thZod=Math.max(2,Math.round(dataN/12*multiplier));
-  // 期望次数 = 窗口期数 / 类别数（用于算偏离倍数，替代"绝对次数"排序——
-  // 绝对次数会让波色(3类)永远霸榜，因为它的绝对次数天然最大）
-  var expOf={生肖:dataN/12,合数:dataN/13,五行:dataN/5,波色:dataN/3,尾数:dataN/10};
+  // 理论期望 = 窗口期数 × 该属性值在1-49中的号码数 ÷ 49（精确口径，替代"1÷类别数"）
+  var BK={生肖:'zod',合数:'he',五行:'wx',波色:'wv',尾数:'tail'};
+  var dataN6=A.n6||TE_SHORT;
+  function expN(cat,val,n){
+    var b=(BASE[BK[cat]]||{})[val]||0;
+    return (n||0)*b/(BASE.total||49);
+  }
+  var catNOf={生肖:12,合数:13,五行:5,波色:3,尾数:10};
+  var allCand={}; // 各维度全部候选（含未达标），供"近期最热"保底挑选
+  // 双窗口判定：
+  //  通道A(长期过热) 长窗口次数 ≥ 阈值 —— 稳定，但少类别维度(波色3类/五行5类)阈值高、变化迟钝
+  //  通道B(近期过热) 近6期次数≥2 且 近6期热度 ≥1.4倍期望 且 高于长期热度 ——
+  //    实测新奥波色连续10期锁定"绿(12→8)"，正是通道A单独作用的结果；
+  //    通道B 每进一期变化 1/6≈17%，可让波色/五行随近期走势灵敏轮转
   function pushEx(cat,val){
     var c=cntOf(cat,val);
+    var c6=cnt6Of(cat,val);
     var th={生肖:thZod,合数:thHe,五行:thWx,波色:thWv,尾数:thTail}[cat];
-    if(c<th) return;
-    var ex=expOf[cat]||1;
-    meanExcludes.push({label:cat+'='+val,val:val,cnt:c,kind:'hot',cat:cat,
-      catN:{生肖:12,合数:13,五行:5,波色:3,尾数:10}[cat],
-      ratio:c/ex, prev:prevCntOf(cat,val)});
+    var exp=expN(cat,val,dataN)||1;
+    var exp6=expN(cat,val,dataN6)||1;
+    var heatL=c/exp;    // 长期热度（长窗口偏离倍数）
+    var heat6=c6/exp6;  // 近期热度（近6期偏离倍数）
+    var f6=dataN6>0?c6/dataN6:0;   // 近期频率（近6期占比）
+    var fL=dataN>0?c/dataN:0;      // 长期频率（长窗口占比）
+    var qLong=(c>=th);
+    // 通道B用「近期频率 vs 长期频率」而非「vs 理论期望」：波色近6期期望仅1.96次，
+    // 若按期望算需出现3次才够1.4倍，门槛过高（实测波色仍长期锁定"绿"）。
+    // 改为频率对比后，蓝色近6期2次(33%) vs 长期4/20(20%) 即可判定"正在变热"。
+    var qShort=(c6>=2 && f6>fL*1.25);
+    var item={label:cat+'='+val,val:val,cnt:c,cnt6:c6,cat:cat,catN:catNOf[cat],
+      exp:exp,exp6:exp6,heatL:heatL,heat6:heat6,f6:f6,fL:fL,
+      ratio:heatL, kind:qLong?(qShort?'both':(qShort?'surge':'hot')):(qShort?'surge':'none'),
+      prev:prevCntOf(cat,val),prev6:prevCnt6Of(cat,val)};
+    (allCand[cat]=allCand[cat]||[]).push(item);  // 全候选（含未达标），供"近期最热"保底挑选
+    if(item.kind==='none') return;
+    meanExcludes.push(item);
   }
   // 生肖（12类）
   for(var zi=0;zi<ZODS.length;zi++) pushEx('生肖',ZODS[zi]);
@@ -6694,13 +6764,8 @@ function buildStatExcludeBlock(){
   for(var hd=1;hd<=13;hd++) pushEx('合数',hd);
   // 五行
   ["金","木","水","火","土"].forEach(function(w){pushEx('五行',w);});
-  // 波色：同类互斥保护——最多排除N-1种（3种全排除=空集）
-  var wxExcl=[];
-  var _pushWv=function(wvname){var c=cntOf('波色',wvname);if(c>=thWv)wxExcl.push({label:'波色='+wvname,val:wvname,cnt:c,kind:'hot',cat:'波色',catN:3,ratio:c/(expOf['波色']||1),prev:prevCntOf('波色',wvname)});};
-  ["红","蓝","绿"].forEach(_pushWv);
-  wxExcl.sort(function(a,b){return b.ratio-a.ratio;});
-  wxExcl=wxExcl.slice(0,Math.max(1,wxExcl.length>2?1:2));
-  meanExcludes=meanExcludes.concat(wxExcl);
+  // 波色（3类）：不再特殊处理，统一走通用互斥保护（最多排除 catN-1=2 种防空集）
+  ["红","蓝","绿"].forEach(function(wvname){pushEx('波色',wvname);});
   // 尾数
   for(var t=0;t<=9;t++) pushEx('尾数',t);
   // 通用互斥保护：同类属性最多排除 catN-1 种（避免空集）
@@ -6716,15 +6781,31 @@ function buildStatExcludeBlock(){
   var eliteKeep={生肖:0,合数:0,五行:0,波色:0,尾数:0}; // 0=按 ELITE_RATIO 动态算
   Object.keys(catCounts).forEach(function(cat){
     var catItems=meanExcludes.filter(function(ex){return ex.cat===cat;});
-    // 【v10.0901.03】排序改用"偏离倍数 ratio=次数÷期望"降序，而非绝对次数降序：
-    // 绝对次数会让波色(仅3类，绝对次数天然最大)永远霸榜第一，且长期不变。
-    catItems.sort(function(a,b){return b.ratio-a.ratio;});
+    // 【v10.0902.01】排序改为「近期热度(近6期偏离倍数)」优先，其次长期热度。
+    // 近6期每进一期就换掉 1/6 的样本 → 热度值连续变化 → 排除项排序随之轮转，
+    // 不再出现"波色连续10期锁定绿色"这类长期霸榜。
+    catItems.sort(function(a,b){
+      var ka=(a.kind==='surge')?1:0,kb=(b.kind==='surge')?1:0;
+      if(ka!==kb) return kb-ka;                                   // 近期突热项优先
+      if(Math.abs((b.heat6||0)-(a.heat6||0))>0.01) return (b.heat6||0)-(a.heat6||0);
+      return (b.ratio||0)-(a.ratio||0);
+    });
     // 互斥保护上限
     var maxKeep=catItems[0]?catItems[0].catN-1:catItems.length;
     // 精华提取上限：eliteKeep 为 0 时按达标数量动态算（至少1条），随开奖浮动
     var eliteLimit=eliteKeep[cat]>0?eliteKeep[cat]:Math.max(1,Math.ceil(catItems.length*ELITE_RATIO));
     var actualKeep=Math.min(maxKeep,eliteLimit,catItems.length);
     finalExcludes=finalExcludes.concat(catItems.slice(0,actualKeep));
+    // 【v10.0902.01】少类别维度(波色3类/五行5类)保底：达标项不足2条时，
+    // 补充"近6期频率最高"的1条（标 🔵近期最热）。原因：这类维度长窗口阈值高，
+    // 长期被同一项霸榜（实测新奥波色连续10期只有"绿"），而"近期最热"
+    // 每期都因 1/6 样本更替而切换，能让面板真实反映走势变化。
+    if(actualKeep<2 && actualKeep<maxKeep){
+      var hasVal={};catItems.slice(0,actualKeep).forEach(function(x){hasVal[x.val]=1;});
+      var extra=(allCand[cat]||[]).filter(function(x){return !hasVal[x.val]&&(x.f6||0)>0;})
+        .sort(function(a,b){return (b.f6-a.f6)||((b.heat6||0)-(a.heat6||0));})[0];
+      if(extra){var cp={};for(var kk in extra)cp[kk]=extra[kk];cp.kind='near';finalExcludes.push(cp);}
+    }
   });
   meanExcludes=finalExcludes;
   if(meanExcludes.length>0){
@@ -6746,14 +6827,21 @@ function buildStatExcludeBlock(){
        '<b style="font-size:12px;color:#e67e22">⚡ 统计排除</b>'+
        '<span style="font-size:10px;color:#333;margin-left:6px">统计窗口：<b style="color:#c0392b">第 '+A.from+' ~ '+A.to+' 期（近'+dataN+'期）</b></span>'+
        '<span style="font-size:10px;color:#666;margin-left:6px">阈值：生肖≥'+thZod+'/合数≥'+thHe+'/五行≥'+thWx+'/波色≥'+thWv+'/尾数≥'+thTail+'次 [期望×'+multiplier+']，同类最多排除N-1种防空集</span>'+
+       '<div style="margin:4px 0;font-size:10px;background:#fff;border-radius:4px;padding:4px 6px;border-left:3px solid #c0392b">'+
+       '<b>⚡双窗口口径（v10.0902.01）：</b>'+
+       '<b style="color:#c0392b">长窗口</b>=第 '+A.from+'~'+A.to+' 期（'+dataN+'期，看长期偏热，稳定）　'+
+       '<b style="color:#1a6baa">短窗口</b>=第 '+A.sFrom+'~'+A.to+' 期（'+dataN6+'期，看近期突热，<b>每期都会变</b>）<br>'+
+       '<span style="font-size:9px;color:#666">为什么加短窗口：波色只有3类、五行只有5类，长窗口期望大、阈值高，每期只换1期数据根本跨不过阈值（实测波色曾连续10期锁定"绿"）。近6期每进一期就换掉1/6样本≈17%波动，少类别维度才灵敏得起来。</span>'+
+       '</div>'+
        '<div style="margin:4px 0;font-size:10px">'+
        '<b>窗口期数：</b>'+WIN_OPTS.map(function(o){
          return '<span class="attr-toggle" data-action="setStatExclN" data-val="'+o+'" style="cursor:pointer;margin-right:4px;padding:2px 6px;border-radius:4px;'+(o===selN?'background:#e67e22;color:#fff;font-weight:bold':'background:#eee;color:#555')+'">'+o+'期</span>';
        }).join('')+
        '<span style="color:#888;margin-left:6px">（改窗口立即重算，可直观看到排除项随窗口/开奖变化）</span></div>'+
        '<div style="font-size:9px;color:#666;background:#fff;border-radius:4px;padding:4px 6px;margin-bottom:4px">'+
-       '排序依据：<b>偏离倍数 = 实际次数 ÷ 理论期望</b>（波色期望=N/3、五行=N/5、尾数=N/10、生肖=N/12、合数=N/13），倍数越大越异常。<br>'+
-       '变化标记：<b style="color:#c0392b">🆕新增</b>=上期未达标本期达标 / <b style="color:#e67e22">↑升</b> <b style="color:#1a6baa">↓降</b>=较上期次数变化 / <b style="color:#27ae60">持平</b>=无变化。'+
+       '<b>达标条件（二选一）：</b>①<b>长期偏热</b>=长窗口次数≥阈值；②<b>近期突热</b>=近6期≥2次 且 近6期热度≥1.4倍期望 且 高于长期热度（标 <b style="color:#c0392b">🔥突热</b>）。<br>'+
+       '<b>期望</b>=窗口期数×该属性号码数÷49（精确口径，非简单1÷类别数）。<b>排序</b>=近6期热度优先→长期热度。<br>'+
+       '<b>变化标记：</b><b style="color:#c0392b">🆕新增</b>=上期未达标本期达标 / <b style="color:#e67e22">↑升</b> <b style="color:#1a6baa">↓降</b>=较上期长期窗口次数变化 / <b style="color:#27ae60">持平</b>=无变化 / <b style="color:#c0392b">🔥</b>近6期升温 <b style="color:#1a6baa">❄️</b>近6期降温。'+
        '</div>'+
        (LAST?'<span style="font-size:9px;color:#888">上期('+LAST.p+'期) 特码:'+LAST.t+' 正码:'+LAST.n.join(',')+' → 标注每项排除上期特码/正码是否准确</span>':'')+
        '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">';
@@ -6789,10 +6877,30 @@ function buildStatExcludeBlock(){
                 :'<span style="color:#27ae60" title="较上期无变化">持平</span>';
       var wasQualify=(ex.prev||0)>={生肖:thZod,合数:thHe,五行:thWx,波色:thWv,尾数:thTail}[ex.cat];
       var newMark=(!wasQualify&&ex.cnt>0)?'<span style="background:#c0392b;color:#fff;border-radius:3px;padding:0 3px;font-size:9px;margin-left:3px">🆕新增</span>':'';
-      h+='<div style="background:#fff;border:1px solid #f0c36d;border-radius:6px;padding:6px;font-size:10px">'+
-        '<b>🚫 排除 '+ex.label+' ('+ex.cnt+'次)</b>'+
-        '<span style="color:#7d3c98;font-weight:bold;margin-left:4px" title="实际次数÷理论期望('+(expOf[ex.cat]||1).toFixed(2)+')">×'+ratio.toFixed(2)+'</span>'+
-        '<span style="margin-left:4px">'+chgMark+'</span>'+newMark+
+      // 【v10.0902.01】近6期短窗口：次数 + 热度 + 升降温趋势
+      var c6=(ex.cnt6||0),h6=(ex.heat6||0);
+      var d6=c6-(ex.prev6||0);
+      var trend6=d6>0?'<span style="color:#c0392b;font-weight:bold" title="近6期较上期 +'+d6+'次">🔥'+d6+'</span>'
+                :d6<0?'<span style="color:#1a6baa;font-weight:bold" title="近6期较上期 '+d6+'次">❄️'+(-d6)+'</span>'
+                :'<span style="color:#27ae60" title="近6期较上期无变化">＝</span>';
+      var shortBadge='<span style="background:'+(h6>=1.4?'#c0392b':h6>=1?'#e67e22':'#95a5a6')+';color:#fff;border-radius:3px;padding:0 4px;font-size:9px;font-weight:bold;margin-left:4px" '+
+        'title="近'+dataN6+'期('+A.sFrom+'~'+A.to+'期)出现'+c6+'次，理论期望'+(ex.exp6||0).toFixed(2)+'次">近6期'+c6+'次 ×'+h6.toFixed(2)+'</span>';
+      var surgeMark=(ex.kind==='surge')?'<span style="background:#c0392b;color:#fff;border-radius:3px;padding:0 3px;font-size:9px;margin-left:3px">🔥突热</span>'
+                   :(ex.kind==='near')?'<span style="background:#1a6baa;color:#fff;border-radius:3px;padding:0 3px;font-size:9px;margin-left:3px" title="未达长期阈值，但近6期出现频率最高，作为走势补充">🔵近期最热</span>':'';
+      var bdColor=(ex.kind==='surge')?'#c0392b':(ex.kind==='near')?'#1a6baa':'#f0c36d';
+      var bdLeft=(ex.kind==='surge')?'border-left:4px solid #c0392b;':(ex.kind==='near')?'border-left:4px solid #1a6baa;':'';
+      // 保底项(kind='near')的入选理由是"近6期出得最多"，主指标须用近期热度，
+      // 否则会出现"长期×0.61(偏冷)却被列进排除"的误导性展示。
+      var isNear=(ex.kind==='near');
+      var mainRatio=isNear?h6:ratio;
+      var mainExp=isNear?(ex.exp6||0):(ex.exp||0);
+      var mainN=isNear?dataN6:dataN;
+      var hzMark=(isNear?'<span style="color:#1a6baa;font-weight:bold;margin-left:4px" title="长期'+dataN+'期：'+ex.cnt+'次 ÷ 期望'+(ex.exp||0).toFixed(2)+' = ×'+ratio.toFixed(2)+'">长×'+ratio.toFixed(2)+'</span>':'');
+      h+='<div style="background:#fff;border:1px solid '+bdColor+';'+bdLeft+'border-radius:6px;padding:6px;font-size:10px">'+
+        '<b>'+(isNear?'⚠️ 近期偏热 ':'🚫 排除 ')+ex.label+' ('+ex.cnt+'次)</b>'+
+        '<span style="color:#7d3c98;font-weight:bold;margin-left:4px" title="'+(isNear?'近'+mainN+'期':'窗口'+mainN+'期')+'：'+(isNear?c6:ex.cnt)+'次 ÷ 期望'+mainExp.toFixed(2)+'次">×'+mainRatio.toFixed(2)+'</span>'+hzMark+
+        shortBadge+trend6+
+        '<span style="margin-left:4px">'+chgMark+'</span>'+newMark+surgeMark+
         teAccMark+zmAccMark+'<br>'+
         '<span class="attr-toggle excl" data-action="quickExclAttr" data-key="'+ak+'" data-val="'+av+'" style="cursor:pointer;margin-right:4px">⚡ 一键排除属性</span>'+
         '<button class="btn" style="font-size:8px;padding:1px 4px;background:#e74c3c;color:#fff;margin-right:2px" data-action="applyStatExcl" data-key="'+ak+'" data-val="'+av+'" data-target="te">📌 应用到特码排除</button>'+
