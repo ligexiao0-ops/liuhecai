@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0901.02</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0901.04</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -574,6 +574,14 @@ function loadData(){
   // 本地加载(localStorage/基准INIT_DR)路径未排序，一旦 localStorage 里 DR 乱序/截断就会"数据会乱/期号错乱"。
   // 此处兜底，确保任何来源的数据都顺序正确，所有"近N期/遗漏/连号"计算才可靠。
   DR.sort(function(a,b){return a.p-b.p;});
+  // 【v10.0901.04】本地缓存兜底过滤：旧版本已把别彩种的期号写进过 localStorage，
+  // 不清理的话一刷新"串号"又会复活并再次被推上云端。只剔除不属于本彩种期号段的记录（不影响正常数据）。
+  var _drBefore=DR.length;
+  DR=DR.filter(function(r){return _periodBelongsToLot(CUR_LOT,r.p);});
+  if(DR.length!==_drBefore){
+    console.warn('[串号防护] 本地'+LOTTERIES[CUR_LOT].name+'缓存中发现 '+(_drBefore-DR.length)+' 条不属于本彩种的期号，已剔除并回写');
+    try{localStorage.setItem(cfg.dr_key,JSON.stringify(DR));localStorage.setItem(cfg.dr_key+'_safe',JSON.stringify(DR));}catch(e){}
+  }
   // 后台从API刷新最新数据
   refreshFromServer();
 }
@@ -584,9 +592,62 @@ var SYNC_STATUS='idle',SYNC_MSG='';
 // 实际已发生过：港彩被塞进新奥的 154~243 期、新奥/老奥被塞进港彩的 44~94 期。
 // 港彩期号增长慢(每周3期)、新奥/老奥增长快(每天1期)，两者的期号段天然分离，
 // 据此在推送前过滤掉不属于当前彩种的期号，宁可不推也不能推错。
+// 【v10.0901.04】期号段改为"持久化 + 自适应"，彻底废弃硬编码常数（#571 教训：任何固定常数都会随时间失效反噬）。
+// 港彩每周约3期、新奥/老奥每天1期，两者期号段天然分离：港彩 (0, gcMax]，新奥/老奥 [xaMin, +∞)，且恒有 gcMax < xaMin。
+// 段边界存 localStorage 全局键（跨彩种共享），切换彩种不会被 UP 重置清空。
+var LOT_BAND={gcMax:130,xaMin:140};
+(function(){
+  try{var v=localStorage.getItem('_lot_band');
+    if(v){var o=JSON.parse(v);
+      if(o&&o.gcMax>0&&o.xaMin>o.gcMax+5)LOT_BAND={gcMax:o.gcMax,xaMin:o.xaMin};}
+  }catch(e){}
+})();
+function _saveLotBand(){try{localStorage.setItem('_lot_band',JSON.stringify(LOT_BAND));}catch(e){}}
 function _periodBelongsToLot(lot,p){
-  if(lot==='gc') return p>0 && p<=130;  // 港彩期号段
-  return p>=140;                        // 新奥/老奥期号段
+  p=+p; if(!(p>0))return false;
+  if(lot==='gc') return p<=LOT_BAND.gcMax;   // 港彩期号段
+  return p>=LOT_BAND.xaMin;                   // 新奥/老奥期号段
+}
+// 某彩种内置权威种子数据里的最早期号（INIT_DR 是硬编码的干净源头，不受任何污染影响）
+function _minSeedPeriod(lots){
+  var lo=null;
+  (lots||[]).forEach(function(l){
+    var base=(l==='xa')?INIT_DR_XA:(l==='la')?INIT_DR_LA:INIT_DR_GC;
+    base.forEach(function(r){if(lo===null||r.p<lo)lo=r.p;});
+  });
+  return lo;
+}
+// 自适应放宽：期号单向增长，段必须跟着走。放宽港彩上界时同步把新奥下界顶上去，
+// 但新奥下界最多只能顶到"新奥/老奥真实数据最早期号-1"，否则会误伤真实数据。
+// 真顶不动了（两段已无间隔）就拒绝并大声告警——串号比录不进去严重得多，宁可拒绝。
+function _autoWidenBand(lot,p){
+  p=+p; if(!(p>0))return false;
+  if(lot==='gc'&&p>LOT_BAND.gcMax){
+    var g=p+15, xaSeed=_minSeedPeriod(['xa','la']);
+    var maxX=xaSeed?xaSeed-1:Infinity;      // 新奥下界的天花板
+    if(g>=LOT_BAND.xaMin){
+      var nx=Math.min(g+5,maxX);
+      if(!(nx>LOT_BAND.xaMin)){
+        console.error('[期号段] 港彩期号'+p+'已把两段挤到一起（新奥段无法再上移到'+nx+'），拒绝录入以免串号。请清理新奥/老奥历史数据或调整段边界。');
+        return false;
+      }
+      LOT_BAND.xaMin=nx;
+    }
+    if(g<LOT_BAND.xaMin){LOT_BAND.gcMax=g;_saveLotBand();return true;}
+    console.error('[期号段] 港彩期号'+p+'放宽失败，拒绝录入');
+    return false;
+  }
+  if(lot!=='gc'&&p<LOT_BAND.xaMin){
+    var x=p-15;
+    if(x>LOT_BAND.gcMax){LOT_BAND.xaMin=x;_saveLotBand();return true;}
+    console.error('[期号段] 新奥/老奥期号'+p+'已逼近港彩段('+LOT_BAND.gcMax+')，拒绝录入以免串号');
+    return false;
+  }
+  return false;
+}
+// 统计一批期号里不属于本彩种的条数（用于体检提示）
+function _countForeignPeriods(lot,rows){
+  var c=0;(rows||[]).forEach(function(r){if(!_periodBelongsToLot(lot,r.p))c++;});return c;
 }
 // 【v10.0830.03】分块批量 upsert：把 N 条记录切成每块 100 条顺序提交。
 // 原实现是"每条记录一个并发请求"——DR 到 240 期就是 240 个并发 Promise.all，
@@ -603,18 +664,29 @@ function _upsertChunked(recs,chunk){
     });
   },Promise.resolve());
 }
+// 【v10.0901.04】自动刷新定时器统一管理：原代码在 switchLottery/登录切换/初始化 三处各注册一个
+// setInterval 且从不 clearInterval —— 每次切换彩种就多一个 60s 定时器并发跑 refreshFromServer，
+// 既是性能负担，也让"异步飞行中切彩种"的串号竞态被放大。改为全局唯一，重复调用自动顶掉旧的。
+var _autoRefreshTimer=null;
+function startAutoRefresh(){
+  try{if(_autoRefreshTimer){clearInterval(_autoRefreshTimer);}}catch(e){}
+  _autoRefreshTimer=setInterval(refreshFromServer,60000);
+}
 function syncAllToServer(){
   if(!sb)return;
   SYNC_STATUS='syncing';
+  // 【v10.0901.04】锁定本次推送的彩种（DR 在 await 期间可能被 switchLottery 换掉）
+  var LOT=CUR_LOT;
   // 【v10.0901.02】推送前过滤掉不属于本彩种期号段的记录，防止串号污染
-  var recs=DR.filter(function(r){return _periodBelongsToLot(CUR_LOT,r.p);}).map(function(r){return {
-    lot_type:CUR_LOT,period:r.p,date:r.d,
+  var recs=DR.filter(function(r){return _periodBelongsToLot(LOT,r.p);}).map(function(r){return {
+    lot_type:LOT,period:r.p,date:r.d,
     n1:r.n[0],n2:r.n[1],n3:r.n[2],n4:r.n[3],n5:r.n[4],n6:r.n[5],t:r.t
   };});
   _upsertChunked(recs).then(function(){
+    if(LOT!==CUR_LOT){console.warn('[串号防护] 推送期间彩种已切换，后续UP同步跳过');return;}
     // 【v10.0803.01】同步用户偏好UP到user_prefs表（手机和电脑两端共享）
     if(typeof UP!=='undefined'){
-      sb.from('user_prefs').upsert({lot_type:CUR_LOT,prefs:UP,updated_at:new Date().toISOString()},{onConflict:'lot_type'}).then(function(){
+      sb.from('user_prefs').upsert({lot_type:LOT,prefs:UP,updated_at:new Date().toISOString()},{onConflict:'lot_type'}).then(function(){
         SYNC_STATUS='synced';SYNC_MSG='';updateSyncUI();
       }).catch(function(e){
         SYNC_STATUS='synced';SYNC_MSG='UP同步失败(需user_prefs表)';updateSyncUI();
@@ -631,11 +703,26 @@ function syncAllToServer(){
 function refreshFromServer(){
   if(!sb){SYNC_STATUS='error';SYNC_MSG='未连接(需Supabase)';updateSyncUI();return;}
   var cfg=LOTTERIES[CUR_LOT];
+  // 【v10.0901.04】★串号根治★：本次请求锁定彩种。此前所有异步回调里都直接读全局 CUR_LOT/DR，
+  // 一旦请求飞行途中用户切换彩种（或多个 60s 定时器并发），就会出现"用 A 彩种拉回的数据并进 B 彩种的 DR，
+  // 再以 B 的 lot_type 推上云端"——这正是新奥拿到港彩44-94、港彩拿到新奥154-244 这种双向串号的成因。
+  // 现全程使用 LOT，并在每个异步续体入口校验 LOT===CUR_LOT，不一致立即丢弃本次结果。
+  var LOT=CUR_LOT;
   SYNC_STATUS='syncing';updateSyncUI();
-  sb.from('lottery_records').select('period,date,n1,n2,n3,n4,n5,n6,t').eq('lot_type',CUR_LOT).order('period',{ascending:true}).then(function(res){
+  sb.from('lottery_records').select('period,date,n1,n2,n3,n4,n5,n6,t').eq('lot_type',LOT).order('period',{ascending:true}).then(function(res){
+    if(LOT!==CUR_LOT){console.warn('[串号防护] 云端拉取期间彩种已切换('+LOT+'→'+CUR_LOT+')，丢弃本次结果');return;}
     if(res.error||!res.data){SYNC_STATUS='error';SYNC_MSG=(res.error||{}).message||'连接失败';return;}
     if(res.data.length===0){SYNC_STATUS='synced';SYNC_MSG='';return;}
     var serverData=res.data.map(function(r){return {p:r.period,d:r.date,n:[r.n1,r.n2,r.n3,r.n4,r.n5,r.n6],t:r.t};});
+    // 【v10.0901.04】拉取侧串号过滤：推送侧早就过滤了，但云端若残留脏数据，拉取时不过滤照样会被并进本地 DR
+    var _badPull=0;
+    serverData=serverData.filter(function(sr){
+      if(_periodBelongsToLot(LOT,sr.p))return true;
+      _badPull++;return false;
+    });
+    if(_badPull>0){
+      console.warn('[串号防护] 云端「'+LOTTERIES[LOT].name+'」残留 '+_badPull+' 条不属于本彩种期号段('+(LOT==='gc'?('≤'+LOT_BAND.gcMax):('≥'+LOT_BAND.xaMin))+')的记录，已忽略未合并');
+    }
     var localLastP=DR.length>0?DR[DR.length-1].p:0;
     // 策略：本地INIT_DR数据为权威源，云端只补充本地没有的新期号，不覆盖本地已有记录
     var localMap={}; DR.forEach(function(r){localMap[r.p]=r;});
@@ -666,12 +753,14 @@ function refreshFromServer(){
       try{var cfg2=LOTTERIES[CUR_LOT];localStorage.setItem(cfg2.dr_key,JSON.stringify(DR));localStorage.setItem(cfg2.dr_key+'_safe',JSON.stringify(DR));}catch(e){}
     }
     // 强制推送所有本地数据到服务器（修正云端错误数据）
+    // 【v10.0901.04】推送前再次校验彩种未变：此时 DR 已是当前彩种的，若中途切过则绝不能推（会串号）
+    if(LOT!==CUR_LOT){console.warn('[串号防护] 推送前检测到彩种已切换('+LOT+'→'+CUR_LOT+')，放弃本次推送');return;}
     if(sb&&DR.length>0){
       // 【v10.0830.03】同样改为分块批量提交（原为每条一个并发请求，易被限流导致整体失败）
       // 【v10.0901.02】同样加串号过滤，防止把别彩种的期号推进来
-      _upsertChunked(DR.filter(function(r){return _periodBelongsToLot(CUR_LOT,r.p);}).map(function(r){
+      _upsertChunked(DR.filter(function(r){return _periodBelongsToLot(LOT,r.p);}).map(function(r){
         return {
-          lot_type:CUR_LOT,period:r.p,date:r.d,
+          lot_type:LOT,period:r.p,date:r.d,
           n1:r.n[0],n2:r.n[1],n3:r.n[2],n4:r.n[3],n5:r.n[4],n6:r.n[5],t:r.t
         };
       })).then(function(){
@@ -693,7 +782,9 @@ function refreshFromServer(){
     if(merged){calcDerived();render();}
     // 【v10.0803.01】拉取云端用户偏好UP（如手机操作过则覆盖本地）
     if(typeof UP!=='undefined'){
-      sb.from('user_prefs').select('prefs,updated_at').eq('lot_type',CUR_LOT).then(function(pr){
+      sb.from('user_prefs').select('prefs,updated_at').eq('lot_type',LOT).then(function(pr){
+        // 【v10.0901.04】同样加锁：否则会把 A 彩种的偏好覆盖到 B 彩种上（表现为"改了设置/排除项莫名丢失或串味"）
+        if(LOT!==CUR_LOT){console.warn('[串号防护] 偏好拉取期间彩种已切换，丢弃');return;}
         if(pr.data&&pr.data[0]&&pr.data[0].prefs){
           var serverUp=pr.data[0].prefs;
           var serverTime=pr.data[0].updated_at?new Date(pr.data[0].updated_at).getTime():0;
@@ -778,11 +869,20 @@ function fixWrongLotData(){
 function updateSyncUI(){
   var el=document.getElementById('sync-indicator');
   if(!el)return;
-  if(!sb){el.style.background='#95a5a6';el.innerHTML='🔴 未连接';el.title='Supabase未连接';return;}
-  if(SYNC_STATUS==='syncing'){el.style.background='#f39c12';el.innerHTML='🟡 同步中...';return;}
-  if(SYNC_STATUS==='synced'){el.style.background='#27ae60';el.innerHTML='🟢 已同步';el.title='云端数据已同步';return;}
-  if(SYNC_STATUS==='error'){el.style.background='#e74c3c';el.innerHTML='🔴 失败';el.title=SYNC_MSG||'同步出错';return;}
-  el.style.background='#95a5a6';el.innerHTML='🟡 待同步';el.title='等待首次同步';
+  // 【v10.0901.04】数据体检：实时检测本地 DR 里是否还混着别的彩种的期号（串号自愈指示）
+  var _bad=0;
+  try{_bad=_countForeignPeriods(CUR_LOT,DR);}catch(e){}
+  var _bandTip='\n【期号段】'+LOTTERIES[CUR_LOT].name+'：'+(CUR_LOT==='gc'?('1 ~ '+LOT_BAND.gcMax+' 期'):(LOT_BAND.xaMin+' 期以上'))
+    +'\n当前本地 '+((typeof DR!=='undefined'&&DR)?DR.length:0)+' 期'
+    +(_bad>0?('\n⚠️ 检出 '+_bad+' 条不属于本彩种的期号（已被隔离，不会参与运算）'):'\n✅ 未检出串号数据');
+  if(!sb){el.style.background='#95a5a6';el.innerHTML='🔴 未连接';el.title='Supabase未连接'+_bandTip;return;}
+  if(SYNC_STATUS==='syncing'){el.style.background='#f39c12';el.innerHTML='🟡 同步中...';el.title=_bandTip;return;}
+  if(SYNC_STATUS==='synced'){
+    if(_bad>0){el.style.background='#e67e22';el.innerHTML='🟠 已同步·串号'+_bad;el.title='云端已同步'+_bandTip;return;}
+    el.style.background='#27ae60';el.innerHTML='🟢 已同步';el.title='云端数据已同步'+_bandTip;return;
+  }
+  if(SYNC_STATUS==='error'){el.style.background='#e74c3c';el.innerHTML='🔴 失败';el.title=(SYNC_MSG||'同步出错')+_bandTip;return;}
+  el.style.background='#95a5a6';el.innerHTML='🟡 待同步';el.title='等待首次同步'+_bandTip;
 }
 const COMBOS=[
   {k:"红单",fn:n=>gwv(n)==="红"&&gpar(n)==="单"},{k:"红双",fn:n=>gwv(n)==="红"&&gpar(n)==="双"},
@@ -2793,7 +2893,7 @@ function switchLottery(lot){
   render();
   refreshFromServer();
   // Auto-refresh: poll server every 60 seconds for new records
-  setInterval(refreshFromServer,60000);
+  startAutoRefresh();
 }
 function renderLotteryBar(){
   document.getElementById('lotteryBar').innerHTML=Object.keys(LOTTERIES).map(k=>{
@@ -5254,6 +5354,13 @@ function scoreZheng(extraPrefs){
   var zodAvg=Object.keys(zodFreq100).length>0?Object.keys(zodFreq100).reduce(function(s,k){return s+zodFreq100[k];},0)/Object.keys(zodFreq100).length:58;
   var posM500=null;
   try{posM500=posModelScore();}catch(e){posM500=null;}
+  // ===== 【v10.0901.03】正码来源复盘 + 生肖级联动预计算 =====
+  var ZSB=null,DZ={hard:[],soft:[]};
+  try{ZSB=zhengSourceBucketOf();}catch(e){ZSB=null;}
+  try{DZ=deadZodsForZheng()||{hard:[],soft:[]};}catch(e){DZ={hard:[],soft:[]};}
+  var DZHARD={},DZSOFT={};
+  (DZ.hard||[]).forEach(function(z){DZHARD[z]=1;});
+  (DZ.soft||[]).forEach(function(z){DZSOFT[z]=1;});
 
   const lTeTail=gtl(LAST.t);
   const lTeHead=ghd(LAST.t);
@@ -5280,6 +5387,31 @@ function scoreZheng(extraPrefs){
     // 【v10.0814.04-#556】动态排除轻度降权（近3期特码/过热正码/近2期特肖→-8降温）
     if(typeof CROSS_DYN_NUMS!=='undefined'&&CROSS_DYN_NUMS.indexOf(n)>=0){s-=8;rs.push("动态排除(近开)-8");}
     if(typeof CROSS_DYN_ZODS!=='undefined'&&CROSS_DYN_ZODS.indexOf(gz(n))>=0){s-=8;rs.push("动态排除(近特肖)-8");}
+
+    // ===== 【v10.0901.03】生肖级联动：若判定此生肖不会出，则其下号码肯定也不会出现 =====
+    if(DZHARD[gz(n)]){s-=999;rs.push("生肖不出("+gz(n)+")→号码不出");}
+    // 统计排除判定的"过热生肖"只做软降权（过热→下期反压），不封杀，避免可选号码枯竭(#562)
+    else if(DZSOFT[gz(n)]){s-=15;rs.push("过热肖("+gz(n)+")降权");}
+
+    // ===== 【v10.0901.03】正码来源复盘占比加权 =====
+    // 依据历史回测得到的"各来源桶实际占比 ÷ 理论占比"，lift>1 加分、<1 减分。
+    if(ZSB&&ZSB.bucket[n]){
+      var bk=ZSB.bucket[n],lf=ZSB.E.lift||{};
+      var l1=lf[bk.app]||1, l2=lf[bk.bg]||1, l3=lf[bk.om]||1;
+      // 单桶加权（每个维度限幅 ±4，避免复盘噪声压过其它维度）
+      var d1=Math.max(-4,Math.min(4,(l1-1)*10));
+      var d2=Math.max(-4,Math.min(4,(l2-1)*10));
+      var d3=Math.max(-4,Math.min(4,(l3-1)*10));
+      s+=d1+d2+d3;
+      rs.push("复盘"+bk.app+"×"+l1.toFixed(2)+"/"+bk.bg+"×"+l2.toFixed(2)+"/"+bk.om+"×"+l3.toFixed(2)+"("+((d1+d2+d3)>=0?'+':'')+(d1+d2+d3).toFixed(1)+")");
+      // 三桶交叉组合（命中历史高频组合额外加分）
+      var cx=(ZSB.E.cross||{})[bk.key];
+      if(cx&&cx.cnt>=3){
+        var cd=Math.max(-5,Math.min(5,(cx.lift-1)*6));
+        s+=cd;
+        rs.push("组合"+bk.key+"×"+cx.lift.toFixed(2)+"("+(cd>=0?'+':'')+cd.toFixed(1)+")");
+      }
+    }
 
     // ===== 用户强选择 =====
     if(pTails.length>0&&!pTails.includes(gtl(n))){s-=8;rs.push("不在指定尾数");}
@@ -5775,6 +5907,13 @@ document.addEventListener('click',function(e){
     if(zmAdded)UP.zm3_excl_zods.push(zodVal);
     saveData();render();
     showClickFeedback('✅ 已排除生肖'+EMJ[zodVal]+zodVal+'（连肖'+(lxAdded?'新增':'已有')+',三中三'+(zmAdded?'新增':'已有')+')');
+  } else if(action==='setStatExclN'){
+    // 【v10.0901.03】切换"统计排除"的滚动窗口期数
+    var wn=parseInt(el.dataset.val,10);
+    UP.stat_excl_n=wn;
+    window._TE_EXCL=null; // 强制重算
+    saveData();render();
+    showClickFeedback('✅ 统计排除窗口已切换为近'+wn+'期');
   } else if(action==='clearGrpLimits'){
     UP.lx_grp_limits=[];saveData();render();showClickFeedback('✅ 分组限制已清空');
   } else if(action==='switchSubTab'){
@@ -6197,6 +6336,12 @@ function addRecord(){
   const msg=document.getElementById('add-msg');
   if(ns.some(n=>isNaN(n)||n<1||n>49)||isNaN(t)||t<1||t>49){msg.innerHTML='<span class="warn">❌ 请检查7个号码（1-49）</span>';return;}
   const np=LAST.p+1,nd=pToDate(np);
+  // 【v10.0901.04】期号段自适应放宽：期号单向增长，超出当前段时先尝试放宽，避免将来录不进去
+  _autoWidenBand(CUR_LOT,np);
+  if(!_periodBelongsToLot(CUR_LOT,np)){
+    msg.innerHTML='<span class="warn">❌ 第'+np+'期不属于'+LOTTERIES[CUR_LOT].name+'的期号段（'+(CUR_LOT==='gc'?('≤'+LOT_BAND.gcMax):('≥'+LOT_BAND.xaMin))+'），已阻止录入以防串号</span>';
+    return;
+  }
   const histPrevDraw=DR[DR.length-1]||null; // np-1期（push前的最新期，用于计算"新出现生肖"）
   DR.push({p:np,d:nd,n:ns,t:t,drop:ns.slice()}); // drop保存落球顺序(原始录入顺序)
   // 【v10.0803.02新增】记录九肖历史（每期开奖后自动记录，供发现"位置完全映射少见/九肖内5个概率大/新出现生肖"规律）
@@ -6438,17 +6583,8 @@ function renderRecord(){
 }
 
 // ===== 计算特码属性分布（用于统计排除） =====
-function calcTeAttrCounts(){
-  // 【v10.0830.04】改为"最近 N 期"滚动统计（N=min(DR.length,100)）：
-  // 原为全量 DR 累计——240 期里新增 1 期只占 0.4%，而排除阈值又随总期数同步放大
-  // （如 thZod=240/12×1.2=24），两者相互抵消，筛出的排除项几乎恒定，
-  // 这正是"统计排除每期都一样"的真正根因（比"没重算"更本质）。
-  // 改为固定长度滚动窗口后，每录入一期窗口滑动一格，计数真实反映近期冷热变化。
-  // 【v10.0830.05】N 进一步缩到 30：N=100 时翻一格新旧窗口重叠 99%，结果几乎不变；
-  // N=30 时翻一格重叠 29/30≈97%（其实也大，但阈值按 30 期算自然更敏感）。
-  // 真正的"翻到哪期都不同"还得配合 multiplier 硬编码 1.2（见 buildStatExcludeBlock）。
-  var N=Math.min(DR.length,30);
-  var rows=DR.slice(-N).map(r=>({heVal:ghesum(r.t),wx:gwx(r.t),wv:gwv(r.t),tail:r.t%10,zod:gz(r.t),fam:gfam(r.t),sz:gsz(r.t),par:gpar(r.t),he:ghe(r.t)}));
+// 纯函数：对给定 rows 统计五类属性分布
+function _teAttrCountsOf(rows){
   var heValCount={};for(var v=1;v<=13;v++)heValCount[v]=0;
   var wxCount={金:0,木:0,水:0,火:0,土:0};
   var wvCount={红:0,蓝:0,绿:0};
@@ -6461,15 +6597,35 @@ function calcTeAttrCounts(){
     tailCount[r.tail]++;
     zodCount[r.zod]++;
   });
-  window._lastHeCnt=Object.assign({},heValCount);
-  window._lastWxCnt=Object.assign({},wxCount);
-  window._lastWvCnt=Object.assign({},wvCount);
-  window._lastTailCnt=Object.assign({},tailCount);
-  window._lastZodCnt=Object.assign({},zodCount);
-  // 【v10.0830.03】记录本次统计对应的 DR 指纹，供调用方判断数据是否已变、是否需要重算
-  // 【v10.0830.04】指纹加入窗口大小 N，并记录窗口供阈值计算使用
-  window._teAttrN=N;
-  window._teAttrKey=N+'|'+DR.length+'|'+(DR.length?DR[0].p:0)+'|'+(DR.length?DR[DR.length-1].p:0)+'|'+CUR_LOT;
+  return {he:heValCount,wx:wxCount,wv:wvCount,tail:tailCount,zod:zodCount};
+}
+// 按窗口 N + 偏移 offset 统计（offset=0 当前窗口，offset=1 上一期窗口，用于算"较上期变化"）
+function calcTeAttrCounts(winN,offset){
+  var N=winN||Math.min(DR.length,30);
+  if(!(N>0))N=Math.min(DR.length,30)||1;
+  var off=offset||0;
+  var end=DR.length-off; if(end<0)end=0;
+  var start=Math.max(0,end-N);
+  var rows=DR.slice(start,end).map(r=>({heVal:ghesum(r.t),wx:gwx(r.t),wv:gwv(r.t),tail:r.t%10,zod:gz(r.t),fam:gfam(r.t),sz:gsz(r.t),par:gpar(r.t),he:ghe(r.t)}));
+  var c=_teAttrCountsOf(rows);
+  var C={he:c.he,wx:c.wx,wv:c.wv,tail:c.tail,zod:c.zod,n:rows.length,off:off,
+         winN:N,
+         from:rows.length?DR[start].p:0,
+         to:end>0?DR[end-1].p:0,
+         key:N+'|'+off+'|'+DR.length+'|'+(DR.length?DR[0].p:0)+'|'+(DR.length?DR[DR.length-1].p:0)+'|'+CUR_LOT};
+  // 【v10.0901.03·关键修复】必须写入专属命名空间 _TE_EXCL，绝不能写回 window._lastXxxCnt——
+  // renderTeFullColumns() 会用「全量 DR」覆写 window._lastHeCnt/_lastWxCnt/_lastWvCnt/_lastTailCnt，
+  // 而本函数的指纹 _teAttrKey 未被它更新，于是同一份数据重复渲染时命中"指纹未变"跳过重算，
+  // 统计排除就会读到全量历史口径→合数/五行/波色/尾数长期冻结不变（用户反馈"永远都是那几个"）。
+  window._TE_EXCL=C;
+  return C;
+}
+// 带缓存取当前窗口统计（窗口/数据/彩种任一变化即重算）
+function getTeAttrCounts(winN){
+  var N=winN||Math.min(DR.length,30);
+  var k=N+'|0|'+DR.length+'|'+(DR.length?DR[0].p:0)+'|'+(DR.length?DR[DR.length-1].p:0)+'|'+CUR_LOT;
+  if(window._TE_EXCL&&window._TE_EXCL.key===k) return window._TE_EXCL;
+  return calcTeAttrCounts(N,0);
 }
 
 // ===== Tab: 特码分析表（独立栏目，含6期生肖统计）=====
@@ -6486,54 +6642,67 @@ function buildStatExcludeBlock(){
       '<td style="padding:3px"><div style="background:#eee;height:10px;border-radius:3px;overflow:hidden;width:80px"><div style="background:'+barColor+';height:10px;width:'+barW+'%"></div></div></td>'+
       '<td style="padding:3px;font-size:9px;color:#555">'+advice+'</td></tr>';
   }
-  // 【v10.0830.03】修复"统计排除每一期都一样"：原判断只看缓存是否存在，一旦算过就永不重算，
-  // 于是录入新开奖后 DR 已增加、切换彩种后 DR 已更换，统计排除仍显示首次算出的那一份分布。
-  // 现改为比对 DR 指纹（条数+首末期号+彩种），数据一变立即重算。
-  // 【v10.0830.05】窗口缩到 30 + multiplier 硬编码 1.2：
-  // N=100 时翻一格新旧窗口重叠 99%，结果几乎不变；缩到 30 后"最近 30 期"才稳定，窗口一滑动排除项即变。
-  var _teKey=Math.min(DR.length,30)+'|'+DR.length+'|'+(DR.length?DR[0].p:0)+'|'+(DR.length?DR[DR.length-1].p:0)+'|'+CUR_LOT;
-  if(!window._lastHeCnt||!window._lastWxCnt||!window._lastWvCnt||!window._lastTailCnt||!window._lastZodCnt||window._teAttrKey!==_teKey) calcTeAttrCounts();
+  // 【v10.0901.03·根治】改用专属命名空间 getTeAttrCounts()：
+  // 旧代码读 window._lastXxxCnt，而 renderTeFullColumns() 用「全量DR」覆写同名全局，
+  // 指纹判断又不会因此失效 → 同一份数据重复渲染时统计排除读出全量历史口径，
+  // 合数/五行/波色/尾数长期冻结（实测：首次渲染"木9次"，重复渲染变"木36次"且不再变化）。
+  var WIN_OPTS=[10,15,20,30,50,100];
+  var selN=parseInt(UP.stat_excl_n,10);
+  if(WIN_OPTS.indexOf(selN)<0) selN=20; // 默认近20期（比30更敏感，翻一格即明显变化）
+  var A=getTeAttrCounts(selN);
+  var Aprev=calcTeAttrCounts(selN,1); // 上一期同长度窗口，用于算"较上期变化"
+  var cntOf=function(cat,val){
+    if(cat==='生肖')return (A.zod||{})[val]||0;
+    if(cat==='合数')return (A.he||{})[val]||0;
+    if(cat==='五行')return (A.wx||{})[val]||0;
+    if(cat==='波色')return (A.wv||{})[val]||0;
+    if(cat==='尾数')return (A.tail||{})[val]||0;
+    return 0;
+  };
+  var prevCntOf=function(cat,val){
+    if(cat==='生肖')return (Aprev.zod||{})[val]||0;
+    if(cat==='合数')return (Aprev.he||{})[val]||0;
+    if(cat==='五行')return (Aprev.wx||{})[val]||0;
+    if(cat==='波色')return (Aprev.wv||{})[val]||0;
+    if(cat==='尾数')return (Aprev.tail||{})[val]||0;
+    return 0;
+  };
   var h='';
   var meanExcludes=[];
-  var dataN=window._teAttrN||Math.min(DR.length,30)||30;
-  var multiplier=1.2; // 硬编码：N 已固定为 30，不再随 dataN 派生
-  var thHe=Math.max(4,Math.round(dataN/13*multiplier));
-  var thWx=Math.max(3,Math.round(dataN/5*multiplier));
-  var thWv=Math.max(4,Math.round(dataN/3*multiplier));
-  var thTail=Math.max(3,Math.round(dataN/10*multiplier));
-  var thZod=Math.max(3,Math.round(dataN/12*multiplier));
-  // 生肖（12类，同类最多排除11种）
-  for(var zi=0;zi<ZODS.length;zi++){
-    var zod=ZODS[zi];
-    var zcnt=(window._lastZodCnt||{})[zod]||0;
-    if(zcnt>=thZod){meanExcludes.push({label:'生肖='+zod,cnt:zcnt,kind:'hot',cat:'生肖',catN:12});}
+  var dataN=A.n||selN;
+  var multiplier=1.2;
+  var thHe=Math.max(2,Math.round(dataN/13*multiplier));
+  var thWx=Math.max(2,Math.round(dataN/5*multiplier));
+  var thWv=Math.max(2,Math.round(dataN/3*multiplier));
+  var thTail=Math.max(2,Math.round(dataN/10*multiplier));
+  var thZod=Math.max(2,Math.round(dataN/12*multiplier));
+  // 期望次数 = 窗口期数 / 类别数（用于算偏离倍数，替代"绝对次数"排序——
+  // 绝对次数会让波色(3类)永远霸榜，因为它的绝对次数天然最大）
+  var expOf={生肖:dataN/12,合数:dataN/13,五行:dataN/5,波色:dataN/3,尾数:dataN/10};
+  function pushEx(cat,val){
+    var c=cntOf(cat,val);
+    var th={生肖:thZod,合数:thHe,五行:thWx,波色:thWv,尾数:thTail}[cat];
+    if(c<th) return;
+    var ex=expOf[cat]||1;
+    meanExcludes.push({label:cat+'='+val,val:val,cnt:c,kind:'hot',cat:cat,
+      catN:{生肖:12,合数:13,五行:5,波色:3,尾数:10}[cat],
+      ratio:c/ex, prev:prevCntOf(cat,val)});
   }
+  // 生肖（12类）
+  for(var zi=0;zi<ZODS.length;zi++) pushEx('生肖',ZODS[zi]);
   // 合数
-  for(var hd=1;hd<=13;hd++){
-    var cnt=(window._lastHeCnt||{})[hd]||0;
-    if(cnt>=thHe){meanExcludes.push({label:'合数='+hd,cnt:cnt,kind:'hot',cat:'合数',catN:13});}
-  }
+  for(var hd=1;hd<=13;hd++) pushEx('合数',hd);
   // 五行
-  for(var w=0;w<5;w++){
-    var wname=["金","木","水","火","土"][w];
-    var wcnt=(window._lastWxCnt||{})[wname]||0;
-    if(wcnt>=thWx){meanExcludes.push({label:'五行='+wname,cnt:wcnt,kind:'hot',cat:'五行',catN:5});}
-  }
+  ["金","木","水","火","土"].forEach(function(w){pushEx('五行',w);});
   // 波色：同类互斥保护——最多排除N-1种（3种全排除=空集）
   var wxExcl=[];
-  for(var wv=0;wv<3;wv++){
-    var wvname=["红","蓝","绿"][wv];
-    var wvcnt=(window._lastWvCnt||{})[wvname]||0;
-    if(wvcnt>=thWv){wxExcl.push({label:'波色='+wvname,cnt:wvcnt,kind:'hot',cat:'波色',catN:3});}
-  }
-  wxExcl.sort(function(a,b){return b.cnt-a.cnt;});
+  var _pushWv=function(wvname){var c=cntOf('波色',wvname);if(c>=thWv)wxExcl.push({label:'波色='+wvname,val:wvname,cnt:c,kind:'hot',cat:'波色',catN:3,ratio:c/(expOf['波色']||1),prev:prevCntOf('波色',wvname)});};
+  ["红","蓝","绿"].forEach(_pushWv);
+  wxExcl.sort(function(a,b){return b.ratio-a.ratio;});
   wxExcl=wxExcl.slice(0,Math.max(1,wxExcl.length>2?1:2));
   meanExcludes=meanExcludes.concat(wxExcl);
   // 尾数
-  for(var t=0;t<=9;t++){
-    var tcnt=(window._lastTailCnt||{})[t]||0;
-    if(tcnt>=thTail){meanExcludes.push({label:'尾数='+t,cnt:tcnt,kind:'hot',cat:'尾数',catN:10});}
-  }
+  for(var t=0;t<=9;t++) pushEx('尾数',t);
   // 通用互斥保护：同类属性最多排除 catN-1 种（避免空集）
   // 然后精华提取：每类只保留Top 2-3最准项，避免"杀太多等于没杀"
   var catCounts={};
@@ -6547,7 +6716,9 @@ function buildStatExcludeBlock(){
   var eliteKeep={生肖:0,合数:0,五行:0,波色:0,尾数:0}; // 0=按 ELITE_RATIO 动态算
   Object.keys(catCounts).forEach(function(cat){
     var catItems=meanExcludes.filter(function(ex){return ex.cat===cat;});
-    catItems.sort(function(a,b){return b.cnt-a.cnt;});
+    // 【v10.0901.03】排序改用"偏离倍数 ratio=次数÷期望"降序，而非绝对次数降序：
+    // 绝对次数会让波色(仅3类，绝对次数天然最大)永远霸榜第一，且长期不变。
+    catItems.sort(function(a,b){return b.ratio-a.ratio;});
     // 互斥保护上限
     var maxKeep=catItems[0]?catItems[0].catN-1:catItems.length;
     // 精华提取上限：eliteKeep 为 0 时按达标数量动态算（至少1条），随开奖浮动
@@ -6572,8 +6743,19 @@ function buildStatExcludeBlock(){
     }
     var accCount={teOk:0,teFail:0,zmOk:0,zmFail:0,total:0};
     h+='<div class="card" style="border:2px solid #e67e22;background:#fff8e1;margin-top:6px">'+
-       '<b style="font-size:12px;color:#e67e22">⚡ 统计排除（近'+dataN+'期：生肖≥'+thZod+'/合数≥'+thHe+'/五行≥'+thWx+'/波色≥'+thWv+'/尾数≥'+thTail+'次[期望×'+multiplier+']，同类最多排除N-1种防空集）</b>'+
-       (LAST?'<span style="font-size:9px;color:#888;margin-left:6px">上期('+LAST.p+'期) 特码:'+LAST.t+' 正码:'+LAST.n.join(',')+' → 标注每项排除上期特码/正码是否准确</span>':'')+
+       '<b style="font-size:12px;color:#e67e22">⚡ 统计排除</b>'+
+       '<span style="font-size:10px;color:#333;margin-left:6px">统计窗口：<b style="color:#c0392b">第 '+A.from+' ~ '+A.to+' 期（近'+dataN+'期）</b></span>'+
+       '<span style="font-size:10px;color:#666;margin-left:6px">阈值：生肖≥'+thZod+'/合数≥'+thHe+'/五行≥'+thWx+'/波色≥'+thWv+'/尾数≥'+thTail+'次 [期望×'+multiplier+']，同类最多排除N-1种防空集</span>'+
+       '<div style="margin:4px 0;font-size:10px">'+
+       '<b>窗口期数：</b>'+WIN_OPTS.map(function(o){
+         return '<span class="attr-toggle" data-action="setStatExclN" data-val="'+o+'" style="cursor:pointer;margin-right:4px;padding:2px 6px;border-radius:4px;'+(o===selN?'background:#e67e22;color:#fff;font-weight:bold':'background:#eee;color:#555')+'">'+o+'期</span>';
+       }).join('')+
+       '<span style="color:#888;margin-left:6px">（改窗口立即重算，可直观看到排除项随窗口/开奖变化）</span></div>'+
+       '<div style="font-size:9px;color:#666;background:#fff;border-radius:4px;padding:4px 6px;margin-bottom:4px">'+
+       '排序依据：<b>偏离倍数 = 实际次数 ÷ 理论期望</b>（波色期望=N/3、五行=N/5、尾数=N/10、生肖=N/12、合数=N/13），倍数越大越异常。<br>'+
+       '变化标记：<b style="color:#c0392b">🆕新增</b>=上期未达标本期达标 / <b style="color:#e67e22">↑升</b> <b style="color:#1a6baa">↓降</b>=较上期次数变化 / <b style="color:#27ae60">持平</b>=无变化。'+
+       '</div>'+
+       (LAST?'<span style="font-size:9px;color:#888">上期('+LAST.p+'期) 特码:'+LAST.t+' 正码:'+LAST.n.join(',')+' → 标注每项排除上期特码/正码是否准确</span>':'')+
        '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">';
     meanExcludes.forEach(function(ex){
       var ak=ex.label.split('=')[0],av=ex.label.split('=')[1];
@@ -6599,8 +6781,19 @@ function buildStatExcludeBlock(){
           accCount.zmOk++;
         }
       }
+      // 【v10.0901.03】偏离倍数 + 较上期变化标记（让"每期都在变"肉眼可见）
+      var ratio=(ex.ratio||0);
+      var dCnt=ex.cnt-(ex.prev||0);
+      var chgMark=dCnt>0?'<span style="color:#e67e22;font-weight:bold" title="较上期 +'+dCnt+'">↑'+dCnt+'</span>'
+                :dCnt<0?'<span style="color:#1a6baa;font-weight:bold" title="较上期 '+dCnt+'">↓'+(-dCnt)+'</span>'
+                :'<span style="color:#27ae60" title="较上期无变化">持平</span>';
+      var wasQualify=(ex.prev||0)>={生肖:thZod,合数:thHe,五行:thWx,波色:thWv,尾数:thTail}[ex.cat];
+      var newMark=(!wasQualify&&ex.cnt>0)?'<span style="background:#c0392b;color:#fff;border-radius:3px;padding:0 3px;font-size:9px;margin-left:3px">🆕新增</span>':'';
       h+='<div style="background:#fff;border:1px solid #f0c36d;border-radius:6px;padding:6px;font-size:10px">'+
-        '<b>🚫 排除 '+ex.label+' ('+ex.cnt+'次)</b>'+teAccMark+zmAccMark+'<br>'+
+        '<b>🚫 排除 '+ex.label+' ('+ex.cnt+'次)</b>'+
+        '<span style="color:#7d3c98;font-weight:bold;margin-left:4px" title="实际次数÷理论期望('+(expOf[ex.cat]||1).toFixed(2)+')">×'+ratio.toFixed(2)+'</span>'+
+        '<span style="margin-left:4px">'+chgMark+'</span>'+newMark+
+        teAccMark+zmAccMark+'<br>'+
         '<span class="attr-toggle excl" data-action="quickExclAttr" data-key="'+ak+'" data-val="'+av+'" style="cursor:pointer;margin-right:4px">⚡ 一键排除属性</span>'+
         '<button class="btn" style="font-size:8px;padding:1px 4px;background:#e74c3c;color:#fff;margin-right:2px" data-action="applyStatExcl" data-key="'+ak+'" data-val="'+av+'" data-target="te">📌 应用到特码排除</button>'+
         '<button class="btn" style="font-size:8px;padding:1px 4px;background:#8e44ad;color:#fff" data-action="applyStatExcl" data-key="'+ak+'" data-val="'+av+'" data-target="zm3">📌 应用到正码排除</button>'+
@@ -7046,7 +7239,7 @@ function renderTeFullColumns(){
   // ===== 列5：合数（具体数值1-13，49号最大合数=4+9=13）=====
   const heValCount={};for(let v=1;v<=13;v++)heValCount[v]=0;
   rows.forEach(r=>{if(r.heVal>=1&&r.heVal<=13)heValCount[r.heVal]++;});
-  window._lastHeCnt=Object.assign({},heValCount);
+  window._TEFULL_heCnt=Object.assign({},heValCount);
   h+='<div class="card"><b style="font-size:11px">⑤ 合数具体数值分布（1-13，49号合数范围）</b><div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">';
   for(let v=1;v<=13;v++){
     const c=heValCount[v]||0;
@@ -7060,7 +7253,7 @@ function renderTeFullColumns(){
   // ===== 列6：五行分布 =====
   const wxCount={金:0,木:0,水:0,火:0,土:0};rows.forEach(r=>wxCount[r.wx]++);
   const wxSorted=Object.keys(wxCount).sort((a,b)=>wxCount[b]-wxCount[a]);
-  window._lastWxCnt=Object.assign({},wxCount);
+  window._TEFULL_wxCnt=Object.assign({},wxCount);
   const wxMean=N/5;
   const wxHotThreshold=Math.max(3,Math.round(wxMean*1.2));
   h+='<div class="card"><b style="font-size:11px">⑥ 五行分布（均值'+wxMean.toFixed(1)+'次/行）</b><div style="display:flex;gap:4px;margin-top:6px">';
@@ -7087,7 +7280,7 @@ function renderTeFullColumns(){
   // ===== 列7：波色分布 =====
   const wvCount={红:0,蓝:0,绿:0};rows.forEach(r=>wvCount[r.wv]++);
   const wvSorted=Object.keys(wvCount).sort((a,b)=>wvCount[b]-wvCount[a]);
-  window._lastWvCnt=Object.assign({},wvCount);
+  window._TEFULL_wvCnt=Object.assign({},wvCount);
   const wvMean=N/3;
   h+='<div class="card"><b style="font-size:11px">⑦ 波色分布（均值'+wvMean.toFixed(1)+'次/色）</b><div style="display:flex;gap:6px;margin-top:6px">';
   wvSorted.forEach(v=>h+='<div style="flex:1;text-align:center;padding:6px;border:2px solid '+WVB[v]+';border-radius:6px">'+tag(v)+'<div style="font-size:16px;font-weight:bold">'+wvCount[v]+'</div>'+((wvCount[v]>=wvMean*1.2)?'<div style="font-size:8px;color:#c0392b">🔥</div>':'')+((wvCount[v]<wvMean*0.7)?'<div style="font-size:8px;color:#1a6baa">❄️</div>':'')+'</div>');
@@ -7177,7 +7370,7 @@ function renderTeFullColumns(){
 
   // ===== 列8：尾数分布 =====
   const tailCount={};for(let t=0;t<=9;t++)tailCount[t]=0;rows.forEach(r=>tailCount[r.tail]++);
-  window._lastTailCnt=Object.assign({},tailCount);
+  window._TEFULL_tailCnt=Object.assign({},tailCount);
   const tailMean=N/10;
   const tailHotThreshold=Math.max(3,Math.round(tailMean*1.2));
   h+='<div class="card"><b style="font-size:11px">⑧ 尾数分布（均值'+tailMean.toFixed(1)+'次/尾，≥'+tailHotThreshold+'次标红🔥）</b><div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">';
@@ -13384,6 +13577,22 @@ function renderHotCold(){
   var T100om=calcT100Om(),Z100om=calcZ100Om();
   var N100=_getDynN();
   var lotName=LOTTERIES[CUR_LOT].name;
+  // ===== 【v10.0901.03】近6期正码「已出/未出/次数」标注数据 =====
+  // 口径与三中三(v10.0901.01)完全一致：只统计正码 d.n，绝不混入特码 d.t
+  var ZM6_CNT={},ZM6_APP=[];
+  try{
+    DR.slice(-6).forEach(function(d){(d.n||[]).forEach(function(n){ZM6_CNT[n]=(ZM6_CNT[n]||0)+1;});});
+    ZM6_APP=Array.from(new Set(DR.slice(-6).reduce(function(a,d){return a.concat(d.n||[]);},[])));
+  }catch(e){ZM6_CNT={};ZM6_APP=[];}
+  var ZM6_NOT=A49.filter(function(n){return ZM6_APP.indexOf(n)<0;});
+  var zmCurOm=calcZm2Om(); // 正码当前遗漏（提前到此处供上方标注面板使用，calcZm2Om 已记忆化）
+  var ZM6_WIN=(DR.length>0?(DR[Math.max(0,DR.length-6)].p+'~'+DR[DR.length-1].p+'期'):'无数据');
+  // 已出/未出徽章
+  function _zmBadge(n){
+    var c=ZM6_CNT[n]||0;
+    if(c>0) return '<span style="display:inline-block;background:#1a6baa;color:#fff;border-radius:3px;padding:0 3px;font-size:9px;font-weight:bold">已出'+c+'次</span>';
+    return '<span style="display:inline-block;background:#e0e0e0;color:#666;border-radius:3px;padding:0 3px;font-size:9px">未出</span>';
+  }
   // 【v10.0830.01】数据源改为统一的真实开奖记录滚动统计，不再掺入 BASE100 硬编码快照
   let h='<div class="sec-title">🔥 正特码冷热遗漏统计（'+lotName+'，共'+N100+'期数据，数据源：最近'+N100+'期开奖记录）</div>';
 
@@ -13504,6 +13713,34 @@ function renderHotCold(){
   h+='<div class="card" style="margin-top:8px">';
   h+='<div class="sec-title" style="border-bottom-color:#1a6baa">🔵 正码100期冷热遗漏</div>';
 
+  // ===== 【v10.0901.03】近6期正码 已出/未出 标注面板（用户要求） =====
+  h+='<div style="background:#e3f2fd;border:2px solid #1a6baa;border-radius:6px;padding:8px;margin-bottom:8px">';
+  h+='<div style="font-size:12px;font-weight:bold;color:#1a6baa">📌 近6期正码「已出 / 未出 / 出现次数」标注　<span style="font-size:10px;color:#666;font-weight:normal">（统计窗口：'+ZM6_WIN+'，仅统计正码，不含特码）</span></div>';
+  h+='<div style="font-size:10px;color:#666;margin:3px 0 6px">口径说明：<b style="color:#1a6baa">已出</b>=该号码在近6期<b>正码</b>中出现过（右侧数字为出现次数）；<b style="color:#666">未出</b>=近6期正码一次都没出。<b style="color:#c0392b">只开过特码的号码一律算「未出」</b>（三中三同口径，v10.0901.01）。</div>';
+  // 已出号码（按次数降序）
+  var zm6AppSorted=ZM6_APP.slice().sort(function(a,b){return (ZM6_CNT[b]||0)-(ZM6_CNT[a]||0);});
+  h+='<div style="margin-bottom:6px"><b style="font-size:11px;color:#1a6baa">🔵 已出（'+zm6AppSorted.length+'码）</b><div style="line-height:2.1;margin-top:3px">';
+  zm6AppSorted.forEach(function(n){
+    var c=ZM6_CNT[n]||0;
+    var bg=c>=3?'#c0392b':c===2?'#e67e22':'#1a6baa';
+    h+='<span style="display:inline-block;margin:1px 2px;text-align:center">'+ball(n,18)+'<div style="font-size:8px;background:'+bg+';color:#fff;border-radius:0 0 3px 3px;margin-top:-2px;padding:0 2px">'+c+'次</div></span>';
+  });
+  h+='</div><div style="font-size:9px;color:#888">底色：蓝=1次 / 橙=2次 / 红=≥3次（过热，下期反压）</div></div>';
+  // 未出号码
+  h+='<div><b style="font-size:11px;color:#555">⚪ 未出（'+ZM6_NOT.length+'码）</b><div style="line-height:2;margin-top:3px">';
+  ZM6_NOT.forEach(function(n){
+    h+='<span style="display:inline-block;margin:1px 2px;opacity:.62">'+ball(n,18)+'</span>';
+  });
+  h+='</div></div>';
+  // 交叉速览：已出中"冷门"=值得追 / 未出中"大遗漏"=值得等
+  var zm6AppCold=zm6AppSorted.filter(function(n){return (Z100[n]||0)<=Math.round(N100*6/49*0.8);});
+  var zm6NotLong=ZM6_NOT.filter(function(n){return (zmCurOm[n]||0)>=6;}).sort(function(a,b){return (zmCurOm[b]||0)-(zmCurOm[a]||0);});
+  h+='<div style="margin-top:6px;padding:5px;background:#fff;border-radius:4px;font-size:10px;line-height:1.9">'+
+     '<b style="color:#e67e22">🔥 已出但100期偏冷（'+zm6AppCold.length+'码）：</b>'+(zm6AppCold.length?zm6AppCold.map(function(n){return String(n).padStart(2,'0')+gz(n);}).join('、'):'无')+'<br>'+
+     '<b style="color:#1e8449">❄️ 未出且当前遗漏≥6期（'+zm6NotLong.length+'码）：</b>'+(zm6NotLong.length?zm6NotLong.slice(0,24).map(function(n){return String(n).padStart(2,'0')+gz(n)+'('+(zmCurOm[n]||0)+')';}).join('、'):'无')+
+     '</div>';
+  h+='</div>';
+
   var zmHot=A49.map(x=>({n:x,m:Z100[x]||0,z:gz(x)})).sort((a,b)=>b.m-a.m);
   var zmHot10=zmHot.slice(0,10);
   var zmCold10=zmHot.slice().sort((a,b)=>a.m-b.m).slice(0,10);
@@ -13512,10 +13749,11 @@ function renderHotCold(){
   // 热门前10
   h+='<div style="background:#fff3cd;border-radius:6px;padding:8px">'+
     '<b style="color:#e67e22;font-size:12px">🔥 正码热门前10（出现次数降序）</b>'+
-    '<table style="margin-top:6px"><tr><th>#</th><th>号</th><th>肖</th><th>次数</th><th>率</th><th>操作</th></tr>';
+    '<table style="margin-top:6px"><tr><th>#</th><th>号</th><th>肖</th><th>次数</th><th>率</th><th>近6期</th><th>操作</th></tr>';
   zmHot10.forEach((it,i)=>{
     var isExcl=(UP.zm3_excl_nums&&UP.zm3_excl_nums.indexOf(it.n)>=0);
     h+='<tr><td>'+(i+1)+'</td><td>'+ball(it.n,18)+'</td><td>'+it.z+'</td><td style="font-weight:bold;color:#e67e22">'+it.m+'</td><td>'+(N100>0?(it.m/(N100*6)*100).toFixed(1):0)+'%</td>'+
+       '<td>'+_zmBadge(it.n)+'</td>'+
        '<td style="white-space:nowrap"><button class="btn" style="font-size:7px;padding:1px 3px;background:'+(isExcl?'#c0392b':'#8e44ad')+';color:#fff" data-action="toggleExclNum" data-key="zm3_excl_nums" data-val="'+it.n+'">'+(isExcl?'✅':'📌')+'</button> <button class="btn" style="font-size:7px;padding:1px 3px;background:#2c3e50;color:#fff" data-action="applyExclBoth" data-val="'+it.n+'">⚡</button></td></tr>';
   });
   h+='</table></div>';
@@ -13523,11 +13761,12 @@ function renderHotCold(){
   // 冷门/遗漏前10
   h+='<div style="background:#d4edda;border-radius:6px;padding:8px">'+
     '<b style="color:#1e8449;font-size:12px">❄️ 正码遗漏前10（未出现次数降序）</b>'+
-    '<table style="margin-top:6px"><tr><th>#</th><th>号</th><th>肖</th><th>未出</th><th>出现</th><th>操作</th></tr>';
+    '<table style="margin-top:6px"><tr><th>#</th><th>号</th><th>肖</th><th>未出</th><th>出现</th><th>近6期</th><th>操作</th></tr>';
   zmCold10.forEach((it,i)=>{
     var om=N100-it.m;
     var isExcl=(UP.zm3_excl_nums&&UP.zm3_excl_nums.indexOf(it.n)>=0);
     h+='<tr><td>'+(i+1)+'</td><td>'+ball(it.n,18)+'</td><td>'+it.z+'</td><td style="font-weight:bold;color:#1e8449">'+om+'</td><td>'+it.m+'</td>'+
+       '<td>'+_zmBadge(it.n)+'</td>'+
        '<td style="white-space:nowrap"><button class="btn" style="font-size:7px;padding:1px 3px;background:'+(isExcl?'#c0392b':'#8e44ad')+';color:#fff" data-action="toggleExclNum" data-key="zm3_excl_nums" data-val="'+it.n+'">'+(isExcl?'✅':'📌')+'</button> <button class="btn" style="font-size:7px;padding:1px 3px;background:#2c3e50;color:#fff" data-action="applyExclBoth" data-val="'+it.n+'">⚡</button></td></tr>';
   });
   h+='</table></div>';
@@ -13538,35 +13777,38 @@ function renderHotCold(){
   h+='<div class="grid2" style="gap:8px;margin-top:8px">';
   h+='<div style="background:#ffe0b2;border-radius:6px;padding:8px">'+
     '<b style="color:#e65100;font-size:11px">🔥 正码热门前7</b>'+
-    '<table style="margin-top:4px"><tr><th>#</th><th>号</th><th>肖</th><th>次</th><th>排</th></tr>';
+    '<table style="margin-top:4px"><tr><th>#</th><th>号</th><th>肖</th><th>次</th><th>近6期</th><th>排</th></tr>';
   zmHot7.forEach((it,i)=>{
     var isExcl=(UP.zm3_excl_nums&&UP.zm3_excl_nums.indexOf(it.n)>=0);
     h+='<tr style="font-weight:bold"><td>'+(i+1)+'</td><td>'+ball(it.n,16)+'</td><td>'+it.z+'</td><td style="color:#e65100">'+it.m+'</td>'+
+       '<td>'+_zmBadge(it.n)+'</td>'+
        '<td><button class="btn" style="font-size:7px;padding:1px 3px;background:'+(isExcl?'#c0392b':'#8e44ad')+';color:#fff" data-action="toggleExclNum" data-key="zm3_excl_nums" data-val="'+it.n+'">'+(isExcl?'✅':'📌')+'</button></td></tr>';
   });
   h+='</table></div>';
   h+='<div style="background:#c8e6c9;border-radius:6px;padding:8px">'+
     '<b style="color:#2e7d32;font-size:11px">❄️ 正码冷门后7</b>'+
-    '<table style="margin-top:4px"><tr><th>#</th><th>号</th><th>肖</th><th>出</th><th>排</th></tr>';
+    '<table style="margin-top:4px"><tr><th>#</th><th>号</th><th>肖</th><th>出</th><th>近6期</th><th>排</th></tr>';
   zmCold7.forEach((it,i)=>{
     var isExcl=(UP.zm3_excl_nums&&UP.zm3_excl_nums.indexOf(it.n)>=0);
     h+='<tr style="font-weight:bold"><td>'+(i+1)+'</td><td>'+ball(it.n,16)+'</td><td>'+it.z+'</td><td style="color:#2e7d32">'+it.m+'</td>'+
+       '<td>'+_zmBadge(it.n)+'</td>'+
        '<td><button class="btn" style="font-size:7px;padding:1px 3px;background:'+(isExcl?'#c0392b':'#8e44ad')+';color:#fff" data-action="toggleExclNum" data-key="zm3_excl_nums" data-val="'+it.n+'">'+(isExcl?'✅':'📌')+'</button></td></tr>';
   });
   h+='</table></div>';
   h+='</div>';
 
   // 正码当前遗漏TOP20（独立区块）
-  var zmCurOm=calcZm2Om(); // 当前遗漏期数
+  zmCurOm=zmCurOm||calcZm2Om(); // 已在上方标注面板处计算（v10.0901.03）
   var zmOmList=A49.map(function(n){return{n:n,om:zmCurOm[n]||0,z:gz(n)};}).sort(function(a,b){return b.om-a.om;});
   var zmOmTop20=zmOmList.slice(0,20);
   h+='<div style="margin-top:8px;background:#fff0f0;border-radius:6px;padding:8px">'+
     '<b style="color:#c0392b;font-size:12px">⏰ 正码当前遗漏期数TOP20（遗漏越久越可能开出）</b>'+
-    '<table style="margin-top:6px"><tr><th>#</th><th>号</th><th>肖</th><th>五行</th><th>波色</th><th>当前遗漏</th><th>100期出现</th><th>操作</th></tr>';
+    '<table style="margin-top:6px"><tr><th>#</th><th>号</th><th>肖</th><th>五行</th><th>波色</th><th>当前遗漏</th><th>100期出现</th><th>近6期</th><th>操作</th></tr>';
   zmOmTop20.forEach(function(it,i){
     var zm100m=Z100[it.n]||0;
     var isExcl2=(UP.zm3_excl_nums&&UP.zm3_excl_nums.indexOf(it.n)>=0);
     h+='<tr'+(i<10?' style="font-weight:bold"':'')+'><td>'+(i+1)+'</td><td>'+ball(it.n,16)+'</td><td>'+it.z+'</td><td style="color:'+WXC[gwx(it.n)]+';font-weight:bold">'+gwx(it.n)+'</td><td style="color:'+WVB[gwv(it.n)]+';font-weight:bold">'+gwv(it.n)+'</td><td style="font-weight:bold;color:'+(it.om===0?'#1e8449':it.om>20?'#c0392b':it.om>10?'#e67e22':'#333')+'">'+it.om+'期'+(it.om===0?' ✅':'')+'</td><td style="color:#888">'+zm100m+'次</td>'+
+       '<td>'+_zmBadge(it.n)+'</td>'+
        '<td style="white-space:nowrap"><button class="btn" style="font-size:8px;padding:1px 4px;background:'+(isExcl2?'#c0392b':'#8e44ad')+';color:#fff" data-action="toggleExclNum" data-key="zm3_excl_nums" data-val="'+it.n+'">'+(isExcl2?'✅ 已排除':'📌排除')+'</button> <button class="btn" style="font-size:8px;padding:1px 4px;background:#2c3e50;color:#fff" data-action="applyExclBoth" data-val="'+it.n+'">⚡双排</button></td></tr>';
   });
   h+='</table></div>';
@@ -13581,18 +13823,18 @@ function renderHotCold(){
     '<option value="1">按100期出现(冷热)排序</option></select></div>';
   // 表1：按遗漏排序（默认可见）
   var zmOmSorted=A49.map(function(n){return{n:n,m:Z100[n]||0,om:N100-(Z100[n]||0),z:gz(n),curOm:zmCurOm[n]||0};}).sort(function(a,b){return b.om-a.om;});
-  h+='<table style="margin-top:4px;font-size:10px"><tr><th>#</th><th>号</th><th>肖</th><th>五行</th><th>波色</th><th>大小</th><th>单双</th><th>尾</th><th>100期出现</th><th>100期未出</th><th>当前遗漏</th></tr>';
+  h+='<table style="margin-top:4px;font-size:10px"><tr><th>#</th><th>号</th><th>肖</th><th>五行</th><th>波色</th><th>大小</th><th>单双</th><th>尾</th><th>100期出现</th><th>100期未出</th><th>当前遗漏</th><th>近6期</th></tr>';
   zmOmSorted.forEach(function(it,i){
     var bgColor=i<10?'#dce8f8':i<20?'#fff3cd':'#f8f9ff';
-    h+='<tr style="background:'+bgColor+';font-weight:'+(i<10?'bold':'normal')+'"><td>'+(i+1)+'</td><td>'+ball(it.n,16)+'</td><td>'+it.z+'</td><td style="color:'+WXC[gwx(it.n)]+';font-weight:bold">'+gwx(it.n)+'</td><td style="color:'+WVB[gwv(it.n)]+';font-weight:bold">'+gwv(it.n)+'</td><td style="font-weight:bold">'+gsz(it.n)+'</td><td style="font-weight:bold">'+gpar(it.n)+'</td><td style="font-weight:bold">'+gtl(it.n)+'</td><td style="font-weight:bold;color:#e67e22">'+it.m+'次</td><td style="font-weight:bold;color:#1e8449">'+it.om+'期</td><td style="font-weight:bold;color:'+(it.curOm===0?'#1e8449':it.curOm>20?'#c0392b':it.curOm>10?'#e67e22':'#333')+'">'+it.curOm+'期'+(it.curOm===0?' ✅':'')+'</td></tr>';
+    h+='<tr style="background:'+bgColor+';font-weight:'+(i<10?'bold':'normal')+'"><td>'+(i+1)+'</td><td>'+ball(it.n,16)+'</td><td>'+it.z+'</td><td style="color:'+WXC[gwx(it.n)]+';font-weight:bold">'+gwx(it.n)+'</td><td style="color:'+WVB[gwv(it.n)]+';font-weight:bold">'+gwv(it.n)+'</td><td style="font-weight:bold">'+gsz(it.n)+'</td><td style="font-weight:bold">'+gpar(it.n)+'</td><td style="font-weight:bold">'+gtl(it.n)+'</td><td style="font-weight:bold;color:#e67e22">'+it.m+'次</td><td style="font-weight:bold;color:#1e8449">'+it.om+'期</td><td style="font-weight:bold;color:'+(it.curOm===0?'#1e8449':it.curOm>20?'#c0392b':it.curOm>10?'#e67e22':'#333')+'">'+it.curOm+'期'+(it.curOm===0?' ✅':'')+'</td><td>'+_zmBadge(it.n)+'</td></tr>';
   });
   h+='</table>';
   // 表2：按冷热排序（默认隐藏）
   var zmHotSorted=zmOmSorted.slice().sort(function(a,b){return b.m-a.m;});
-  h+='<table style="margin-top:4px;font-size:10px;display:none"><tr><th>#</th><th>号</th><th>肖</th><th>五行</th><th>波色</th><th>大小</th><th>单双</th><th>尾</th><th>100期出现</th><th>100期未出</th><th>当前遗漏</th></tr>';
+  h+='<table style="margin-top:4px;font-size:10px;display:none"><tr><th>#</th><th>号</th><th>肖</th><th>五行</th><th>波色</th><th>大小</th><th>单双</th><th>尾</th><th>100期出现</th><th>100期未出</th><th>当前遗漏</th><th>近6期</th></tr>';
   zmHotSorted.forEach(function(it,i){
     var bgColor=i<10?'#ffe0b2':i<20?'#fff8e1':'#fff';
-    h+='<tr style="background:'+bgColor+'"><td>'+(i+1)+'</td><td>'+ball(it.n,16)+'</td><td>'+it.z+'</td><td style="color:'+WXC[gwx(it.n)]+'">'+gwx(it.n)+'</td><td style="color:'+WVB[gwv(it.n)]+'">'+gwv(it.n)+'</td><td>'+gsz(it.n)+'</td><td>'+gpar(it.n)+'</td><td>'+gtl(it.n)+'</td><td style="font-weight:bold;color:#e67e22">'+it.m+'次</td><td style="font-weight:bold;color:#1e8449">'+it.om+'期</td><td style="font-weight:bold;color:'+(it.curOm===0?'#1e8449':it.curOm>20?'#c0392b':it.curOm>10?'#e67e22':'#555')+'">'+it.curOm+'期'+(it.curOm===0?' ✅':'')+'</td></tr>';
+    h+='<tr style="background:'+bgColor+'"><td>'+(i+1)+'</td><td>'+ball(it.n,16)+'</td><td>'+it.z+'</td><td style="color:'+WXC[gwx(it.n)]+'">'+gwx(it.n)+'</td><td style="color:'+WVB[gwv(it.n)]+'">'+gwv(it.n)+'</td><td>'+gsz(it.n)+'</td><td>'+gpar(it.n)+'</td><td>'+gtl(it.n)+'</td><td style="font-weight:bold;color:#e67e22">'+it.m+'次</td><td style="font-weight:bold;color:#1e8449">'+it.om+'期</td><td style="font-weight:bold;color:'+(it.curOm===0?'#1e8449':it.curOm>20?'#c0392b':it.curOm>10?'#e67e22':'#555')+'">'+it.curOm+'期'+(it.curOm===0?' ✅':'')+'</td><td>'+_zmBadge(it.n)+'</td></tr>';
   });
   h+='</table><div style="font-size:9px;color:#888;margin-top:4px">下拉切换排序：遗漏=100期未出次数降序（冷门在前），冷热=100期出现次数降序（热门在前）。</div></div>';
   h+='</div>'; // card for zm
@@ -14241,6 +14483,120 @@ function zodNotOutCount(){
 // 【v10.0814.02-#554】正码公式验证引擎
 // 用户需求："上下两期正码互减的绝对值能不能得到最新预测期的号码，或其它公式如加上某个常数如1-10的常数，
 //           或者存在倍数关系，总之概率高的入选，低的排除"
+// ===== 【v10.0901.03】正码来源复盘引擎 =====
+// 用户要求：『正码的公式还要继续计算，如若复盘后的正码号码占比来添加计算方式，
+// 如来自已出或未出冷热遗漏等』
+// 做法：回测最近若干期，每期用"该期之前的数据"还原当时状态（近6期正码已出集合 /
+// 近100期正码冷热 / 正码当前遗漏），再统计该期真实开出的 6 个正码落在哪个来源桶，
+// 得出【实际占比】；与【理论占比】（该桶候选号码数÷49）相除得到【提升倍数 lift】。
+// lift>1 → 该来源"超额供给"；lift<1 → "供给不足"。据此给号码加减分。
+function zhengSourceEngine(){
+  return _memo('ZSrc',function(){
+    var L=DR.length;
+    if(L<15) return null;
+    var startI=Math.max(6,L-120);            // 最多回测最近120期，兼顾速度与样本
+    var W=Math.min(100,L);                   // 冷热窗口
+    var bActual={已出:0,未出:0,热门:0,中温:0,冷门:0,长遗:0,短遗:0};
+    var total=0,sumAppSize=0,sumLongOm=0,draws=0;
+    var cross={};
+    var lastSeen={};A49.forEach(function(n){lastSeen[n]=-9999;});
+    // 预热：记录 startI 之前各号码最后出现位置，避免首期遗漏虚高
+    for(var w=0;w<startI;w++){(DR[w].n||[]).forEach(function(n){lastSeen[n]=w;});}
+    for(var i=startI;i<L;i++){
+      var nums=DR[i].n||[]; if(!nums.length) continue;
+      var appSet={},appSize=0;
+      for(var k=Math.max(0,i-6);k<i;k++){(DR[k].n||[]).forEach(function(x){if(!appSet[x]){appSet[x]=1;appSize++;}});}
+      var zc={};
+      var wStart=Math.max(0,i-W);
+      for(var k=wStart;k<i;k++){(DR[k].n||[]).forEach(function(x){zc[x]=(zc[x]||0)+1;});}
+      var arr=A49.map(function(n){return [n,zc[n]||0];}).sort(function(a,b){return b[1]-a[1]||a[0]-b[0];});
+      var hotSet={},coldSet={};
+      arr.slice(0,10).forEach(function(p){hotSet[p[0]]=1;});
+      arr.slice(-10).forEach(function(p){coldSet[p[0]]=1;});
+      var longOmCnt=0;
+      nums.forEach(function(n){
+        var inApp=appSet[n]?1:0;
+        var om=(lastSeen[n]<-9000)?999:(i-lastSeen[n]);
+        var isLong=om>=6;
+        var bg=hotSet[n]?'热门':(coldSet[n]?'冷门':'中温');
+        bActual[inApp?'已出':'未出']++;
+        bActual[bg]++;
+        bActual[isLong?'长遗':'短遗']++;
+        var key=(inApp?'已出':'未出')+'·'+bg+'·'+(isLong?'长遗':'短遗');
+        cross[key]=(cross[key]||0)+1;
+        total++;
+      });
+      for(var q=0;q<A49.length;q++){var nn=A49[q];var o2=(lastSeen[nn]<-9000)?999:(i-lastSeen[nn]);if(o2>=6)longOmCnt++;}
+      sumAppSize+=appSize; sumLongOm+=longOmCnt; draws++;
+      nums.forEach(function(n){lastSeen[n]=i;});
+    }
+    if(!total||!draws) return null;
+    var avgApp=sumAppSize/draws, avgLong=sumLongOm/draws;
+    var theory={
+      已出:avgApp/49, 未出:(49-avgApp)/49,
+      热门:10/49, 中温:29/49, 冷门:10/49,
+      长遗:avgLong/49, 短遗:(49-avgLong)/49
+    };
+    var actual={},lift={};
+    Object.keys(bActual).forEach(function(k){
+      actual[k]=bActual[k]/total;
+      lift[k]=theory[k]>0?(actual[k]/theory[k]):1;
+    });
+    var crossLift={};
+    Object.keys(cross).forEach(function(k){
+      var p=k.split('·');
+      var t=1;p.forEach(function(x){t*=(theory[x]||0.2);});
+      var a=cross[k]/total;
+      crossLift[k]={cnt:cross[k],pct:a,lift:t>0?(a/t):1};
+    });
+    return {total:total,draws:draws,sampleFrom:DR[startI].p,sampleTo:DR[L-1].p,
+            actual:actual,theory:theory,lift:lift,cross:crossLift,
+            avgApp:avgApp,avgLong:avgLong};
+  });
+}
+// 当前状态下每个号码的来源桶（供评分注入 & 面板展示）
+function zhengSourceBucketOf(){
+  var E=zhengSourceEngine(); if(!E) return null;
+  var Z100=calcZ100(),ZM2=calcZm2Om();
+  var arr=A49.map(function(n){return [n,Z100[n]||0];}).sort(function(a,b){return b[1]-a[1]||a[0]-b[0];});
+  var hotSet={},coldSet={};
+  arr.slice(0,10).forEach(function(p){hotSet[p[0]]=1;});
+  arr.slice(-10).forEach(function(p){coldSet[p[0]]=1;});
+  var bucket={};
+  A49.forEach(function(n){
+    var inApp=ZM_APP.indexOf(n)>=0;
+    var om=ZM2[n]||0;
+    var bg=hotSet[n]?'热门':(coldSet[n]?'冷门':'中温');
+    bucket[n]={app:inApp?'已出':'未出',bg:bg,om:om>=6?'长遗':'短遗',
+               key:(inApp?'已出':'未出')+'·'+bg+'·'+(om>=6?'长遗':'短遗')};
+  });
+  return {E:E,bucket:bucket,hotSet:hotSet,coldSet:coldSet};
+}
+// 【v10.0901.03】生肖级联动：若判定此生肖不会出 → 其下号码肯定也不会出现。
+// 分两档，避免"排除太多生肖导致三中三无号可选"（#562 教训）：
+//   hard（硬排除 -999）= 用户/跨系统**明确判定不出**的生肖（正码排除肖、跨系统排除肖）
+//   soft（软降权 -15） = 统计排除判定的**过热生肖**（含义是"过热→下期反压"，不是封杀）
+function deadZodsForZheng(){
+  return _memo('DeadZod',function(){
+    var hard={},soft={};
+    function addH(a){(a||[]).forEach(function(z){if(z)hard[z]=1;});}
+    addH(UP.zm3_excl_zods);             // 三中三（正码）排除生肖
+    if(typeof CROSS_EXCL_ZODS!=='undefined') addH(CROSS_EXCL_ZODS); // 跨系统排除生肖
+    try{
+      // 过热肖判定收紧：只取"偏离倍数≥1.6"且最多3个。
+      // 若沿用面板阈值(≈1.2×期望)，20期窗口下几乎半数生肖都会达标(8/12)，
+      // 等于变相封杀大半号码，重蹈 #562 "排除太多生肖导致三中三无号可选"。
+      var A=getTeAttrCounts(parseInt(UP.stat_excl_n,10)||20);
+      var n=A.n||20, exp=n/12;
+      ZODS.map(function(z){return {z:z,c:(A.zod||{})[z]||0};})
+          .filter(function(o){return !hard[o.z]&&o.c>=Math.max(2,exp*1.6);})
+          .sort(function(a,b){return b.c-a.c;})
+          .slice(0,3)
+          .forEach(function(o){soft[o.z]=1;});
+    }catch(e){}
+    return {hard:Object.keys(hard),soft:Object.keys(soft)};
+  });
+}
 // 验证5类公式历史命中率，高概率→选择集合，低概率→排除集合
 // 基线: 随机一个号码出现在6个正码中的概率 = 6/49 ≈ 12.24%
 function zhengFormulaEngine(){
@@ -15799,6 +16155,78 @@ function renderZ3(){
 
     h+='</div>';
   }catch(e){console.error('#553 UI panel error:',e);}
+
+  // ===== 【v10.0901.03】正码来源复盘占比面板（用户要求：复盘后的正码号码占比）=====
+  try{
+    var ZS=zhengSourceEngine();
+    if(ZS){
+      var order=['已出','未出','热门','中温','冷门','长遗','短遗'];
+      var groupOf={已出:'① 近6期正码',未出:'① 近6期正码',热门:'② 100期冷热',中温:'② 100期冷热',冷门:'② 100期冷热',长遗:'③ 正码遗漏',短遗:'③ 正码遗漏'};
+      h+='<div class="card" style="border:3px solid #1565c0;background:#e3f2fd;margin-top:8px">'+
+         '<div class="sec-title" style="color:#1565c0;border-bottom-color:#1565c0">📊 正码来源复盘占比引擎</div>'+
+         '<div style="font-size:9px;color:#666;margin-bottom:6px;line-height:1.7">'+
+         '回测样本：<b>第 '+ZS.sampleFrom+' ~ '+ZS.sampleTo+' 期（'+ZS.draws+'期 / '+ZS.total+'个正码）</b>。'+
+         '每期只用<b>该期之前</b>的数据还原当时状态，再统计真实开出的 6 个正码来自哪个桶。<br>'+
+         '<b>提升倍数 lift = 实际占比 ÷ 理论占比</b>：&gt;1 表示该来源"超额供给"（加分），&lt;1 表示"供给不足"（减分）。'+
+         '已自动注入正码单号评分（每维限幅±4，避免复盘噪声压过其它维度）。</div>';
+      h+='<div style="overflow-x:auto"><table style="width:100%;font-size:9px;border-collapse:collapse">'+
+         '<tr style="background:#bbdefb;color:#0d47a1"><th>维度</th><th>来源桶</th><th>实际占比</th><th>理论占比</th><th>提升倍数</th><th>判定</th></tr>';
+      order.forEach(function(k){
+        var a=ZS.actual[k]||0,t=ZS.theory[k]||0,l=ZS.lift[k]||1;
+        var flag=l>=1.15?'✅超额供给':l<=0.85?'⚠️供给不足':'≈ 正常';
+        var fc=l>=1.15?'#1e8449':l<=0.85?'#c0392b':'#888';
+        h+='<tr style="background:#fff">'+
+           '<td style="padding:2px 4px;color:#666">'+groupOf[k]+'</td>'+
+           '<td style="padding:2px 4px;font-weight:bold">'+k+'</td>'+
+           '<td style="text-align:center;font-weight:bold;color:#1565c0">'+(a*100).toFixed(1)+'%</td>'+
+           '<td style="text-align:center;color:#888">'+(t*100).toFixed(1)+'%</td>'+
+           '<td style="text-align:center;font-weight:bold;color:'+fc+'">×'+l.toFixed(2)+'</td>'+
+           '<td style="text-align:center;color:'+fc+';font-weight:bold">'+flag+'</td></tr>';
+      });
+      h+='</table></div>';
+      // 交叉组合 TOP
+      var cxArr=Object.keys(ZS.cross||{}).map(function(k){return {k:k,v:ZS.cross[k]};})
+                 .filter(function(o){return o.v.cnt>=3;})
+                 .sort(function(a,b){return b.v.lift-a.v.lift;});
+      if(cxArr.length){
+        h+='<div style="margin-top:6px;font-size:9px"><b>🔗 三桶交叉组合（已出/未出 × 冷热 × 遗漏，出现≥3次）</b>'+
+           '<div style="margin-top:3px;line-height:2">';
+        cxArr.slice(0,12).forEach(function(o){
+          var l=o.v.lift;
+          var bg=l>=1.3?'#c8e6c9':l>=1.1?'#fff9c4':l<=0.7?'#ffcdd2':'#f5f5f5';
+          var col=l>=1.3?'#1e8449':l>=1.1?'#e65100':l<=0.7?'#c0392b':'#666';
+          h+='<span style="display:inline-block;background:'+bg+';color:'+col+';border-radius:4px;padding:2px 6px;margin:1px;font-weight:bold" title="实际占比'+(o.v.pct*100).toFixed(1)+'% · 命中'+o.v.cnt+'次">'+o.k+' ×'+l.toFixed(2)+' ('+o.v.cnt+')</span>';
+        });
+        h+='</div></div>';
+      }
+      // ===== 复盘结论（把 lift≈1 的事实讲清楚，纠正"60%正码来自已出"的错觉）=====
+      var lApp=ZS.lift['已出']||1, lOm=ZS.lift['长遗']||1;
+      var lHot=ZS.lift['热门']||1, lCold=ZS.lift['冷门']||1;
+      var conclTxt=[];
+      conclTxt.push('近6期<b>已出池</b>占全部号码 '+(ZS.theory['已出']*100).toFixed(1)+'%，实际正码来自已出 '+(ZS.actual['已出']*100).toFixed(1)+'% → 提升×'+lApp.toFixed(2)+
+        (Math.abs(lApp-1)<0.08?'：<b style="color:#c0392b">几乎无超额收益</b>。坊间"60%正码来自已出"其实只是<b>池子大小效应</b>（已出池本身就占了一半以上号码），并非可套利信号。':'。'));
+      conclTxt.push('<b>追遗漏</b>（遗漏≥6期）实际占 '+(ZS.actual['长遗']*100).toFixed(1)+'%，理论 '+(ZS.theory['长遗']*100).toFixed(1)+'% → 提升×'+lOm.toFixed(2)+
+        (Math.abs(lOm-1)<0.08?'：<b style="color:#c0392b">同样无超额收益</b>，长遗漏号码池本身就很大，追遗漏并不占优。':'。'));
+      conclTxt.push('真正有差异的是<b>冷热</b>：热门×'+lHot.toFixed(2)+' / 冷门×'+lCold.toFixed(2)+'，以及<b>三桶交叉组合</b>（最高×'+(cxArr.length?cxArr[0].v.lift.toFixed(2):'1.00')+'）。');
+      h+='<div style="margin-top:6px;padding:6px;background:#fff8e1;border-left:3px solid #e67e22;font-size:9px;line-height:1.9">'+
+         '<b style="color:#e67e22">📌 复盘结论：</b><br>'+conclTxt.join('<br>')+'</div>';
+      // 生肖级联动提示
+      var dz=deadZodsForZheng()||{hard:[],soft:[]};
+      var dzH=dz.hard||[],dzS=dz.soft||[];
+      var numOf=function(zs){return A49.filter(function(n){return zs.indexOf(gz(n))>=0;}).map(function(n){return String(n).padStart(2,'0');}).join('、')||'无';};
+      h+='<div style="margin-top:6px;padding:5px;background:#fff;border-radius:4px;font-size:9px;line-height:1.8">'+
+         '<b style="color:#c0392b">🔒 生肖级联动（若判此肖不出 → 其下号码肯定不出）：</b>'+
+         (dzH.length?dzH.map(function(z){return '<span style="display:inline-block;background:#ffcdd2;color:#c0392b;border-radius:3px;padding:1px 5px;margin:1px;font-weight:bold">'+EMJ[z]+z+'</span>';}).join('')+
+           '<div style="color:#666;margin-top:2px">硬排除号码（评分-999，绝不入选）：'+numOf(dzH)+'</div>'
+           :'<span style="color:#1e8449">当前没有生肖被明确判定为"不出"</span>')+
+         (dzS.length?'<div style="margin-top:3px"><b style="color:#e67e22">🌡 统计排除过热肖（仅软降权-15，不封杀）：</b>'+
+           dzS.map(function(z){return '<span style="display:inline-block;background:#ffe0b2;color:#e65100;border-radius:3px;padding:1px 5px;margin:1px">'+EMJ[z]+z+'</span>';}).join('')+
+           '<div style="color:#888">' + numOf(dzS) + '</div></div>':'')+
+         '<div style="color:#888;margin-top:2px">硬排除来源：三中三排除肖 + 跨系统排除肖；过热肖来源：统计排除面板（本彩种独立计算）</div>'+
+         '</div>';
+      h+='</div>';
+    }
+  }catch(e){console.error('#ZSrc panel error:',e);}
 
   // ===== 【v10.0814.02-#554】正码公式验证引擎面板 =====
   try{
@@ -19241,7 +19669,7 @@ function hideLogin(){
     calcDerived();
     render();
     refreshFromServer();
-    setInterval(refreshFromServer,60000);
+    startAutoRefresh();
   } else {
     // 切换登录态（重新加载对应记录）
     loadCopyHistory();
@@ -19408,7 +19836,7 @@ if(_authed){
     calcDerived();
     render();
     refreshFromServer();
-    setInterval(refreshFromServer,60000);
+    startAutoRefresh();
   }catch(e){
     console.error('Load error:',e);
     DR=getFallbackDR();
