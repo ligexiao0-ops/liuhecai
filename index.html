@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0902.01</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0905.01</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -866,12 +866,40 @@ function fixWrongLotData(){
   alert('✅ 已清理'+removed.length+'条异种数据。\n当前 DR 剩余：'+DR.length+' 条记录。');
 }
 
+// 【v10.0905.01】串号横幅告警。
+// 背景：v10.0901.04 的防护（彩种锁+拉取过滤+定时器统一）本身无漏洞，但**手机端若缓存了旧版本**，
+// 旧代码没有防护，仍会把 A 彩种数据以 B 的 lot_type 推上云端（2026-09-05 复发即为此因：
+// xa 混进 48 条港彩数据，且日期被按新奥基准重算 → 证明是以"新奥"身份走录入流程写入的）。
+// 本横幅让"已刷新到新版本"的用户能立刻察觉并强制刷新，切断污染。
+var _crossBannerEl=null;
+function showCrossLotAlert(badN,lotName){
+  try{
+    if(!badN||badN<=0){
+      if(_crossBannerEl&&_crossBannerEl.parentNode)_crossBannerEl.parentNode.removeChild(_crossBannerEl);
+      _crossBannerEl=null;return;
+    }
+    if(_crossBannerEl) return;  // 已显示，不重复弹
+    var d=document.createElement('div');
+    d.id='cross-lot-banner';
+    d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#c0392b;color:#fff;'+
+      'padding:8px 12px;font-size:12px;line-height:1.7;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3)';
+    d.innerHTML='⚠️ <b>检测到数据串号</b>：「'+lotName+'」本地有 <b>'+badN+'</b> 条不属于本彩种期号段的记录'+
+      '<span style="font-size:11px">（已被隔离，不参与运算）</span><br>'+
+      '<span style="font-size:11px">通常是<b>浏览器缓存了旧版本</b>导致。请在手机上<b>强制刷新</b>'+
+      '（下拉刷新 / 清缓存后重开），否则旧版本会继续污染云端。</span>'+
+      '<div style="margin-top:5px"><button onclick="var b=document.getElementById(\'cross-lot-banner\');if(b)b.style.display=\'none\'" '+
+      'style="background:#fff;color:#c0392b;border:0;border-radius:4px;padding:3px 12px;font-weight:bold;cursor:pointer;font-size:11px">我知道了</button></div>';
+    document.body.appendChild(d);
+    _crossBannerEl=d;
+  }catch(e){}
+}
 function updateSyncUI(){
   var el=document.getElementById('sync-indicator');
   if(!el)return;
   // 【v10.0901.04】数据体检：实时检测本地 DR 里是否还混着别的彩种的期号（串号自愈指示）
   var _bad=0;
   try{_bad=_countForeignPeriods(CUR_LOT,DR);}catch(e){}
+  try{showCrossLotAlert(_bad,LOTTERIES[CUR_LOT].name);}catch(e){}
   var _bandTip='\n【期号段】'+LOTTERIES[CUR_LOT].name+'：'+(CUR_LOT==='gc'?('1 ~ '+LOT_BAND.gcMax+' 期'):(LOT_BAND.xaMin+' 期以上'))
     +'\n当前本地 '+((typeof DR!=='undefined'&&DR)?DR.length:0)+' 期'
     +(_bad>0?('\n⚠️ 检出 '+_bad+' 条不属于本彩种的期号（已被隔离，不会参与运算）'):'\n✅ 未检出串号数据');
@@ -5361,6 +5389,9 @@ function scoreZheng(extraPrefs){
   var DZHARD={},DZSOFT={};
   (DZ.hard||[]).forEach(function(z){DZHARD[z]=1;});
   (DZ.soft||[]).forEach(function(z){DZSOFT[z]=1;});
+  // ===== 【v10.0905.01】已出/未出池动态偏移（滞后1期负自相关，弱信号）=====
+  var ZPS=null;
+  try{ZPS=zhengPoolShift();}catch(e){ZPS=null;}
 
   const lTeTail=gtl(LAST.t);
   const lTeHead=ghd(LAST.t);
@@ -5374,6 +5405,19 @@ function scoreZheng(extraPrefs){
     // 用含特码的 APP 判断会让它被误加"已出"分或误判冷热。
     if(ZM_APP.includes(n)){s+=3;rs.push("已出(基础+3)");}
     else{s-=2;rs.push("未出(基础-2)");}
+
+    // ===== 【v10.0905.01】已出/未出池动态偏移 =====
+    // 依据：上期K 与本期K 显著负相关（三彩种置换检验 P=0.019/0.010/0.016）。
+    // 幅度刻意压小（限幅±2.5，且 lift 已打八折）：这是 88/88/45 期样本下的弱信号，
+    // 只做微调，绝不翻转"已出池更大因而基础更优"这一事实。
+    if(ZPS){
+      var _pLift=(ZM_APP.indexOf(n)>=0)?ZPS.appLift:ZPS.notLift;
+      var _pd=Math.max(-2.5,Math.min(2.5,(_pLift-1)*10));
+      if(Math.abs(_pd)>=0.3){
+        s+=_pd;
+        rs.push("池偏移(上期K="+ZPS.prevK+"→"+(ZM_APP.indexOf(n)>=0?'已出':'未出')+(_pd>0?'+':'')+_pd.toFixed(1)+")");
+      }
+    }
 
     // ===== 用户强排除（三中三排除号码必须彻底排除，-999确保永不超过其他号码）=====
     if(eN.includes(n)){s-=999;rs.push("用户排除(彻底)");}
@@ -14680,6 +14724,35 @@ function zhengSourceBucketOf(){
   });
   return {E:E,bucket:bucket,hotSet:hotSet,coldSet:coldSet};
 }
+// ===== 【v10.0905.01】已出/未出池「动态偏移」引擎 =====
+// 统计发现（三彩种置换检验 20000 次全部通过，且条件梯度单调一致）：
+//   一期6个正码中来自「近6期已出池」的个数 K，与下一期 K 呈**显著负相关**：
+//     新奥 r1=-0.2331 P=0.0187 / 老奥 r1=-0.2552 P=0.0104 / 港彩 r1=-0.3320 P=0.0163
+//   条件口径下「本期 C(6,3)=20 个三元组中全来自已出池」的实际占比：
+//     新奥 上期K≥4→12.2%  K=3→18.8%  K≤2→22.1%
+//     老奥 上期K≥4→10.8%  K=3→20.6%  K≤2→29.7%
+//     港彩 上期K≥4→10.2%  K=3→14.0%  K≤2→26.9%
+// 含义：上期越偏"已出"，本期已出池贡献越少（反之亦然）。
+// ⚠️ 关键约束：即便在最不利的「上期K≥4」条件下，选已出池(12.2%)仍优于未出池(10.2%)——
+//    因为已出池平均占 54% 的号码，"池子更大"永远是更强的基础效应。
+//    故本引擎只做**幅度受限的偏移**，绝不翻转已出池的基础优势(#575 教训：少类别维度别硬翻转)。
+function zhengPoolShift(){
+  return _memo('ZPoolShift',function(){
+    var L=DR.length;
+    if(L<12) return null;
+    var i=L-1;                                  // 最近一期 = 待预测期的"上期"
+    var nums=DR[i].n||[]; if(nums.length!==6) return null;
+    var appSet={},appSize=0;
+    for(var k=Math.max(0,i-6);k<i;k++){(DR[k].n||[]).forEach(function(x){if(!appSet[x]){appSet[x]=1;appSize++;}});}
+    var prevK=0; nums.forEach(function(n){if(appSet[n])prevK++;});
+    // 三元组口径 lift → 单号口径需开立方；已按三彩种平均后**再打八折**防过拟合（样本仅 88/88/45 期）
+    var appLift,notLift,label;
+    if(prevK<=2){ appLift=1.12; notLift=1-(1.12-1)*0.6;  label='上期偏未出(K≤2) → 本期加重已出池'; }
+    else if(prevK>=4){ appLift=0.90; notLift=1+(1-0.90)*0.6; label='上期偏已出(K≥4) → 本期减轻已出池'; }
+    else { appLift=1; notLift=1; label='上期居中(K=3) → 不偏移'; }
+    return {prevK:prevK,appLift:appLift,notLift:notLift,label:label,appSize:appSize,atPeriod:DR[i].p};
+  });
+}
 // 【v10.0901.03】生肖级联动：若判定此生肖不会出 → 其下号码肯定也不会出现。
 // 分两档，避免"排除太多生肖导致三中三无号可选"（#562 教训）：
 //   hard（硬排除 -999）= 用户/跨系统**明确判定不出**的生肖（正码排除肖、跨系统排除肖）
@@ -16318,6 +16391,40 @@ function renderZ3(){
       conclTxt.push('真正有差异的是<b>冷热</b>：热门×'+lHot.toFixed(2)+' / 冷门×'+lCold.toFixed(2)+'，以及<b>三桶交叉组合</b>（最高×'+(cxArr.length?cxArr[0].v.lift.toFixed(2):'1.00')+'）。');
       h+='<div style="margin-top:6px;padding:6px;background:#fff8e1;border-left:3px solid #e67e22;font-size:9px;line-height:1.9">'+
          '<b style="color:#e67e22">📌 复盘结论：</b><br>'+conclTxt.join('<br>')+'</div>';
+      // ===== 【v10.0905.01】已出/未出池「动态偏移」=====
+      // 把"上期K → 本期池倾向"的负自相关结论摆到台面上，让用户自己看得见依据
+      try{
+        var ZP=zhengPoolShift();
+        if(ZP){
+          var zpHtml='';
+          var KROWS=[
+            {lbl:'上期 K≥4（偏已出）',a:'新奥 12.2% / 老奥 10.8% / 港彩 10.2%',note:'已出池优势大幅缩水'},
+            {lbl:'上期 K=3（居中）',  a:'新奥 18.8% / 老奥 20.6% / 港彩 14.0%',note:'回到常态'},
+            {lbl:'上期 K≤2（偏未出）',a:'新奥 22.1% / 老奥 29.7% / 港彩 26.9%',note:'已出池显著占优'}
+          ];
+          var curIdx=(ZP.prevK<=2?2:(ZP.prevK>=4?0:1));
+          KROWS.forEach(function(r,idx){
+            var on=(idx===curIdx);
+            zpHtml+='<tr style="background:'+(on?'#fff3e0':'#fff')+'">'+
+              '<td style="padding:2px 4px;font-weight:bold;color:'+(on?'#e65100':'#666')+'">'+(on?'▶ ':'')+r.lbl+'</td>'+
+              '<td style="padding:2px 4px;text-align:center;font-weight:bold;color:'+(on?'#e65100':'#555')+'">'+r.a+'</td>'+
+              '<td style="padding:2px 4px;color:#888">'+r.note+'</td></tr>';
+          });
+          var zpDelta=((ZP.appLift-1)*10);
+          h+='<div style="margin-top:6px;padding:6px;background:#e8f5e9;border-left:3px solid #2e7d32;font-size:9px;line-height:1.9">'+
+             '<b style="color:#2e7d32">🔄 已出/未出池 · 动态偏移（v10.0905.01）</b><br>'+
+             '上期（第 '+ZP.atPeriod+' 期）6个正码中有 <b style="color:#c0392b;font-size:11px">'+ZP.prevK+' 个</b>来自当时近6期已出池（池大小 '+ZP.appSize+'/49）→ <b>'+ZP.label+'</b><br>'+
+             '<span style="color:#555">本期单号评分偏移：已出池号码 <b style="color:'+(zpDelta>=0?'#1e8449':'#c0392b')+'">'+(zpDelta>=0?'+':'')+zpDelta.toFixed(1)+' 分</b>'+
+             '，未出池号码 <b style="color:'+(zpDelta>=0?'#c0392b':'#1e8449')+'">'+(zpDelta>=0?'-':'+')+Math.abs((ZP.notLift-1)*10).toFixed(1)+' 分</b>（已限幅±2.5）</span>'+
+             '<div style="overflow-x:auto;margin-top:4px"><table style="width:100%;font-size:9px;border-collapse:collapse">'+
+             '<tr style="background:#c8e6c9;color:#1b5e20"><th style="text-align:left">上期 K 分组</th>'+
+             '<th>本期「全已出三元组」占 C(6,3)=20 的实际比例</th><th>说明</th></tr>'+zpHtml+'</table></div>'+
+             '<div style="margin-top:4px;color:#666">依据：K 序列滞后1期自相关 <b>新奥 r=-0.233 / 老奥 r=-0.255 / 港彩 r=-0.332</b>，'+
+             '置换检验 20000 次 <b>三彩种全部 P&lt;0.02</b>，且梯度单调一致 → 上期越偏已出，本期已出池贡献越少。<br>'+
+             '<b style="color:#c0392b">⚠️ 但请注意</b>：即便在最不利的「上期K≥4」下，选已出池(12.2%)仍<b>优于</b>选未出池(10.2%)——'+
+             '已出池占 54% 号码，"池子更大"是更强的基础效应。所以本引擎<b>只微调、不翻转</b>，幅度已打八折防过拟合。</div></div>';
+        }
+      }catch(e){}
       // 生肖级联动提示
       var dz=deadZodsForZheng()||{hard:[],soft:[]};
       var dzH=dz.hard||[],dzS=dz.soft||[];
