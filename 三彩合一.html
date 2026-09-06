@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0905.01</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0906.01</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -2617,6 +2617,11 @@ let UP={
   lx9_history:[], // 【v10.0803.02】九肖历史记录 [{p,d,seq1,seq1_period,seq2,seq2_period,seq0,seq0_period,drawZ,newZ,s1Hit,s1HitPos,posMapHitCnt}] 每期开奖自动记录
   te_pred_snapshot:null, // 【v10.0803.02】特码预测快照 {period, scores:{n:s}} 首次预测该期时锁定，开奖后用于排名复盘
   te_pred_result:null, // 【v10.0803.02】特码预测复盘结果 {period,teNum,rank,predTop3,predTop10,hitTop3,hitTop10,teScore}
+  // 【v10.0906.01】三中三/五连肖 推荐记录与命中复盘：自动记录每期推荐，开奖后比对实际，给出累计命中率统计
+  z3l_snapshot:null,    // 本期三中三推荐快照 {p, poolTop, top3, top6, ts}
+  z3l_history:[],       // 历史复盘 [{p,d,poolTop,top3,top6,actualN,actualT,poolCnt,top3Cnt,top3Nums,top6Cnt,top6Nums,quality}]
+  lx5_snapshot:null,    // 本期五连肖推荐快照 {p, main, alt1, alt2, ts}
+  lx5_history:[],       // 历史复盘 [{p,d,main,alt1,alt2,actualZods,mainCnt,mainZods,alt1Cnt,alt1Zods,alt2Cnt,alt2Zods,bestCnt,bestSrc}]
   not_sub_latest:1, // 【v10.0805.02】未出号码窗口：减去最近N期开奖记录(默认1期)。如最新210-215，则未出窗口用209-214，避免用最新的开奖污染"已出/未出"判断
   // 图片识别文字笔记和自定义规则
   img_notes:[], // 保存的文字描述列表 [{text, time, fields}]
@@ -6333,6 +6338,67 @@ function recordLx9SeqHistory(period,date,isConfirm,opts){
     UP.lx9_history=hist.slice(-80);
   }catch(e){console.warn('lx9_history record fail',e);}
 }
+// 【v10.0906.01】三中三/五连肖 推荐复盘 helper
+// 把本期推荐快照与实际开奖比对，写入 UP.z3l_history / UP.lx5_history，
+// 便于事后发现规律（候选池命中率 / 主推3码命中率 / 五连肖命中分布等）
+function recordZ3lHistory(period,date,drawN,drawT){
+  try{
+    var snap=UP.z3l_snapshot;
+    if(!snap||snap.p!==period){
+      // 没快照（如用户先录入开奖再渲染、或快照被覆盖）→ 只记实际开奖，不写历史
+      return null;
+    }
+    var poolTop=snap.poolTop||[],top3=snap.top3||[],top6=snap.top6||[];
+    var poolSet={};poolTop.forEach(function(n){poolSet[n]=1;});
+    var poolCnt=drawN.filter(function(n){return poolSet[n];}).length;
+    var poolNums=drawN.filter(function(n){return poolSet[n];});
+    var top3Set={};top3.forEach(function(n){top3Set[n]=1;});
+    var top3Cnt=drawN.filter(function(n){return poolSet[n]&&top3Set[n];}).length;
+    var top3Nums=drawN.filter(function(n){return poolSet[n]&&top3Set[n];});
+    var top6Set={};top6.forEach(function(n){top6Set[n]=1;});
+    var top6Cnt=drawN.filter(function(n){return poolSet[n]&&top6Set[n];}).length;
+    var top6Nums=drawN.filter(function(n){return poolSet[n]&&top6Set[n];});
+    // quality：主推3码命中档次（中3=全中 / 中2=对 / 中1=单 / 全失=零）
+    var q=top3Cnt>=3?'中3':top3Cnt===2?'中2':top3Cnt===1?'中1':'全失';
+    var rec={p:period,d:date,poolTop:poolTop,top3:top3,top6:top6,
+      actualN:drawN.slice(),actualT:drawT,
+      poolCnt:poolCnt,poolNums:poolNums,top3Cnt:top3Cnt,top3Nums:top3Nums,
+      top6Cnt:top6Cnt,top6Nums:top6Nums,quality:q};
+    var hist=(UP.z3l_history||[]).slice();
+    var idx=-1;for(var i=0;i<hist.length;i++){if(hist[i].p===period){idx=i;break;}}
+    if(idx>=0)hist[idx]=rec;else hist.push(rec);
+    UP.z3l_history=hist.slice(-200); // 保留最近200期（约一年）
+    return rec;
+  }catch(e){console.warn('recordZ3lHistory fail',e);return null;}
+}
+function recordLx5History(period,date,drawN,drawT){
+  try{
+    var snap=UP.lx5_snapshot;
+    if(!snap||snap.p!==period)return null;
+    // 实际开奖的生肖集合（6正码+特码共7个号码，5~12生肖）
+    var drawZods=Array.from(new Set(drawN.concat([drawT]).map(gz)));
+    function hit(predZ){
+      predZ=predZ||[];
+      var pz={};predZ.forEach(function(z){pz[z]=1;});
+      var hitZ=drawZods.filter(function(z){return pz[z];});
+      return {cnt:hitZ.length,zods:hitZ};
+    }
+    var mainH=hit(snap.main),alt1H=hit(snap.alt1),alt2H=hit(snap.alt2);
+    var bestCnt=Math.max(mainH.cnt,alt1H.cnt,alt2H.cnt);
+    var bestSrc=bestCnt===mainH.cnt?'main':bestCnt===alt1H.cnt?'alt1':'alt2';
+    var rec={p:period,d:date,main:snap.main.slice(),alt1:snap.alt1.slice(),alt2:snap.alt2.slice(),
+      actualZods:drawZods,
+      mainCnt:mainH.cnt,mainZods:mainH.zods,
+      alt1Cnt:alt1H.cnt,alt1Zods:alt1H.zods,
+      alt2Cnt:alt2H.cnt,alt2Zods:alt2H.zods,
+      bestCnt:bestCnt,bestSrc:bestSrc};
+    var hist=(UP.lx5_history||[]).slice();
+    var idx=-1;for(var i=0;i<hist.length;i++){if(hist[i].p===period){idx=i;break;}}
+    if(idx>=0)hist[idx]=rec;else hist.push(rec);
+    UP.lx5_history=hist.slice(-200);
+    return rec;
+  }catch(e){console.warn('recordLx5History fail',e);return null;}
+}
 // 【v10.0812.09 #485】①序列位置命中率统计（可复用：renderLX面板 + scoreLXCombo评分）
 // 返回 {freq[1-9], pct[1-9], total, hotPos[], coldPos[]} 或 null(数据不足)
 function calcPosFreq(){
@@ -6374,6 +6440,198 @@ function rollLx9AfterDraw(np){
   }
   return {rolled:false,warn:null}; // ①未设定，无需滚动
 }
+// ===== 【v10.0906.01】三中三/五连肖 累计命中率统计面板（复盘 Tab 调用） =====
+// 【v10.0906.01】回测当前算法：取最近 N 期开奖，逐期"用当时已知数据"重算推荐、比对开奖、写入历史。
+// 原理：DR 是 module-scope let，重赋值后所有读 DR 的函数（scoreZheng/scoreZ3Combo/calcZm2Om等）都会读到新值。
+// 注意：这是"假设用户看到的是当时数据生成的推荐"，可反映算法的稳定性，但不等同于"用户真实看到的推荐"。
+// 异步分片执行，每片最多占用主线程 600ms 后 setTimeout 让出，避免手机端卡死。
+// onDone(result) 在全部完成后回调。
+var BACKFILL_STATE={running:false,done:0,total:0};
+function backfillRecHistory(N,onDone){
+  N=N||20;
+  if(BACKFILL_STATE.running){if(onDone)onDone({ok:false,msg:'回测正在进行中，请稍候'});return;}
+  if(DR.length<10){if(onDone)onDone({ok:false,msg:'数据不足（<10期），无法回测'});return;}
+  var fullDR=DR.slice();
+  var startI=Math.max(8,fullDR.length-N);
+  // 真实用户记录的期号：回测不得覆盖真实记录
+  var realP={};
+  ((UP.z3l_history||[]).concat(UP.lx5_history||[])).forEach(function(r){if(r&&!r.backfill)realP[r.p]=1;});
+  var i=startI,added=0,errs=0,skipped=0;
+  var _snap3=UP.z3l_snapshot,_snap5=UP.lx5_snapshot;
+  BACKFILL_STATE={running:true,done:0,total:fullDR.length-startI};
+  function restore(){
+    DR=fullDR.slice();
+    try{calcDerived();}catch(e){console.warn('backfill restore calcDerived fail',e);}
+    UP.z3l_snapshot=_snap3;UP.lx5_snapshot=_snap5;
+    BACKFILL_STATE.running=false;
+    try{var pb=document.getElementById('backfill-progress');if(pb&&pb.parentNode)pb.parentNode.removeChild(pb);}catch(e){}
+  }
+  function paint(){
+    try{
+      var pb=document.getElementById('backfill-progress');
+      if(!pb){
+        pb=document.createElement('div');pb.id='backfill-progress';
+        pb.style.cssText='position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:99999;'+
+          'background:#1a6baa;color:#fff;padding:14px 22px;border-radius:10px;font-size:13px;font-weight:bold;'+
+          'box-shadow:0 4px 16px rgba(0,0,0,.35);text-align:center';
+        document.body.appendChild(pb);
+      }
+      pb.innerHTML='🔄 回测中 '+BACKFILL_STATE.done+'/'+BACKFILL_STATE.total+
+        '<div style="margin-top:6px;background:rgba(255,255,255,.3);height:5px;border-radius:3px;overflow:hidden">'+
+        '<div style="background:#7dffb0;height:100%;width:'+Math.round(BACKFILL_STATE.done/BACKFILL_STATE.total*100)+'%"></div></div>';
+    }catch(e){}
+  }
+  function step(){
+    if(!BACKFILL_STATE.running)return;
+    var t0=Date.now();
+    while(i<fullDR.length && (Date.now()-t0)<600){
+      var target=fullDR[i++];
+      if(realP[target.p]){skipped++;BACKFILL_STATE.done++;continue;}
+      try{
+        // 【关键·无未来数据泄漏】只喂给算法"这一期之前"的数据，且必须 calcDerived() 重算
+        // LAST/D6/ZM_APP 等派生量；否则 scoreZheng 读到的是全量期的旧值 → 回测结果虚高且推荐几乎不变化。
+        DR=fullDR.slice(0,i-1);
+        calcDerived();
+        UP.z3l_snapshot=null;UP.lx5_snapshot=null;
+        renderZ3();  // 复用真实渲染路径生成三中三推荐（会写 UP.z3l_snapshot）
+        renderLX();  // 复用真实渲染路径生成五连肖推荐（会写 UP.lx5_snapshot）
+        // 快照期号可能因缺期与实际下一期不一致，强制对齐到本轮目标期
+        if(UP.z3l_snapshot)UP.z3l_snapshot.p=target.p;
+        if(UP.lx5_snapshot)UP.lx5_snapshot.p=target.p;
+        var r3=recordZ3lHistory(target.p,target.d,target.n.slice(),target.t);
+        var r5=recordLx5History(target.p,target.d,target.n.slice(),target.t);
+        if(r3){r3.backfill=true;added++;}else{skipped++;}
+        if(r5)r5.backfill=true;
+      }catch(e){errs++;console.warn('backfill err @p'+target.p,e);}
+      BACKFILL_STATE.done++;
+    }
+    paint();
+    if(i<fullDR.length){setTimeout(step,30);return;}
+    restore();saveData();
+    try{render();}catch(e){}
+    if(onDone)onDone({ok:true,added:added,errs:errs,skipped:skipped,
+      from:fullDR[startI].p,to:fullDR[fullDR.length-1].p});
+  }
+  paint();
+  setTimeout(step,30);
+}
+function renderRecHistoryStats(){
+  var zh=UP.z3l_history||[],lh=UP.lx5_history||[];
+  var h='<div class="card" style="border:2px solid #1a6baa;background:#f0f7ff">'+
+    '<div class="sec-title" style="color:#1a6baa;border-bottom-color:#1a6baa">📊 三中三/五连肖 推荐命中累计统计</div>'+
+    '<div style="margin-bottom:8px;display:flex;gap:4px;flex-wrap:wrap">'+
+      '<button class="btn btn-blue" style="font-size:10px" onclick="backfillRecHistory(10,function(r){showClickFeedback(r.ok?(\'✅ 回测完成：新增\'+r.added+\'期（p\'+r.from+\'~p\'+r.to+\'）\'+(r.errs?(\'，\'+r.errs+\'期出错\'):\'\')):r.msg);render();})">🔄 回测近10期</button>'+
+      '<button class="btn btn-blue" style="font-size:10px" onclick="backfillRecHistory(30,function(r){showClickFeedback(r.ok?(\'✅ 回测完成：新增\'+r.added+\'期（p\'+r.from+\'~p\'+r.to+\'）\'+(r.errs?(\'，\'+r.errs+\'期出错\'):\'\')):r.msg);render();})">🔄 回测近30期</button>'+
+      '<button class="btn btn-gray" style="font-size:10px" onclick="if(confirm(\'清空所有z3l_history和lx5_history？（新录的会重新生成）\')){UP.z3l_history=[];UP.lx5_history=[];UP.z3l_snapshot=null;UP.lx5_snapshot=null;saveData();render();showClickFeedback(\'✅ 已清空\');}">🗑️ 清空记录</button>'+
+    '</div>'+
+    '<div style="font-size:9px;color:#666;margin-bottom:6px">💡 新录的开奖会自动写入历史；点击"回测"按钮可用当前算法在历史期次上跑一遍，发现规律</div>';
+  // ===== 三中三累计 =====
+  if(zh.length>0){
+    var sumPool=0,sumT3=0,sumT6=0,sumPoolSize=0,qcnt={'中3':0,'中2':0,'中1':0,'全失':0};
+    zh.forEach(function(r){
+      sumPool+=r.poolCnt;sumT3+=r.top3Cnt;sumT6+=r.top6Cnt;
+      sumPoolSize+=r.poolTop.length;qcnt[r.quality]=(qcnt[r.quality]||0)+1;
+    });
+    var n=zh.length;
+    var poolSizeAvg=Math.round(sumPoolSize/n*10)/10;
+    var poolHitPct=Math.round(sumPool/n/6*1000)/10;
+    var poolExpPct=Math.round(poolSizeAvg/49*1000)/10;
+    var t3Avg=Math.round(sumT3/n*100)/100;
+    var t6Avg=Math.round(sumT6/n*100)/100;
+    var t3HiPct=Math.round((qcnt['中3']+qcnt['中2'])/n*100);
+    var t3FullPct=Math.round((qcnt['中3']||0)/n*100);
+    var qColor=function(c){return c==='中3'?'#27ae60':c==='中2'?'#1e8449':c==='中1'?'#e67e22':'#c0392b';};
+    var qBar=function(label,key){
+      var pct=Math.round(((qcnt[key]||0)/n)*100);
+      var col=qColor(key);
+      return '<div style="margin:2px 0;display:flex;align-items:center;gap:4px">'+
+        '<div style="width:48px;text-align:right;font-size:10px">'+label+'</div>'+
+        '<div style="background:#f0f0f0;border-radius:3px;flex:1;height:14px;position:relative;overflow:hidden">'+
+        '<div style="background:'+col+';height:100%;width:'+pct+'%;border-radius:3px;transition:width .3s"></div>'+
+        '<span style="position:absolute;left:6px;top:0;font-size:10px;color:#333;line-height:14px">'+(qcnt[key]||0)+'期 '+pct+'%</span></div></div>';
+    };
+    h+='<div style="margin-bottom:8px;padding:8px;background:#fff;border-radius:6px">'+
+      '<b style="color:#1a6baa">🎯 三中三（'+n+'期样本）</b><br>'+
+      '<table style="margin-top:4px;font-size:10px;width:100%"><tr>'+
+      '<td><b>候选池平均</b><br>'+poolSizeAvg+'码</td>'+
+      '<td><b>命中率</b><br><span style="color:'+(poolHitPct>=poolExpPct*1.1?'#27ae60':poolHitPct<=poolExpPct*0.9?'#c0392b':'#666')+'">'+poolHitPct+'%</span></td>'+
+      '<td><b>理论期望</b><br>'+poolExpPct+'%</td>'+
+      '<td><b>主推3码均值</b><br>'+t3Avg+'个/期</td>'+
+      '<td><b>扩展6码均值</b><br>'+t6Avg+'个/期</td></tr></table>'+
+      '<div style="margin-top:6px"><b style="font-size:10px">主推3码命中分布：</b>'+
+      qBar('中3','中3')+qBar('中2','中2')+qBar('中1','中1')+qBar('全失','全失')+
+      '</div><div style="margin-top:4px;font-size:9px;color:#666">'+
+      '　⭐ 中2以上 '+t3HiPct+'% / 全中 '+t3FullPct+'%（全中才能开中三，参考"统计排除动态测试"调阈值）</div></div>';
+  }
+  // ===== 五连肖累计 =====
+  if(lh.length>0){
+    var mc=[0,0,0,0,0,0]; // 0/1/2/3/4/5+ 个分布
+    var bestCnt=[0,0,0,0,0,0]; // 备选中最大命中分布
+    var bestSrcDist={main:0,alt1:0,alt2:0};
+    lh.forEach(function(r){
+      mc[Math.min(5,r.mainCnt)]++;
+      bestCnt[Math.min(5,r.bestCnt)]++;
+      bestSrcDist[r.bestSrc]=(bestSrcDist[r.bestSrc]||0)+1;
+    });
+    var n2=lh.length;
+    var bestAvg=Math.round(lh.reduce(function(s,r){return s+r.bestCnt;},0)/n2*100)/100;
+    var mainAvg=Math.round(lh.reduce(function(s,r){return s+r.mainCnt;},0)/n2*100)/100;
+    var main2PlusPct=Math.round(lh.filter(function(r){return r.mainCnt>=2;}).length/n2*100);
+    function zBar(label,key,arr){
+      var pct=Math.round((arr[key]/n2)*100);
+      var col=key>=3?'#27ae60':key===2?'#e67e22':key===1?'#c0392b':'#999';
+      return '<div style="margin:2px 0;display:flex;align-items:center;gap:4px">'+
+        '<div style="width:48px;text-align:right;font-size:10px">'+label+'</div>'+
+        '<div style="background:#f0f0f0;border-radius:3px;flex:1;height:14px;position:relative;overflow:hidden">'+
+        '<div style="background:'+col+';height:100%;width:'+pct+'%;border-radius:3px"></div>'+
+        '<span style="position:absolute;left:6px;top:0;font-size:10px;color:#333;line-height:14px">'+arr[key]+'期 '+pct+'%</span></div></div>';
+    }
+    h+='<div style="margin-bottom:8px;padding:8px;background:#fff;border-radius:6px">'+
+      '<b style="color:#8e44ad">🐾 五连肖（'+n2+'期样本）</b><br>'+
+      '<table style="margin-top:4px;font-size:10px;width:100%"><tr>'+
+      '<td><b>主选平均</b><br>'+mainAvg+'肖</td>'+
+      '<td><b>3选最优均</b><br>'+bestAvg+'肖</td>'+
+      '<td><b>主选中2+</b><br>'+main2PlusPct+'%</td>'+
+      '<td><b>主选最优</b><br>'+(bestSrcDist.main||0)+'期</td>'+
+      '<td><b>备选1最优</b><br>'+(bestSrcDist.alt1||0)+'期</td>'+
+      '<td><b>备选2最优</b><br>'+(bestSrcDist.alt2||0)+'期</td></tr></table>'+
+      '<div style="margin-top:6px"><b style="font-size:10px">主选5肖命中分布：</b>'+
+      zBar('中5','5',mc)+zBar('中4','4',mc)+zBar('中3','3',mc)+
+      zBar('中2','2',mc)+zBar('中1','1',mc)+zBar('全失','0',mc)+
+      '</div><div style="margin-top:4px;font-size:9px;color:#666">'+
+      '　⭐ 主选 vs 备选的最优命中分布可用于发现"哪套连肖策略更贴近真实"</div></div>';
+  }
+  // ===== 最近10期逐期 =====
+  var lastN=Math.min(10,zh.length);
+  if(lastN>=1){
+    h+='<div style="margin-top:6px;padding:8px;background:#fff;border-radius:6px"><b style="color:#1a6baa;font-size:10px">📋 最近'+lastN+'期逐期记录：</b>'+
+      '<table style="margin-top:4px;font-size:9px;width:100%;border-collapse:collapse">'+
+      '<tr style="background:#f5f5f5"><th style="text-align:left;padding:2px 4px">期</th><th>开奖</th><th>主推3</th><th>中</th><th>扩展6</th><th>中</th><th>池命中</th><th>主选5肖</th><th>中</th></tr>';
+    var lhMap={};
+    lh.forEach(function(r){lhMap[r.p]=r;});
+    for(var i=zh.length-lastN;i<zh.length;i++){
+      var r=zh[i];
+      var lhr=lhMap[r.p];
+      var qc=r.quality==='中3'?'#27ae60':r.quality==='中2'?'#1e8449':r.quality==='中1'?'#e67e22':'#c0392b';
+      h+='<tr><td style="padding:2px 4px"><b>p'+r.p+'</b></td>'+
+        '<td style="padding:2px 4px">'+r.actualN.map(function(x){return String(x).padStart(2,'0');}).join(' ')+'+<b style="color:#c0392b">'+String(r.actualT).padStart(2,'0')+'</b></td>'+
+        '<td style="padding:2px 4px">'+r.top3.map(function(x){return String(x).padStart(2,'0');}).join(' ')+'</td>'+
+        '<td style="padding:2px 4px;text-align:center;background:'+qc+';color:#fff"><b>'+r.top3Cnt+'</b></td>'+
+        '<td style="padding:2px 4px">'+r.top6.map(function(x){return String(x).padStart(2,'0');}).join(' ')+'</td>'+
+        '<td style="padding:2px 4px;text-align:center"><b>'+r.top6Cnt+'</b></td>'+
+        '<td style="padding:2px 4px;text-align:center"><b>'+r.poolCnt+'</b>/6</td>'+
+        '<td style="padding:2px 4px">'+(lhr?(lhr.main.map(function(z){return EMJ[z]+z;}).join('')):'—')+'</td>'+
+        '<td style="padding:2px 4px;text-align:center;color:'+((lhr&&lhr.mainCnt>=3)?'#27ae60':'#c0392b')+'"><b>'+(lhr?lhr.mainCnt:'—')+'</b></td></tr>';
+    }
+    h+='</table><div style="margin-top:4px;font-size:9px;color:#666">'+
+      '　📌 主推3码命中柱：绿=全中、青=中2、橙=中1、红=全失；五连肖中≥3个为"稳中"。</div></div>';
+  }
+  h+='</div>';
+  if(zh.length===0&&lh.length===0){
+    h+='<div style="font-size:10px;color:#888;margin-top:6px">暂无论记录。每录入一期开奖后，将自动统计候选池命中率 / 主推3码命中率 / 五连肖命中分布等。<br>建议至少录入10期以上再观察规律；也可点上方"回测近30/60期"按钮立即生成。</div>';
+  }
+  return h;
+}
 function addRecord(){
   const ns=[1,2,3,4,5,6].map(i=>parseInt(document.getElementById('b'+i).value));
   const t=parseInt(document.getElementById('bt').value);
@@ -6395,6 +6653,9 @@ function addRecord(){
   var lx9Roll=rollLx9AfterDraw(np);
   saveData();
   var teSnapForReview=UP.te_pred_snapshot; // 【v10.0803.02】必须在render(会把快照滚动到新期)之前捕获本期预测快照，供下方复盘对比
+  // 【v10.0906.01】三中三/五连肖 推荐历史写入（必须在 render 前，因为 render 会渲染到下一期、快照会过期）
+  var z3lRec=recordZ3lHistory(np,nd,ns.slice(),t);
+  var lx5Rec=recordLx5History(np,nd,ns.slice(),t);
   calcDerived();render();
   // 检查复制记录命中（只显示当期开奖的记录）
   var hits=checkCopyHits();
@@ -6533,6 +6794,33 @@ function addRecord(){
   var bt=backtestAllFormulas();
   var btHtml=bt?renderBacktestSummary(bt):'';
   summary+='<b style="color:#c0392b">👉 2.5秒后自动跳转至「复盘」Tab查看完整分析</b></div>';
+  // ===== 【v10.0906.01】三中三/五连肖 推荐命中明细 =====
+  if(z3lRec){
+    var qcol=z3lRec.quality==='中3'?'#27ae60':z3lRec.quality==='中2'?'#1e8449':z3lRec.quality==='中1'?'#e67e22':'#c0392b';
+    summary+='<div style="margin-top:6px;padding:8px;background:#fff;border-radius:6px;border-left:3px solid #1a6baa;font-size:11px;text-align:left">'+
+      '<b style="color:#1a6baa">🎯 三中三推荐命中（第'+np+'期）：</b><br>'+
+      '　<b>主推3码：'+z3lRec.top3.map(function(x){return String(x).padStart(2,'0');}).join(' ')+'</b> → 命中 <b style="color:'+qcol+'">'+z3lRec.top3Cnt+'个</b>（'+(z3lRec.top3Nums.map(function(x){return String(x).padStart(2,'0');}).join('、')||'无')+
+      '）<span style="background:'+qcol+';color:#fff;border-radius:3px;padding:0 6px;margin-left:4px;font-size:10px">'+z3lRec.quality+'</span><br>'+
+      '　<b>扩展6码：'+z3lRec.top6.map(function(x){return String(x).padStart(2,'0');}).join(' ')+'</b> → 命中 <b>'+z3lRec.top6Cnt+'个</b>（'+(z3lRec.top6Nums.map(function(x){return String(x).padStart(2,'0');}).join('、')||'无')+
+      '）<br>'+
+      '　<b>候选池('+z3lRec.poolTop.length+'码)：</b> 命中 <b>'+z3lRec.poolCnt+'个</b> 正码（'+(z3lRec.poolNums.map(function(x){return String(x).padStart(2,'0');}).join('、')||'无')+
+      '），命中率 '+Math.round(z3lRec.poolCnt/6*100)+'%（理论期望 '+Math.round(z3lRec.poolTop.length/49*100)+'%）</div>';
+  }
+  if(lx5Rec){
+    function _lxFmt(zs){return zs.map(function(z){return EMJ[z]+z;}).join(' ')||'(空)';}
+    function _lxBadge(name,zArr,cnt){
+      var col=cnt>=4?'#27ae60':cnt>=3?'#1e8449':cnt>=2?'#e67e22':cnt>=1?'#c0392b':'#999';
+      return '<b>'+name+'：</b><span style="background:'+col+';color:#fff;border-radius:3px;padding:0 6px;margin:0 2px;font-size:10px">中'+cnt+'</span> '+_lxFmt(zArr)+' ';
+    }
+    var _bestZArr=lx5Rec.bestSrc==='main'?lx5Rec.mainZods:lx5Rec.bestSrc==='alt1'?lx5Rec.alt1Zods:lx5Rec.alt2Zods;
+    summary+='<div style="margin-top:6px;padding:8px;background:#fff;border-radius:6px;border-left:3px solid #8e44ad;font-size:11px;text-align:left">'+
+      '<b style="color:#8e44ad">🐾 五连肖推荐命中（第'+np+'期，开奖生肖：'+_lxFmt(lx5Rec.actualZods)+'）：</b><br>'+
+      '　'+_lxBadge('主选5肖',lx5Rec.mainZods,lx5Rec.mainCnt)+'<br>'+
+      '　'+_lxBadge('备选1',lx5Rec.alt1Zods,lx5Rec.alt1Cnt)+'<br>'+
+      '　'+_lxBadge('备选2',lx5Rec.alt2Zods,lx5Rec.alt2Cnt)+'<br>'+
+      '　<b>最佳：</b> '+lx5Rec.bestSrc+' 中'+lx5Rec.bestCnt+'肖（'+_lxFmt(_bestZArr)+'）'+
+      '</div>';
+  }
   // 保存到 Supabase 云端
   msg.innerHTML='<span class="ok">✅ 第'+np+'期录入成功！正在同步到云端...</span>'+hitMsg+summary+btHtml;
   if(sb){
@@ -8555,6 +8843,8 @@ function renderReview(){
 
   // 复制记录统计
   if(COPY_HISTORY.length>0)h+=renderCopyStats();
+  // 【v10.0906.01】三中三/五连肖 推荐命中累计统计（自动写入 + 自动展示）
+  h+=renderRecHistoryStats();
   return h;
 }
 
@@ -13587,6 +13877,18 @@ function renderLX(){
     {id:9,label:'3期势头'},{id:10,label:'号码温度'}
   ]);
 
+  // 【v10.0906.01】五连肖推荐快照：只存生肖符号（数组），方便开奖后比对
+  try{
+    var _nxp2=LAST.p+1;
+    if(!UP.lx5_snapshot||UP.lx5_snapshot.p!==_nxp2){
+      UP.lx5_snapshot={p:_nxp2,
+        main:(lx5||[]).map(function(it){return typeof it==='object'?(it.z||''):it;}).filter(Boolean),
+        alt1:(lx5alt1||[]).map(function(it){return typeof it==='object'?(it.z||''):it;}).filter(Boolean),
+        alt2:(lx5alt2||[]).map(function(it){return typeof it==='object'?(it.z||''):it;}).filter(Boolean),
+        ts:Date.now()};
+    }
+  }catch(e){console.warn('lx5_snapshot fail',e);}
+
   return h;
 }
 
@@ -17351,6 +17653,17 @@ function renderZ3(){
 
     h+='</details>';
   }
+
+  // 【v10.0906.01】三中三推荐快照：仅在"下一期=本快照期号"时覆盖，避免历史回看时反复重写
+  try{
+    var _nxp=LAST.p+1;
+    if(!UP.z3l_snapshot||UP.z3l_snapshot.p!==_nxp){
+      UP.z3l_snapshot={p:_nxp,poolTop:(poolTop||[]).slice().sort(function(a,b){return a-b;}),
+        top3:(top3||[]).slice().sort(function(a,b){return a-b;}),
+        top6:(top6||[]).slice().sort(function(a,b){return a-b;}),
+        ts:Date.now()};
+    }
+  }catch(e){console.warn('z3l_snapshot fail',e);}
 
   _renderZ3Cache={k:_zk,h:h};
   return h;
