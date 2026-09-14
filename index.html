@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0906.01</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0908.01</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -16136,6 +16136,32 @@ function renderZ3(){
   var _zk=JSON.stringify({lot:CUR_LOT,p:LAST.p,dr:(DR.length>0?(DR[0].p+'~'+DR[DR.length-1].p+'_'+DR[DR.length-1].d+'_'+JSON.stringify(DR[DR.length-1].n)+'_'+DR[DR.length-1].t):'empty'),cx:window._z3ComplexN||6,sub:zm3SubTab,zm3:(function(){var o={};for(var k in UP){if(String(k).indexOf('zm3')===0)o[k]=UP[k];}return o;})()});
   if(_renderZ3Cache&&_renderZ3Cache.k===_zk)return _renderZ3Cache.h;
   const ZM2=calcZm2Om(),Z100=calcZ100();
+  // ===== 【v10.0908.01-#576】三中三排除/选择权威硬过滤 =====
+  // 作用：保证最终推荐的“主推3码/复式N码/同肖双码”永远不含用户排除的号码/尾数/生肖/五行/属性，
+  // 且当用户设定了“范围选择”（指定尾数/候选池/必须属性）时，推荐严格限定在该范围内。
+  // 背景：scoreZheng 对排除给 -999（彻底）、对“选择”只给 -8/-20（软），导致 forcedSeeds(特码运算预测+常出正码)
+  // 绕过尾数/五行/属性排除被注入候选池，且指定尾数只是降权而非封杀——用户看到“不在限制范围”的号码。
+  const atF={大小:gsz,单双:gpar,合数:ghe,家野:gfam,五行:gwx,波色:gwv};
+  var _DZ={hard:[],soft:[]};try{_DZ=deadZodsForZheng()||{hard:[],soft:[]};}catch(e){}
+  var _DZHARD={};(_DZ.hard||[]).forEach(function(z){_DZHARD[z]=1;});
+  function zm3HardExcluded(n){
+    if((UP.zm3_excl_nums||[]).indexOf(n)>=0)return true;
+    if((UP.zm3_excl_zods||[]).indexOf(gz(n))>=0)return true;
+    if((UP.zm3_excl_tails||[]).indexOf(gtl(n))>=0)return true;
+    if((UP.zm3_excl_wx_multi||[]).indexOf(gwx(n))>=0)return true;
+    if(UP.zm3_excl_attrs&&Object.keys(UP.zm3_excl_attrs).some(function(k){return UP.zm3_excl_attrs[k]&&atF[k]&&atF[k](n)===UP.zm3_excl_attrs[k];}))return true;
+    if(typeof CROSS_EXCL_NUMS!=='undefined'&&CROSS_EXCL_NUMS.indexOf(n)>=0)return true;
+    if(typeof CROSS_EXCL_ZODS!=='undefined'&&CROSS_EXCL_ZODS.indexOf(gz(n))>=0)return true;
+    if(_DZHARD[gz(n)])return true;
+    return false;
+  }
+  function zm3SelAllowed(n){
+    if((UP.zm3_pick_tails||[]).length>0&&(UP.zm3_pick_tails||[]).indexOf(gtl(n))<0)return false;
+    if((UP.zm3_pick_pool||[]).length>0&&(UP.zm3_pick_pool||[]).indexOf(n)<0)return false;
+    if(UP.zm3_pick_attrs&&Object.keys(UP.zm3_pick_attrs).some(function(k){return UP.zm3_pick_attrs[k]&&atF[k]&&atF[k](n)!==UP.zm3_pick_attrs[k];}))return false;
+    return true;
+  }
+  var _z3FilterWarn='';
   const lastN=LAST.n;
   const wxC={};["金","木","水","火","土"].forEach(w=>wxC[w]=lastN.filter(n=>gwx(n)===w).length);
   const maxWx=Object.keys(wxC).sort((a,b)=>wxC[b]-wxC[a])[0];
@@ -16256,6 +16282,23 @@ function renderZ3(){
       poolTop=poolTop.slice(0,poolSize);
     }
   }
+  // ===== 【v10.0908.01-#576】候选池权威硬过滤：最终兜底，确保所有推荐码都在用户限制范围内 =====
+  // 1) 先按“硬排除 + 选择范围”双过滤（这是用户期望的“限制范围”）
+  // 2) 若过滤后不足3码无法组成三中三：保留硬排除、放宽软选择，并提示（不静默混入不符号码）
+  var _poolFiltered=poolTop.filter(function(n){return !zm3HardExcluded(n)&&zm3SelAllowed(n);});
+  if(_poolFiltered.length>=3){
+    poolTop=_poolFiltered;
+  }else{
+    var _poolHardOnly=poolTop.filter(function(n){return !zm3HardExcluded(n);});
+    if(_poolHardOnly.length>=3){
+      poolTop=_poolHardOnly;
+      // 仅当“选择范围过窄”时才放宽；若连硬排除后都不足则不提示（下面兜底）
+      if((UP.zm3_pick_tails||[]).length>0||(UP.zm3_pick_pool||[]).length>0||(UP.zm3_pick_attrs&&Object.keys(UP.zm3_pick_attrs).length>0)){
+        _z3FilterWarn='⚠️ 你设定的“选择范围”（指定尾数/候选池/必须属性）内的号码不足3个，三中三无法凑齐。已自动<b>放宽选择限制</b>，但仍<b>严格排除</b>你排除的号码/尾数/生肖/五行/属性。如需纯限定范围，请扩大选择或解除部分排除。';
+      }
+    }
+    // 若硬排除后仍不足3，保持原样（下方 top3 有 AI 兜底）
+  }
   var allTrios=combNK(poolTop,3);
   var scoredTrios=allTrios.map(function(trio){
     return{set:trio,sc:scoreZ3Combo(trio,indivMap,ZM2,userPool)};
@@ -16303,11 +16346,15 @@ function renderZ3(){
   });
   // 【修复】始终包含主推3码的所有号码，再按频率补充
   top3.forEach(function(n){freqMap[n]=(freqMap[n]||0)+10;}); // 给主推3码加权
-  var top6=Object.keys(freqMap).map(function(n){return{n:parseInt(n),f:freqMap[n]};}).sort(function(a,b){
+  // ===== 【v10.0908.01-#577】改为按频率排序的完整 topSet（不再硬编码6个），支持复式7码/8码 =====
+  var topSet=Object.keys(freqMap).map(function(n){return{n:parseInt(n),f:freqMap[n]};}).sort(function(a,b){
     if(b.f!==a.f)return b.f-a.f;
     return a.n-b.n;
-  }).slice(0,6).map(function(x){return x.n;}).sort(function(a,b){return a-b;});
-  // 确保top3的号码都在top6中
+  }).map(function(x){return x.n;});
+  // 确保主推3码都在 topSet 内（加权后通常已在顶部）
+  top3.forEach(function(n){if(topSet.indexOf(n)<0)topSet.unshift(n);});
+  // top6 保持向后兼容（复式默认6码、结论文案、候选生肖最优号等仍引用）
+  var top6=topSet.slice(0,6).sort(function(a,b){return a-b;});
   top3.forEach(function(n){if(top6.indexOf(n)<0)top6.push(n);});
   top6=top6.slice(0,6).sort(function(a,b){return a-b;});
   const c3=arr=>{const r=[];for(let i=0;i<arr.length-2;i++)for(let j=i+1;j<arr.length-1;j++)for(let k=j+1;k<arr.length;k++)r.push([arr[i],arr[j],arr[k]]);return r;};
@@ -17067,7 +17114,7 @@ function renderZ3(){
 
   h+='<div class="sec-title">📌 候选生肖内最优号码</div><div class="grid2" style="margin-bottom:8px">';
   topZods.forEach(z=>{
-    const best=ZM[z].filter(n=>!lastN.includes(n)).map(n=>{const si=sc.find(x=>x.n===n);return{n:n,s:si?si.s:-99,wx:gwx(n),om:ZM2[n]||0};}).sort((a,b)=>b.s-a.s).slice(0,5);
+    const best=ZM[z].filter(n=>!lastN.includes(n)&&!zm3HardExcluded(n)&&zm3SelAllowed(n)).map(n=>{const si=sc.find(x=>x.n===n);return{n:n,s:si?si.s:-99,wx:gwx(n),om:ZM2[n]||0};}).sort((a,b)=>b.s-a.s).slice(0,5);
     h+='<div class="card" style="border:2px solid #1a6baa"><b>'+EMJ[z]+z+'</b><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">';
     best.forEach((it,i)=>{
       h+='<div style="text-align:center;border:2px solid '+(i===0?'#c0392b':'#ddd')+';border-radius:6px;padding:4px;min-width:46px;background:'+(i===0?'#fff3cd':'#fff')+'">'+
@@ -17134,16 +17181,20 @@ function renderZ3(){
        '<div><b style="color:'+WXC[gwx(n)]+';font-size:9px">'+gwx(n)+'</b></div>'+
        '<div style="font-size:8px">遗'+(ZM2[n]||0)+' 分'+(si&&si.s)+'</div></div>';
   });
-  h+='</div>'+concl('三中三主推：'+top3.map(n=>n+'('+gz(n)+'-'+gwx(n)+')').join('、')+'。复式6码：'+top6.join('、')+'。');
+  h+='</div>'+concl('三中三主推：'+top3.map(n=>n+'('+gz(n)+'-'+gwx(n)+')').join('、')+'。复式'+top6.length+'码：'+top6.join('、')+'。');
 
-  // ===== 复式5-6码（可切换）— 与主推3码完全一致 =====
+  // ===== 复式5-8码（可切换）— 与主推3码完全一致 =====
   const z3ComplexN=window._z3ComplexN||6;
   // 【核心修复】复式号码=从 scoreZ3Combo TOP10 组合中按频率统计得到的 topN（与主推3码使用同一评分来源）
-  const topComplex=top6.slice(0,z3ComplexN).sort((a,b)=>a-b);
-  h+='<div class="sec-title">复式'+z3ComplexN+'码（点击切换5码/6码，与主推同源评分）</div>'+
+  // 【v10.0908.01-#577】改从 topSet 取前 N 个（不再限于 top6），支持 5/6/7/8 码复式
+  const topComplex=topSet.slice(0,Math.min(z3ComplexN,topSet.length)).sort((a,b)=>a-b);
+  h+='<div class="sec-title">复式'+z3ComplexN+'码（点击切换5/6/7/8码，与主推同源评分）</div>'+
      '<div style="margin-bottom:6px"><button class="btn '+(z3ComplexN===5?'btn-red':'btn-gray')+'" onclick="window._z3ComplexN=5;render();">5码复式</button> '+
-     '<button class="btn '+(z3ComplexN===6?'btn-red':'btn-gray')+'" onclick="window._z3ComplexN=6;render();">6码复式</button></div>'+
-     '<div style="font-size:9px;color:#888;margin-bottom:4px">复式码=scoreZ3Combo 评分TOP10组合中出现频率最高的 '+z3ComplexN+' 个号码（与主推3码共用同一评分体系）</div>'+
+     '<button class="btn '+(z3ComplexN===6?'btn-red':'btn-gray')+'" onclick="window._z3ComplexN=6;render();">6码复式</button> '+
+     '<button class="btn '+(z3ComplexN===7?'btn-red':'btn-gray')+'" onclick="window._z3ComplexN=7;render();">7码复式</button> '+
+     '<button class="btn '+(z3ComplexN===8?'btn-red':'btn-gray')+'" onclick="window._z3ComplexN=8;render();">8码复式</button></div>'+
+     '<div style="font-size:9px;color:#888;margin-bottom:4px">复式码=scoreZ3Combo 评分TOP10组合中出现频率最高的 '+topComplex.length+' 个号码（与主推3码共用同一评分体系）'+(topComplex.length<z3ComplexN?'（候选池不足'+z3ComplexN+'码，已按实际'+topComplex.length+'码生成）':'')+'</div>'+
+     (_z3FilterWarn?'<div style="font-size:10px;color:#e65100;background:#fff3cd;border:1px solid #e65100;border-radius:4px;padding:4px 6px;margin-bottom:6px">'+_z3FilterWarn+'</div>':'')+
      '<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:8px">';
   topComplex.forEach((n,i)=>{h+='<div class="card" style="text-align:center;padding:4px;border:2px solid '+(i<3?'#8B008B':'#1a6baa')+';min-width:52px">'+ball(n,22)+'<div style="font-size:9px">'+gz(n)+'</div><div style="font-size:8px;color:'+WXC[gwx(n)]+';font-weight:bold">'+gwx(n)+'</div><div style="font-size:8px;color:#888">遗'+(ZM2[n]||0)+'</div></div>';});
   h+='</div>';
