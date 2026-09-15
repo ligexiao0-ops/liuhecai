@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0908.01</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0915.01</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -4800,13 +4800,23 @@ function scoreTE_full(n,TM,T100){
     if(_cH===lH&&TH.sameHeadBonus){s+=2;kp.push("同头"+lH);}
   }
   if(lD>0&&gdf(n)===lD){s-=1;exc.push("同差"+lD);}
-  if((T100[n]||0)===0){s-=2;exc.push("100期未出");}
+  // ===== 【v10.0915.01·修复】特码冷热改窗口相对：T100 实为最近 min(DR.length,100) 期，
+  // 港彩28期期望≈0.57、新奥/老奥≈1.35，旧硬编码 tc>=5/tc>=2/tc===1 按100期(期望1.02)校，
+  // 小窗口下 tc===1(常态)被误判"回补+2"、tc>=5 永不触发 → 冷热排名失真。改基于窗口期望 exp=N/49 相对判定。
+  const _N=(typeof _getDynN==='function')?_getDynN():Math.min(DR.length,100);
+  const _expT=_N/49;
   const tc=T100[n]||0;
-  if(tc>=2&&tc<=4){s+=(3*W.te_w1);kp.push("百期"+tc);}else if(tc>=5){s+=(1*W.te_w1);kp.push("热"+tc);}
-  if(tc===1){s+=(2*W.te_w2);kp.push("百期遗漏回补");} // 100期仅出1次，回补概率高
+  if(tc===0){
+    if(_N>=40){s-=2;exc.push("100期未出");}  // 大窗口下"从未开出"才是真遗漏；小窗口(如港彩28期)tc=0是常态(约半数号码)，不奖不惩
+  }else{
+    if(tc>=Math.ceil(_expT*2)&&tc>=2){s+=(3*W.te_w1);kp.push("特码热出"+tc);}
+    else if(tc>=Math.ceil(_expT*1.5)&&tc>=2){s+=(1.5*W.te_w1);kp.push("特码偏热"+tc);}
+    else if(tc<=Math.max(1,Math.floor(_expT*0.6))&&_N>=20){s+=(2*W.te_w2);kp.push("特码遗漏回补"+tc);}
+  }
   if(APP.includes(n)){s+=1;kp.push("已出集");}
-  const zMx=Math.min.apply(null,(ZM[gz(n)]||[]).map(x=>T100[x]||0));
-  if((T100[n]||0)===zMx&&zMx<=1){s+=(2*W.te_w2);kp.push("肖内最冷"+tc);}
+  const _zNums=(ZM[gz(n)]||[]);
+  const zMx=Math.min.apply(null,_zNums.map(x=>T100[x]||0));
+  if(tc===zMx&&zMx<=Math.max(0,Math.floor(_expT*0.5))&&_zNums.length>0){s+=(2*W.te_w2);kp.push("肖内最冷"+tc);}
   const cz=calcCurZhuang();var czN=cz[gz(n)]||{cold:0,hot:0,score:0};if(czN.cold>=5){s+=(czN.cold*0.5*W.te_w3);kp.push("追冷缺"+czN.cold);}else if(czN.hot>=2){s-=(czN.hot*0.5*W.te_w3);kp.push("杀热连"+czN.hot);}
   // ===== 新增维度1：合数具体值（与上期合数相同则降权，提醒罕见）=====
   if(ghesum(n)===ghesum(LAST.t)){s-=2;exc.push("合数与上期相同("+ghesum(n)+")");}
@@ -5050,13 +5060,20 @@ function scoreTE_pure(n,TM,T100){
     if(_cpH===lH&&THp.sameHeadBonus)s+=2;
   }
   if(lD>0&&gdf(n)===lD)s-=1;
-  if((T100[n]||0)===0)s-=2;
-  const tc=T100[n]||0;
-  if(tc>=2&&tc<=4)s+=3;else if(tc>=5)s+=1;
-  if(tc===1)s+=2;
+  // ===== 【v10.0915.01·修复】同 scoreTE_full：特码冷热改窗口相对（纯净评分用原始分值）=====
+  const _Np=(typeof _getDynN==='function')?_getDynN():Math.min(DR.length,100);
+  const _expTp=_Np/49;
+  const tcp=T100[n]||0;
+  if(tcp===0){ if(_Np>=40)s-=2; }
+  else{
+    if(tcp>=Math.ceil(_expTp*2)&&tcp>=2)s+=3;
+    else if(tcp>=Math.ceil(_expTp*1.5)&&tcp>=2)s+=1.5;
+    else if(tcp<=Math.max(1,Math.floor(_expTp*0.6))&&_Np>=20)s+=2;
+  }
   if(APP.includes(n))s+=1;
-  const zMx=Math.min.apply(null,(ZM[gz(n)]||[]).map(x=>T100[x]||0));
-  if((T100[n]||0)===zMx&&zMx<=1)s+=2;
+  const _zNumsp=(ZM[gz(n)]||[]);
+  const zMxp=Math.min.apply(null,_zNumsp.map(x=>T100[x]||0));
+  if(tcp===zMxp&&zMxp<=Math.max(0,Math.floor(_expTp*0.5))&&_zNumsp.length>0)s+=2;
   // 100期特码热门前7/后7（统计加分，无条件——纯净评分不受用户设定影响）
   const tHot7=A49.map(x=>({n:x,c:T100[x]||0})).sort((a,b)=>b.c-a.c).slice(0,7).map(x=>x.n);
   const tCold7=A49.map(x=>({n:x,c:T100[x]||0})).sort((a,b)=>a.c-b.c).slice(0,7).map(x=>x.n);
@@ -5476,14 +5493,17 @@ function scoreZheng(extraPrefs){
     if(appMode==='app'&&!ZM_APP.includes(n)){s-=20;rs.push("不在已出号");}
     if(appMode==='not'&&ZM_APP.includes(n)){s-=20;rs.push("不在未出号");}
 
-    // ===== 【核心2】100期正码频率（综合冷热）=====
+    // ===== 【核心2】窗口相对正码频率（综合冷热）=====
+    // 【v10.0915.01·修正】阈值随窗口缩放：期望=6×N/49（N=当前实际期数），
+    // 否则 gc(28期,期望≈3.4) 整体被误判为"冷"，常出/几乎不出排名失真。
+    var _Nz=DR.length, _expZ=6*_Nz/49, _stdZ=Math.sqrt(_Nz*6*43/(49*49));
     var zc=(Z100[n]||0);
-    if(zc>=14){s+=4;rs.push("高频"+zc);}           // 确实高频→强加分
-    else if(zc>=10){s+=2.5;rs.push("中高"+zc);}     // 偏高频→加分
-    else if(zc>=7){s+=1;rs.push("适中"+zc);}         // 适中→轻微加分
-    else if(zc>=4){s+=0;}                             // 偏少→中性
-    else if(zc>=2){s-=0.5;}                           // 很少→轻微减分
-    else{s-=1;rs.push("极低"+zc);}                    // 极低→减分
+    if(zc>_expZ*1.4){s+=4;rs.push("高频"+zc+"(期"+_Nz+"期望"+_expZ.toFixed(1)+")");}
+    else if(zc>_expZ*1.1){s+=2.5;rs.push("偏热"+zc);}
+    else if(zc>_expZ*0.85){s+=1;rs.push("适中"+zc);}
+    else if(zc>=_expZ*0.6){s+=0;}
+    else if(zc>=1){s-=0.5;rs.push("偏冷"+zc);}
+    else{s-=1;rs.push("极低"+zc);}
 
     // ===== 【核心3】近6期出现次数（弱化，已出/未出基础分已覆盖）=====
     var d6c2=d6Cnt2[n]||0;
@@ -5582,11 +5602,12 @@ function scoreZheng(extraPrefs){
     // ===== 常出搭配 =====
     if(freqPairNums.has(n)){s+=0.5;rs.push("常搭配");}
 
-    // ===== 【v10.0728.07新增】正态分布z-score评分 =====
-    // 基于统计分析：间隔均值=6.1期，标准差=5.4
-    // z=(当前间隔-6.1)/5.4 → z>2超长遗漏加分，z<-1过热减分
+    // ===== 【v10.0728.07新增·v10.0915.01修正】正态分布z-score评分 =====
+    // 正码每期6码(49选)，遗漏间隙理论 均值=(49-6)/6≈7.17，标准差=√(43×49/36)≈7.65
+    // （旧值6.1/5.4是按100期经验拍的，与正码实际间隙不符，已改为理论值）
     var curOm=ZM2[n]||0;
-    var zScore=(curOm-6.1)/5.4;
+    var _zmMean=43/6, _zmStd=Math.sqrt(43*49/36);
+    var zScore=(curOm-_zmMean)/_zmStd;
     if(zScore>2){s+=3;rs.push("z-score超高("+zScore.toFixed(1)+",超长遗漏+3)");}
     else if(zScore>1.5){s+=2;rs.push("z-score高("+zScore.toFixed(1)+",长遗漏+2)");}
     else if(zScore>1){s+=1;rs.push("z-score偏高("+zScore.toFixed(1)+",+1)");}
@@ -5594,11 +5615,12 @@ function scoreZheng(extraPrefs){
     else if(zScore<-1.5){s-=2;rs.push("z-score超低("+zScore.toFixed(1)+",过热-2)");}
     else if(zScore<-1){s-=1;rs.push("z-score低("+zScore.toFixed(1)+",过热-1)");}
 
-    // ===== 【v10.0728.07新增】回归分析：30期内频率→命中率映射 =====
+    // ===== 【v10.0728.07新增·v10.0915.01修正】回归分析：30期内正码频率→命中率映射 =====
+    // 【修正】只统计正码(n[])，不再混入特码(d.t)（#559同款bug回归：三中三只看正码）
     // 统计结论：30期内0-1次→下期命中率17.7%（最高），8-9次→9.2%（最低）
     var d30Cnt=0;
     DR.slice(-30).forEach(function(d){
-      if(d.n.indexOf(n)>=0||d.t===n)d30Cnt++;
+      if(d.n.indexOf(n)>=0)d30Cnt++;
     });
     if(d30Cnt<=1){s+=2;rs.push("30期低频("+d30Cnt+"次,命中率17.7%)");}
     else if(d30Cnt<=2){s+=1;rs.push("30期偏低("+d30Cnt+"次,+1)");}
@@ -5607,9 +5629,9 @@ function scoreZheng(extraPrefs){
     else if(d30Cnt>=6){s-=0.8;rs.push("30期高频("+d30Cnt+"次,微降)");}
     else if(d30Cnt>=4){s-=0.2;}
 
-    // ===== 【v10.0728.07新增】频率标准差评级（Z100维度）=====
-    // 均值=6.6，标准差=2.6。高频(z>1.5)微降，低频(z<-1.5)微加
-    var freqZ=(zc-6.6)/2.6;
+    // ===== 【v10.0728.07新增·v10.0915.01修正】频率标准差评级（Z100维度）=====
+    // 【修正】均值/标准差改用窗口相对二项分布(期数N, p=6/49)：均值=6N/49, 标准差=√(N·6·43/49²)
+    var freqZ=(zc-_expZ)/_stdZ;
     if(freqZ<-1.5){s+=1;rs.push("超低频(z"+freqZ.toFixed(1)+",潜力+1)");}
     else if(freqZ>1.5){s-=0.5;rs.push("超高频(z"+freqZ.toFixed(1)+",微降)");}
 
