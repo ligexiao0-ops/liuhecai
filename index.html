@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0915.02</span> · 动态100期 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0915.03</span> · 动态100期 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -584,7 +584,7 @@ function loadData(){
   }
   // 后台从API刷新最新数据
   refreshFromServer();
-  // ===== 【v10.0915.02】一次性智能推荐预填：仅首次升级执行，不覆盖用户已手动设置的偏好 =====
+  // ===== 【v10.0915.03】一次性智能推荐预填：仅首次升级执行，不覆盖用户已手动设置的偏好 =====
   if(!UP._recV){
     UP._recV='v10_0915_rec1';
     // 三中三：跨三彩稳定极冷生肖 狗、龙 → 加入排除（与默认 zm3_excl_zods 互补，已有则跳过）
@@ -4821,7 +4821,7 @@ function scoreTE_full(n,TM,T100){
     if(_cH===lH&&TH.sameHeadBonus){s+=2;kp.push("同头"+lH);}
   }
   if(lD>0&&gdf(n)===lD){s-=1;exc.push("同差"+lD);}
-  // ===== 【v10.0915.02·修复】特码冷热改窗口相对：T100 实为最近 min(DR.length,100) 期，
+  // ===== 【v10.0915.03·修复】特码冷热改窗口相对：T100 实为最近 min(DR.length,100) 期，
   // 港彩28期期望≈0.57、新奥/老奥≈1.35，旧硬编码 tc>=5/tc>=2/tc===1 按100期(期望1.02)校，
   // 小窗口下 tc===1(常态)被误判"回补+2"、tc>=5 永不触发 → 冷热排名失真。改基于窗口期望 exp=N/49 相对判定。
   const _N=(typeof _getDynN==='function')?_getDynN():Math.min(DR.length,100);
@@ -5081,7 +5081,7 @@ function scoreTE_pure(n,TM,T100){
     if(_cpH===lH&&THp.sameHeadBonus)s+=2;
   }
   if(lD>0&&gdf(n)===lD)s-=1;
-  // ===== 【v10.0915.02·修复】同 scoreTE_full：特码冷热改窗口相对（纯净评分用原始分值）=====
+  // ===== 【v10.0915.03·修复】同 scoreTE_full：特码冷热改窗口相对（纯净评分用原始分值）=====
   const _Np=(typeof _getDynN==='function')?_getDynN():Math.min(DR.length,100);
   const _expTp=_Np/49;
   const tcp=T100[n]||0;
@@ -5515,7 +5515,7 @@ function scoreZheng(extraPrefs){
     if(appMode==='not'&&ZM_APP.includes(n)){s-=20;rs.push("不在未出号");}
 
     // ===== 【核心2】窗口相对正码频率（综合冷热）=====
-    // 【v10.0915.02·修正】阈值随窗口缩放：期望=6×N/49（N=当前实际期数），
+    // 【v10.0915.03·修正】阈值随窗口缩放：期望=6×N/49（N=当前实际期数），
     // 否则 gc(28期,期望≈3.4) 整体被误判为"冷"，常出/几乎不出排名失真。
     var _Nz=DR.length, _expZ=6*_Nz/49, _stdZ=Math.sqrt(_Nz*6*43/(49*49));
     var zc=(Z100[n]||0);
@@ -5623,7 +5623,7 @@ function scoreZheng(extraPrefs){
     // ===== 常出搭配 =====
     if(freqPairNums.has(n)){s+=0.5;rs.push("常搭配");}
 
-    // ===== 【v10.0728.07新增·v10.0915.02修正】正态分布z-score评分 =====
+    // ===== 【v10.0728.07新增·v10.0915.03修正】正态分布z-score评分 =====
     // 正码每期6码(49选)，遗漏间隙理论 均值=(49-6)/6≈7.17，标准差=√(43×49/36)≈7.65
     // （旧值6.1/5.4是按100期经验拍的，与正码实际间隙不符，已改为理论值）
     var curOm=ZM2[n]||0;
@@ -5636,7 +5636,7 @@ function scoreZheng(extraPrefs){
     else if(zScore<-1.5){s-=2;rs.push("z-score超低("+zScore.toFixed(1)+",过热-2)");}
     else if(zScore<-1){s-=1;rs.push("z-score低("+zScore.toFixed(1)+",过热-1)");}
 
-    // ===== 【v10.0728.07新增·v10.0915.02修正】回归分析：30期内正码频率→命中率映射 =====
+    // ===== 【v10.0728.07新增·v10.0915.03修正】回归分析：30期内正码频率→命中率映射 =====
     // 【修正】只统计正码(n[])，不再混入特码(d.t)（#559同款bug回归：三中三只看正码）
     // 统计结论：30期内0-1次→下期命中率17.7%（最高），8-9次→9.2%（最低）
     var d30Cnt=0;
@@ -5650,7 +5650,7 @@ function scoreZheng(extraPrefs){
     else if(d30Cnt>=6){s-=0.8;rs.push("30期高频("+d30Cnt+"次,微降)");}
     else if(d30Cnt>=4){s-=0.2;}
 
-    // ===== 【v10.0728.07新增·v10.0915.02修正】频率标准差评级（Z100维度）=====
+    // ===== 【v10.0728.07新增·v10.0915.03修正】频率标准差评级（Z100维度）=====
     // 【修正】均值/标准差改用窗口相对二项分布(期数N, p=6/49)：均值=6N/49, 标准差=√(N·6·43/49²)
     var freqZ=(zc-_expZ)/_stdZ;
     if(freqZ<-1.5){s+=1;rs.push("超低频(z"+freqZ.toFixed(1)+",潜力+1)");}
@@ -5979,7 +5979,7 @@ document.addEventListener('click',function(e){
       showClickFeedback('⚠️ '+attrKey+'='+attrVal+' 已在排除列表中');
     }
   } else if(action==='applyTeRecAll'){
-      // 【v10.0915.02】一键应用本彩种统计推荐到特码属性排除（复用 quickExclAttr 口径，批量）
+      // 【v10.0915.03】一键应用本彩种统计推荐到特码属性排除（复用 quickExclAttr 口径，批量）
       if(typeof buildStatExcludeBlock==='function'){ try{buildStatExcludeBlock();}catch(e){} } // 确保 window._TE_EXCL_RECS 为当前彩种最新推荐
       var _recs=window._TE_EXCL_RECS||[];
       var _dk={'生肖':'te_excl_zods','合数':'te_excl_hesums','五行':'te_excl_wx_multi','波色':'te_excl_wv_multi','尾数':'te_excl_tails'};
@@ -5993,6 +5993,28 @@ document.addEventListener('click',function(e){
       });
       saveData();render();
       showClickFeedback(_added>0?('✅ 已应用'+_added+'项本彩种推荐到特码属性排除（可在"个人设定"调整）'):'⚠️ 推荐项均已存在，无需重复应用');
+    } else if(action==='applyTePickHot'){
+      // 【v10.0915.03】一键「限定到热属性」(特码追热策略)：复用 buildStatExcludeBlock 的过热/突热项，
+      // 把 _TE_EXCL_RECS 写入 te_pick_*（只从选中的热属性里选），并清掉同项的 te_excl_* 避免「排除+限定」同属性→空集。
+      if(typeof buildStatExcludeBlock==='function'){ try{buildStatExcludeBlock();}catch(e){} } // 确保 window._TE_EXCL_RECS 为当前彩种最新过热项
+      var _recs=window._TE_EXCL_RECS||[];
+      var _pick={'生肖':'te_pick_zods','合数':'te_pick_hesums','五行':'te_pick_wx_multi','波色':'te_pick_wv_multi','尾数':'te_pick_tails'};
+      var _excl={'生肖':'te_excl_zods','合数':'te_excl_hesums','五行':'te_excl_wx_multi','波色':'te_excl_wv_multi','尾数':'te_excl_tails'};
+      var _added=0,_cleared=0;
+      _recs.forEach(function(r){
+        var _ak=r.cat,_av=r.val,_pkKey=_pick[_ak],_exKey=_excl[_ak];
+        if(!_pkKey)return;
+        if(!UP[_pkKey])UP[_pkKey]=[];
+        var _v=(_ak==='五行'||_ak==='波色'||_ak==='生肖')?_av:parseInt(_av,10);
+        if(UP[_pkKey].indexOf(_v)<0){UP[_pkKey].push(_v);_added++;}
+        // 清掉同项的排除，避免「既排除又限定」同一属性导致候选空集
+        if(_exKey&&UP[_exKey]){
+          var _ei=UP[_exKey].indexOf(_v);
+          if(_ei>=0){UP[_exKey].splice(_ei,1);_cleared++;}
+        }
+      });
+      saveData();render();
+      showClickFeedback(_added>0?('🔥 已限定特码到'+_added+'项热属性(追热；已同步清掉'+_cleared+'项冲突排除)'):'⚠️ 热属性推荐项均已限定');
     } else if(action==='applyStatExcl'){
     // 统计排除→应用于正码/特码候选池
     var attrKey2=el.dataset.key,attrVal2=el.dataset.val,target=el.dataset.target;
@@ -7198,7 +7220,7 @@ function buildStatExcludeBlock(){
     }
   });
   meanExcludes=finalExcludes;
-  // 【v10.0915.02】把最终推荐项缓存到 window._TE_EXCL_RECS（{cat,val}），供"一键应用全部推荐"按钮与首启自动预填复用
+  // 【v10.0915.03】把最终推荐项缓存到 window._TE_EXCL_RECS（{cat,val}），供"一键应用全部推荐"按钮与首启自动预填复用
   window._TE_EXCL_RECS=meanExcludes.map(function(e){var p=(e.label||'').split('=');return {cat:p[0],val:p[1]};});
   if(meanExcludes.length>0){
     // 上期准确性检查：对每项排除判断上期(=最近一期开奖=LAST)特码和正码是否符合被排除属性
@@ -7218,6 +7240,7 @@ function buildStatExcludeBlock(){
     h+='<div class="card" style="border:2px solid #e67e22;background:#fff8e1;margin-top:6px">'+
        '<b style="font-size:12px;color:#e67e22">⚡ 统计排除</b>'+
        '<button class="btn" style="font-size:9px;padding:2px 8px;background:#c0392b;color:#fff;margin-left:6px" data-action="applyTeRecAll">📌 一键应用全部推荐(特码属性排除)</button>'+
+       '<button class="btn" style="font-size:9px;padding:2px 8px;background:#e67e22;color:#fff;margin-left:6px" data-action="applyTePickHot">🔥 一键限定到热属性(特码追热)</button>'+
        '<span style="font-size:10px;color:#333;margin-left:6px">统计窗口：<b style="color:#c0392b">第 '+A.from+' ~ '+A.to+' 期（近'+dataN+'期）</b></span>'+
        '<span style="font-size:10px;color:#666;margin-left:6px">阈值：生肖≥'+thZod+'/合数≥'+thHe+'/五行≥'+thWx+'/波色≥'+thWv+'/尾数≥'+thTail+'次 [期望×'+multiplier+']，同类最多排除N-1种防空集</span>'+
        '<div style="margin:4px 0;font-size:10px;background:#fff;border-radius:4px;padding:4px 6px;border-left:3px solid #c0392b">'+
