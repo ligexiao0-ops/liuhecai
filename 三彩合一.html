@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0929.04</span> · 云端动态数据 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0930.05</span> · 云端动态数据 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -648,24 +648,12 @@ function loadData(){
   // 后台只读拉取最新云端记录
   refreshFromServer();
   // ===== 【v10.0928.01】一次性智能推荐预填：仅首次升级执行，不覆盖用户已手动设置的偏好 =====
-  if(!UP._recV){
-    UP._recV='v10_0915_rec1';
-    // 三中三：跨三彩稳定极冷生肖 狗、龙 → 加入排除（与默认 zm3_excl_zods 互补，已有则跳过）
-    ['狗','龙'].forEach(function(z){
-      if((UP.zm3_excl_zods||[]).indexOf(z)<0)UP.zm3_excl_zods=UP.zm3_excl_zods.concat([z]);
-    });
-    // 特码：本彩种窗口相对冷门/突热属性 → 批量应用到 te_excl_* 属性排除（复用 quickExclAttr 口径）
-    try{
-      if(typeof buildStatExcludeBlock==='function'){ buildStatExcludeBlock(); } // 触发 window._TE_EXCL_RECS 填充
-      (window._TE_EXCL_RECS||[]).forEach(function(r){
-        var _dk={'生肖':'te_excl_zods','合数':'te_excl_hesums','五行':'te_excl_wx_multi','波色':'te_excl_wv_multi','尾数':'te_excl_tails'};
-        var _key=_dk[r.cat];
-        if(!_key)return;
-        if(!UP[_key])UP[_key]=[];
-        var _v=(r.cat==='五行'||r.cat==='波色'||r.cat==='生肖')?r.val:parseInt(r.val,10);
-        if(UP[_key].indexOf(_v)<0)UP[_key].push(_v);
-      });
-    }catch(e){console.warn('[智能推荐预填] 特码属性应用失败:',e);}
+  if(UP._rulesV!=='v10_0930_rules'){
+    // Remove only the untouched legacy two-zodiac preset. User-entered filters remain.
+    if(!UP.zm3_nl && !(UP.zm3_excl_nums||[]).length && !(UP.zm3_pick_zods||[]).length &&
+       (UP.zm3_excl_zods||[]).length===2)UP.zm3_excl_zods=[];
+    UP._recV='disabled_v10_0930';
+    UP._rulesV='v10_0930_rules';
     try{localStorage.setItem(cfg.up_key,JSON.stringify(UP));}catch(e){}
   }
 }
@@ -848,16 +836,11 @@ function manualSync(){
   setTimeout(function(){showClickFeedback(SYNC_STATUS==='synced'?'✅ 同步完成':'⚠️ 同步异常');},2000);
 }
 function fixDatesNow(){
-  var result=validateGcDates();
-  if(result.fixed===0){
-    alert('✅ 日期验证通过，所有记录日期均正确（均为开奖日）。');
-  }else{
-    var msg='🔧 已修复'+result.fixed+'条日期错误：\n';
-    result.errors.forEach(function(e){msg+='  第'+e.p+'期：'+e.old+' → '+e.new+'\n';});
-    alert(msg);
-    calcDerived();render();
-    syncAllToServer();
-  }
+  var fixed=normalizeRecordDates(true),after=recordDataIssues();
+  var msg=fixed?'已按期号基准校正 '+fixed+' 条日期。':'期号与日期映射已正确。';
+  if(after.gaps.length)msg+='\n仍有期号缺口：'+after.gaps.map(function(x){return x[0]+'→'+x[1];}).join('、')+'（不会自动伪造开奖记录）';
+  if(after.sameAdjacent.length)msg+='\n疑似重复录入：'+after.sameAdjacent.map(function(x){return x[0]+'/'+x[1]+'期';}).join('、');
+  alert(msg);calcDerived();render();
 }
 // 清理混入的异种数据：根据各彩种 base_p 范围过滤
 // 新奥/老奥 base_p=181（最大期号 184左右），港彩 base_p=71（最大期号 71+左右）
@@ -2499,23 +2482,7 @@ function nextDrawDate(afterDate){
   return d;
 }
 function pToDate(p){
-  const f=DR.find(function(r){return r.p===p;});if(f)return f.d;
-  if(DR.length>0&&p===DR[DR.length-1].p+1){
-    var pts=DR[DR.length-1].d.split('/');
-    var d=new Date(2026,parseInt(pts[0])-1,parseInt(pts[1]));
-    var nd=nextDrawDate(d);
-    return String(nd.getMonth()+1).padStart(2,'0')+'/'+String(nd.getDate()).padStart(2,'0');
-  }
-  // 港彩按开奖日推算
-  if(LOTTERIES[CUR_LOT].draw_days){
-    var dd=LOTTERIES[CUR_LOT].draw_days;
-    var d2=new Date(BASE_DATE);
-    var cnt=0;
-    while(cnt<p-BASE_P){d2.setDate(d2.getDate()+1);if(dd.indexOf(d2.getDay())>=0)cnt++;}
-    return String(d2.getMonth()+1).padStart(2,'0')+'/'+String(d2.getDate()).padStart(2,'0');
-  }
-  var d2=new Date(BASE_DATE);d2.setDate(d2.getDate()+(p-BASE_P));
-  return String(d2.getMonth()+1).padStart(2,'0')+'/'+String(d2.getDate()).padStart(2,'0');
+  return pToDateByBase(p);
 }
 function is2027New(p){var pts=pToDate(p).split('/');return parseInt(pts[0])>=1&&parseInt(pts[0])<=6?false:new Date(2026,parseInt(pts[0])-1,parseInt(pts[1])).getFullYear()>=2027;}
 // 港彩日期验证：检查每条记录的日期是否为开奖日（周二/四/六）
@@ -2568,6 +2535,39 @@ function pToDateByBase(p){
   d3.setDate(d3.getDate()+(p-LOTTERIES[CUR_LOT].base_p));
   return String(d3.getMonth()+1).padStart(2,'0')+'/'+String(d3.getDate()).padStart(2,'0');
 }
+
+function targetPeriodForDate(now){
+  var d=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  var base=new Date(LOTTERIES[CUR_LOT].base_date);
+  base=new Date(base.getFullYear(),base.getMonth(),base.getDate());
+  var p=LOTTERIES[CUR_LOT].base_p,dd=LOTTERIES[CUR_LOT].draw_days;
+  if(!dd)return p+Math.max(0,Math.round((d-base)/86400000));
+  var cur=new Date(base);
+  while(cur<d){cur.setDate(cur.getDate()+1);if(dd.indexOf(cur.getDay())>=0)p++;}
+  if(dd.indexOf(d.getDay())>=0)return p;
+  while(dd.indexOf(cur.getDay())<0){cur.setDate(cur.getDate()+1);if(dd.indexOf(cur.getDay())>=0)p++;}
+  return p;
+}
+function sameDraw(a,b){
+  if(!a||!b||a.t!==b.t)return false;
+  return a.n.slice().sort(function(x,y){return x-y;}).join(',')===b.n.slice().sort(function(x,y){return x-y;}).join(',');
+}
+function recordDataIssues(){
+  var out={wrongDates:[],sameAdjacent:[],gaps:[]};
+  for(var i=0;i<DR.length;i++){
+    var exp=pToDateByBase(DR[i].p);
+    if(DR[i].d!==exp)out.wrongDates.push({p:DR[i].p,old:DR[i].d,newDate:exp});
+    if(i&&sameDraw(DR[i-1],DR[i]))out.sameAdjacent.push([DR[i-1].p,DR[i].p]);
+    if(i&&DR[i].p!==DR[i-1].p+1)out.gaps.push([DR[i-1].p,DR[i].p]);
+  }
+  return out;
+}
+function normalizeRecordDates(queue){
+  var changed=0;
+  DR.forEach(function(r){var d=pToDateByBase(r.p);if(r.d!==d){r.d=d;changed++;}});
+  if(changed&&queue)saveData();
+  return changed;
+}
 function lotLabel(){return CUR_LOT==='xa'?'新':CUR_LOT==='la'?'老':'港';}
 function lotFullName(){return LOTTERIES[CUR_LOT].name;}
 
@@ -2618,7 +2618,7 @@ let UP={
   te_excl_prev_zod:false,te_excl_prev_tail:false,
   te_pick_prev_zod:false,te_pick_prev_tail:false,
   // 全期特码遗漏/热门筛选
-  zm3_excl_nums:[],zm3_excl_tails:[],zm3_pick_tails:[],zm3_pick_zods:[],zm3_excl_zods:['狗','龙'],zm3_no_together:[],zm3_pick_pool:[],
+  zm3_excl_nums:[],zm3_excl_tails:[],zm3_pick_tails:[],zm3_pick_zods:[],zm3_excl_zods:[],zm3_no_together:[],zm3_pick_pool:[],
   zm3_nl:"",
   // 三中三新增：属性筛选、已出未出、同尾同肖、一肖两肖2码、排除五行多选
   zm3_pick_attrs:{},zm3_excl_attrs:{},zm3_excl_wx_multi:[],
@@ -2959,7 +2959,7 @@ function switchLottery(lot){
   _autoLoggedKey=''; // 重置自动记录标记，允许新彩种记录
   BASE_DATE=new Date(LOTTERIES[CUR_LOT].base_date);
   BASE_P=LOTTERIES[CUR_LOT].base_p;
-  UP={te_excl_nums:[],te_excl_tails:[],te_pick_tails:[],te_pick_attrs:{},te_excl_attrs:{},te_excl_combos:[],te_pick_combos:[],te_pick_pool:[],te_excl_pool:[],te_pick_zods:[],te_excl_zods:[],te_nl:"",te_excl_heads:[],te_pick_heads:[],te_pick_wx_multi:[],te_excl_wx_multi:[],te_pick_wv_multi:[],te_excl_wv_multi:[],te_excl_diffs:[],te_pick_diffs:[],te_excl_hesums:[],te_pick_hesums:[],te_pick_app:'',te_om10:false,te_t100_hot:false,te_excl_t100_hot:false,te_t100_hot7:false,te_excl_t100_hot7:false,te_t100_cold:false,te_excl_t100_cold:false,te_t100_cold7:false,te_excl_t100_cold7:false,te_tm_om10:false,te_excl_prev_zod:false,te_excl_prev_tail:false,zm3_excl_nums:[],zm3_excl_tails:[],zm3_pick_tails:[],zm3_pick_zods:[],zm3_excl_zods:['狗','龙'],zm3_no_together:[],zm3_pick_pool:[],zm3_nl:"",zm3_pick_attrs:{},zm3_excl_attrs:{},zm3_excl_wx_multi:[],zm3_pick_app:'',zm3_same_tail:false,zm3_same_zod:false,zm3_one_zod_2:false,zm3_two_zod_2:false,zm3_z100_hot:false,zm3_excl_z100_hot:false,zm3_z100_hot7:false,zm3_excl_z100_hot7:false,zm3_z100_cold:false,zm3_excl_z100_cold:false,zm3_z100_cold7:false,zm3_excl_z100_cold7:false,zm3_zm2_om10:false,z2_excl_nums:[],z2_pick_pool:[],tc_excl_nums:[],tc_pick_pool:[],tc_te_excl_nums:[],tc_te_pick_pool:[],lx_force_zods:[],lx_excl_zods:[],lx_no_together:[],lx_grp_limits:[],lx_nl:"",lx_wild_ratio:'',lx_same_zod_cnt:0,lx_all_hot:false,lx_all_cold:false,lx_all_home:false,lx_all_wild:false,lx_custom6_zods:[],lx_custom6_size:0,lx_duplex:false,l2_excl_zods:[],l2_force_zods:[],pt_excl_zods:[],pt_force_zods:[],zm3_mode:'',zm3_tuo_zods:[],zm3_tuo_nums:[],zm3_two_zods:[],copy_records:[],not_sub_latest:1};
+  UP={te_excl_nums:[],te_excl_tails:[],te_pick_tails:[],te_pick_attrs:{},te_excl_attrs:{},te_excl_combos:[],te_pick_combos:[],te_pick_pool:[],te_excl_pool:[],te_pick_zods:[],te_excl_zods:[],te_nl:"",te_excl_heads:[],te_pick_heads:[],te_pick_wx_multi:[],te_excl_wx_multi:[],te_pick_wv_multi:[],te_excl_wv_multi:[],te_excl_diffs:[],te_pick_diffs:[],te_excl_hesums:[],te_pick_hesums:[],te_pick_app:'',te_om10:false,te_t100_hot:false,te_excl_t100_hot:false,te_t100_hot7:false,te_excl_t100_hot7:false,te_t100_cold:false,te_excl_t100_cold:false,te_t100_cold7:false,te_excl_t100_cold7:false,te_tm_om10:false,te_excl_prev_zod:false,te_excl_prev_tail:false,zm3_excl_nums:[],zm3_excl_tails:[],zm3_pick_tails:[],zm3_pick_zods:[],zm3_excl_zods:[],zm3_no_together:[],zm3_pick_pool:[],zm3_nl:"",zm3_pick_attrs:{},zm3_excl_attrs:{},zm3_excl_wx_multi:[],zm3_pick_app:'',zm3_same_tail:false,zm3_same_zod:false,zm3_one_zod_2:false,zm3_two_zod_2:false,zm3_z100_hot:false,zm3_excl_z100_hot:false,zm3_z100_hot7:false,zm3_excl_z100_hot7:false,zm3_z100_cold:false,zm3_excl_z100_cold:false,zm3_z100_cold7:false,zm3_excl_z100_cold7:false,zm3_zm2_om10:false,z2_excl_nums:[],z2_pick_pool:[],tc_excl_nums:[],tc_pick_pool:[],tc_te_excl_nums:[],tc_te_pick_pool:[],lx_force_zods:[],lx_excl_zods:[],lx_no_together:[],lx_grp_limits:[],lx_nl:"",lx_wild_ratio:'',lx_same_zod_cnt:0,lx_all_hot:false,lx_all_cold:false,lx_all_home:false,lx_all_wild:false,lx_custom6_zods:[],lx_custom6_size:0,lx_duplex:false,l2_excl_zods:[],l2_force_zods:[],pt_excl_zods:[],pt_force_zods:[],zm3_mode:'',zm3_tuo_zods:[],zm3_tuo_nums:[],zm3_two_zods:[],copy_records:[],not_sub_latest:1};
   loadData();
   calcDerived();
   renderLotteryBar();
@@ -3096,7 +3096,7 @@ function renderCrossExclPanel(){
 }
 function calcDerived(){
   // 注意：窗口模式下 DR 已被 winApply() 截断，这里直接取末6期即为该轮次窗口
-  LAST=DR[DR.length-1];NEXT=LAST.p+1;PREV=DR.length>1?DR[DR.length-2]:null;
+  LAST=DR[DR.length-1];NEXT=Math.max(LAST.p+1,targetPeriodForDate(new Date()));PREV=DR.length>1?DR[DR.length-2]:null;
   D6=DR.slice(-6);
   ALL42=D6.flatMap(d=>[].concat(d.n,[d.t]));
   APP=Array.from(new Set(ALL42));NOT=A49.filter(n=>!APP.includes(n));
@@ -3122,12 +3122,17 @@ var CROSS_DYN_NUMS=[];  // 动态排除号码（近3期特码+近6期正码≥3�
 var CROSS_DYN_ZODS=[];  // 动态排除生肖（近2期特码生肖）
 var CROSS_DYN_SRC={};   // 动态排除来源记录
 function calcCrossExcl(){
-  // v10.0928：玩法隔离。
-  // 旧版会把特码/三中三/连肖等模块的手动排除汇总到 CROSS_EXCL_*，
-  // 再反向传播到其它玩法，导致“在特码排除”意外影响三中三/连肖。
-  // 现在 CROSS_* 仅保留兼容变量，不参与任何选号评分；跨玩法只能由用户在目标玩法中明确设置。
+  // Manual filters stay isolated per game. These are draw-dependent soft penalties only.
   CROSS_EXCL_ZODS=[];CROSS_EXCL_NUMS=[];CROSS_EXCL_SRC={};
   CROSS_DYN_NUMS=[];CROSS_DYN_ZODS=[];CROSS_DYN_SRC={};
+  var last3=DR.slice(-3),last6=DR.slice(-6),normalCount={};
+  last3.forEach(function(r){
+    if(CROSS_DYN_NUMS.indexOf(r.t)<0)CROSS_DYN_NUMS.push(r.t);
+    CROSS_DYN_SRC['#'+r.t]=['近3期已开特码'];
+  });
+  last6.forEach(function(r){(r.n||[]).forEach(function(n){normalCount[n]=(normalCount[n]||0)+1;});});
+  Object.keys(normalCount).forEach(function(k){var n=+k;if(normalCount[n]>=3&&CROSS_DYN_NUMS.indexOf(n)<0){CROSS_DYN_NUMS.push(n);CROSS_DYN_SRC['#'+n]=['近6期正码'+normalCount[n]+'次'];}});
+  DR.slice(-2).forEach(function(r){var z=gz(r.t);if(CROSS_DYN_ZODS.indexOf(z)<0)CROSS_DYN_ZODS.push(z);CROSS_DYN_SRC[z]=['近2期特肖'];});
 }
 // ===== 【v10.0830.01】统计记忆化缓存（修复"全系统非常卡顿/手机端卡死"）=====
 // 以下纯统计函数只依赖 DR（开奖记录），却被反复重算，部分还被放进 49 码循环里：
@@ -6354,6 +6359,7 @@ function deleteRecord(idx){
   if(!confirm('确认删除第'+DR[idx].p+'期记录？此操作不可撤销！'))return;
   var p=DR[idx].p;
   DR.splice(idx,1);
+  normalizeRecordDates(false);
   saveData();
   // 从云端删除
   if(sb){
@@ -6695,6 +6701,8 @@ function addRecord(){
   const t=parseInt(document.getElementById('bt').value);
   const msg=document.getElementById('add-msg');
   if(ns.some(n=>isNaN(n)||n<1||n>49)||isNaN(t)||t<1||t>49){msg.innerHTML='<span class="warn">❌ 请检查7个号码（1-49）</span>';return;}
+  if(new Set(ns.concat([t])).size!==7){msg.innerHTML='<span class="warn">⚠️ 6个正码和特码必须是7个不同号码</span>';return;}
+  if(LAST&&sameDraw(LAST,{n:ns,t:t})&&!confirm('本次7个号码与上一期完全相同，疑似手动输入错误。仍要保存吗？'))return;
   const np=LAST.p+1,nd=pToDate(np);
   // 【v10.0901.04】期号段自适应放宽：期号单向增长，超出当前段时先尝试放宽，避免将来录不进去
   _autoWidenBand(CUR_LOT,np);
@@ -6929,7 +6937,7 @@ function renderRecord(){
      '<button class="btn '+(recordShowCount<DR.length?'btn-blue':'btn-gray')+'" onclick="recordShowCount=Math.min(DR.length,recordShowCount+50);render();">再多50期（已显'+Math.min(recordShowCount,DR.length)+'/'+DR.length+'）</button> '+
      '<button class="btn '+(recordSortDrop?'btn-gray':'btn-green')+'" onclick="recordSortAsc=!recordSortDrop?recordSortAsc:!recordSortAsc;recordSortDrop=!recordSortDrop;render();">'+(recordSortDrop?'正码'+(recordSortAsc?'小→大':'大→小'):'落球顺序')+'</button>'+
      '<button class="btn '+(recordSortDrop?'btn-blue':'btn-gray')+'" onclick="recordSortDrop=!recordSortDrop;render();">'+(recordSortDrop?'落球中':'落球顺序')+'</button>'+
-     (LOTTERIES[CUR_LOT].draw_days?'<button class="btn btn-blue" onclick="fixDatesNow()" style="margin-left:4px">🔧 验证/修复日期</button>':'')+
+     '<button class="btn btn-blue" onclick="fixDatesNow()" style="margin-left:4px">🔧 校正期号/日期</button>'+
      '<button class="btn btn-purple" onclick="fixWrongLotData()" style="margin-left:4px">🧹 清理异种数据</button>'+
      '</div>';
   h+='<div style="overflow-x:auto"><table>'+
@@ -12460,7 +12468,7 @@ function renderLX(){
   function applyLxExcl(arr){
     return arr.map(function(it){
       var ns=it.s,nrs=it.rs.slice();
-      if(lxTeExclZods.indexOf(it.z)>=0){ns-=8;nrs.push("🔒特肖降权-8");}
+      if(lxTeExclZods.indexOf(it.z)>=0){ns-=2;nrs.push("🔒特肖降权-2");}
       else if(lxHotPen[it.z]){ns-=lxHotPen[it.z].penalty;nrs.push("🔥"+lxHotPen[it.z].tag+"-"+lxHotPen[it.z].penalty);}
       return Object.assign({},it,{s:ns,rs:nrs});
     }).sort(function(a,b){return b.s-a.s;});
@@ -12624,6 +12632,17 @@ function renderLX(){
   const lx5list=pickN(5,force,exclLX,3); // 【v10.0812.07-#526】excl→exclLX(含特肖)
   const lx5=lx5list[0]||[],lx5alt1=lx5list[1],lx5alt2=lx5list[2];
   const lxStrictOK=lx5.length===5;
+  var _lxAllowed=zSc.filter(function(x){return exclLX.indexOf(x.z)<0;});
+  var _lx7=force.map(function(z){return _lxAllowed.find(function(x){return x.z===z;});}).filter(Boolean);
+  _lxAllowed.forEach(function(x){if(_lx7.length<7&&!_lx7.some(function(y){return y.z===x.z;}))_lx7.push(x);});
+  var _absentRank=_lxAllowed.filter(function(x){return cur7Z.indexOf(x.z)<0;});
+  var _absentHave=_lx7.filter(function(x){return cur7Z.indexOf(x.z)<0;}).length;
+  _absentRank.forEach(function(x){
+    if(_absentHave>=2||_lx7.some(function(y){return y.z===x.z;}))return;
+    var ri=-1;for(var q=_lx7.length-1;q>=0;q--){if(force.indexOf(_lx7[q].z)<0&&cur7Z.indexOf(_lx7[q].z)>=0){ri=q;break;}}
+    if(ri>=0){_lx7[ri]=x;_absentHave++;}
+  });
+  var _lx7groups=_lx7.length===7?combNK(_lx7,5):[];
   // 四连肖优化：从主选五连肖中去掉评分最弱生肖（rk值最大者）生成四连肖
   var lx5Weak=lx5.slice().sort(function(a,b){return b.rk-a.rk;})[0];
   var lx4=lx5Weak?lx5.filter(function(x){return x!==lx5Weak;}):pickN(4);
@@ -13080,6 +13099,12 @@ function renderLX(){
   }
 
   // 五连/四连/三连
+  if(_lx7.length===7){
+    h+='<div class="card" style="border:2px solid #6a5acd;background:#f8f7ff"><div class="sec-title" style="color:#6a5acd">7肖覆盖池（自动生成21组五连肖）</div>'+
+      '<div style="font-size:16px;font-weight:bold">'+_lx7.map(function(x){return EMJ[x.z]+x.z;}).join(' ')+'</div>'+
+      '<div style="font-size:10px;color:#555;margin-top:5px">若实际7个开奖号形成7个不同生肖，单押一组五肖容易漏；本池把7肖的 C(7,5)=21 组全部覆盖。至少保留2个上期未出现生肖作为突破位；特码生肖只轻度分散，不再强排。</div>'+
+      copyBox('copy-lx7','📋 7肖五连覆盖',_lx7groups.map(function(g){return lotLabel()+g.map(function(x){return x.z;}).join('')+'五连肖';}).join('，'),'连肖')+'</div>';
+  }
   h+='<div style="background:'+(lxStrictOK?'#eef9f0':'#ffebee')+';border:2px dashed '+(lxStrictOK?'#1e8449':'#c0392b')+';border-radius:6px;padding:6px 8px;margin:6px 0;font-size:10px;color:'+(lxStrictOK?'#1e8449':'#c0392b')+';font-weight:bold">'+
      (lxStrictOK?'方案B｜严格限制方案：已通过必含、排除、家野、分组和不得同选的全部检查。':'方案B｜严格限制后无可用五连肖：系统没有放宽任何条件，请减少互相冲突的必含/排除或结构限制。')+'</div>';
   [[lx5,5,'⭐五连肖','#8B008B','约100倍'],[lx4,4,'四连肖(五连去弱)','#e67e22','约30倍'],[lx3,3,'三连肖','#c0392b','约10倍']].forEach(item=>{
@@ -16291,7 +16316,7 @@ function renderZ3(){
     var appNonLx=appCand.filter(function(x){return !lxZodSet.has(gz(x.n));});
     var notLx=notCand.filter(function(x){return lxZodSet.has(gz(x.n));});
     var notNonLx=notCand.filter(function(x){return !lxZodSet.has(gz(x.n));});
-    // v10.0929.04：主候选池收敛到12码。18码会产生C(18,3)=816组并在每次点击后全量评分，
+    // v10.0930.05：主候选池收敛到12码。18码会产生C(18,3)=816组并在每次点击后全量评分，
     // 手机端明显卡顿；12码仅220组，同时更符合“缩小范围”的使用目标。
     var poolSize=12;
     // 候选池构成（4层优先级）：
@@ -16375,6 +16400,12 @@ function renderZ3(){
   var _poolFiltered=poolTop.filter(function(n){return !zm3HardExcluded(n)&&zm3SelAllowed(n);});
   if(_poolFiltered.length!==poolTop.length){_z3FilterWarn='⚠️ 已按你的三中三限制清除 '+(poolTop.length-_poolFiltered.length)+' 个不合条件号码。';}
   poolTop=_poolFiltered;
+  var _needPool=Math.min(12,Math.max(3,window._z3ComplexN||6));
+  sc.forEach(function(x){
+    if(poolTop.length<_needPool&&poolTop.indexOf(x.n)<0&&!zm3HardExcluded(x.n)&&zm3SelAllowed(x.n))poolTop.push(x.n);
+  });
+  poolTop=poolTop.slice(0,12);
+  if(poolTop.length<_needPool)_z3FilterWarn+=' 严格条件实际只剩 '+poolTop.length+' 码；已用全部符合条件号码，未偷偷放宽你的限制。';
   if(poolTop.length<3){
     _z3FilterWarn+=' 当前严格限制后仅剩 '+poolTop.length+' 码，不足3码，因此本次不生成主推三中三。';
   }
@@ -16434,6 +16465,11 @@ function renderZ3(){
   }).map(function(x){return x.n;});
   // 确保主推3码都在 topSet 内（加权后通常已在顶部）
   top3.forEach(function(n){if(topSet.indexOf(n)<0)topSet.unshift(n);});
+  // 复式所需码数可能大于 TOP10 三码组合实际覆盖的号码数。
+  // 只从已经通过全部硬限制的 poolTop 补足，避免把用户排除的号码重新放回。
+  poolTop.forEach(function(n){
+    if(topSet.length<_needPool&&topSet.indexOf(n)<0)topSet.push(n);
+  });
   // top6 保持向后兼容（复式默认6码、结论文案、候选生肖最优号等仍引用）
   var top6=topSet.slice(0,6).sort(function(a,b){return a-b;});
   top3.forEach(function(n){if(top6.indexOf(n)<0)top6.push(n);});
@@ -20092,12 +20128,37 @@ function planChooseModes(rows,options){
   function best(kind){var scored=cands.map(function(m){var hit=0,cov=0,total=0,start=Math.max(m.window,rows.length-30);for(var i=start;i<rows.length;i++){var mm={te:m,zm:m,lx:m},p=planBuild(rows.slice(0,i),options,mm),t=rows[i];total++;if(kind==='te')hit+=p.te.indexOf(t.t)>=0?1:0;else if(kind==='zm'){var got=p.pool6.filter(function(n){return t.n.indexOf(n)>=0;}).length;cov+=got;hit+=got>=3?1:0;}else{var az=new Set((options.includeTe?t.n.concat([t.t]):t.n).map(gz)),got2=p.lx.filter(function(z){return az.has(z);}).length;cov+=got2;hit+=got2===options.lxSize?1:0;}}var score=kind==='te'?(hit+1)/(total+2):(hit*3+cov/(kind==='lx'?options.lxSize:3))/Math.max(1,total);return{m:m,score:score,hit:hit,total:total,cov:cov};}).sort(function(a,b){return b.score-a.score||b.hit-a.hit||b.m.window-a.m.window;});return scored[0]||{m:{window:options.window,dir:'hot'}};}
   return {te:best('te').m,zm:best('zm').m,lx:best('lx').m};
 }
+
+function planAttrPick(history,codes){
+  function top(get,k){var c={};codes.forEach(function(n){var v=get(n);c[v]=(c[v]||0)+1;});return Object.keys(c).sort(function(a,b){return c[b]-c[a]||String(a).localeCompare(String(b));}).slice(0,k);}
+  var appeared=new Set(history.slice(-6).reduce(function(a,r){return a.concat(r.n,[r.t]);},[]));
+  var appCount=codes.filter(function(n){return appeared.has(n);}).length;
+  return {size:top(gsz,1),parity:top(gpar,1),sum:top(ghe,1),family:top(gfam,1),wave:top(gwv,1),element:top(gwx,2),app:[appCount>=codes.length/2?'已出':'未出']};
+}
+function planAttrHit(pick,n,history){
+  var appeared=new Set(history.slice(-6).reduce(function(a,r){return a.concat(r.n,[r.t]);},[]));
+  return {size:pick.size.indexOf(gsz(n))>=0,parity:pick.parity.indexOf(gpar(n))>=0,sum:pick.sum.indexOf(ghe(n))>=0,family:pick.family.indexOf(gfam(n))>=0,wave:pick.wave.indexOf(gwv(n))>=0,element:pick.element.indexOf(gwx(n))>=0,app:pick.app.indexOf(appeared.has(n)?'已出':'未出')>=0};
+}
+function planOmissionAdvice(rows,get,categories,label){
+  var current={},out=[];categories.forEach(function(v){current[v]=0;});
+  for(var c=0;c<categories.length;c++){var v=categories[c],om=0;for(var i=rows.length-1;i>=0;i--){if(get(rows[i])===v)break;om++;}current[v]=om;}
+  categories.slice().sort(function(a,b){return current[b]-current[a];}).slice(0,2).forEach(function(v){
+    var threshold=Math.max(2,Math.min(current[v],8)),sample=0,hit=0,totalHit=0;
+    rows.forEach(function(r){if(get(r)===v)totalHit++;});
+    for(var i=1;i<rows.length;i++){var om=0;for(var j=i-1;j>=0;j--){if(get(rows[j])===v)break;om++;}if(om>=threshold){sample++;if(get(rows[i])===v)hit++;}}
+    var rate=sample?hit/sample:0,base=totalHit/Math.max(1,rows.length),lift=base?rate/base:1;
+    var advice=sample<8?'样本不足，观望':lift>=1.2?'可小幅追冷':lift<=0.8?'继续防冷':'中性，不追不弃';
+    out.push(label+v+' 已遗漏'+current[v]+'期：'+advice+'（同等遗漏后 '+hit+'/'+sample+'，提升倍数'+lift.toFixed(2)+'）');
+  });
+  return out;
+}
 function planBacktest(rows,options){
-  var result={total:0,te:0,triples:0,lx:0};
+  var result={total:0,te:0,triples:0,lx:0,attr:{size:0,parity:0,sum:0,family:0,wave:0,element:0,app:0}};
   for(var i=Math.max(options.window,rows.length-30);i<rows.length;i++){
     var history=rows.slice(0,i),modes=planChooseModes(history,options),p=planBuild(history,options,modes),target=rows[i],zs=new Set((options.includeTe?target.n.concat([target.t]):target.n).map(gz));
     result.total++;
     if(p.te.indexOf(target.t)>=0)result.te++;
+    var ap=planAttrPick(history,p.te),ah=planAttrHit(ap,target.t,history);Object.keys(result.attr).forEach(function(k){if(ah[k])result.attr[k]++;});
     if(p.triples.some(function(g){return g.every(function(n){return target.n.indexOf(n)>=0;});}))result.triples++;
     if(p.lx.every(function(z){return zs.has(z);}))result.lx++;
   }
@@ -20126,13 +20187,17 @@ function renderPlan(){
   h+='<div class="card">数据检查：有效 '+rows.length+' 期；无效记录 '+clean.invalid+' 条；合并重复 '+clean.duplicates+' 条；期号冲突排除 '+clean.conflicts+' 条。';
   if(rows.length<10)return h+'至少需要10期有效记录才能生成方案。</div>';
   var modes=planChooseModes(rows,o),p=planBuild(rows,o,modes),last=rows[rows.length-1],bt=planBacktest(rows,o);
-  h+='本次使用第 '+p.sample[0].p+'—'+last.p+' 期，共 '+p.sample.length+' 期。'+(p.sample.length<o.window?'样本不足所选期数，使用全部有效记录。':'')+'<br>候选对应第 '+(last.p+1)+' 期；记录截至 '+String(last.d||'未填写').replace(/[<>&"']/g,'')+'。请先确认记录已更新，期号范围不代表记录连续。</div>';
+  h+='本次使用第 '+p.sample[0].p+'—'+last.p+' 期，共 '+p.sample.length+' 期。'+(p.sample.length<o.window?'样本不足所选期数，使用全部有效记录。':'')+'<br>候选对应第 '+NEXT+' 期；记录截至 '+String(last.d||'未填写').replace(/[<>&"']/g,'')+'。请先确认记录已更新，期号范围不代表记录连续。</div>';
   h+=renderValidatedGuidance();
   function modeLabel(m){return (m.dir==='hot'?'追热':'防热取冷')+'·近'+m.window+'期';}
   h+='<div class="card" style="background:#eef8ee"><b>本期经逐期比较选用：</b> 特码 '+modeLabel(modes.te)+'；三中三 '+modeLabel(modes.zm)+'；连肖 '+modeLabel(modes.lx)+'。<br><span style="font-size:10px;color:#555">系统只在近15期、近30期和所选长窗口的追热/取冷方案之间比较；每期开奖后重新选择，避免把某一固定冷热规则套在所有彩种。</span></div>';
+  var _ap=planAttrPick(rows,p.te),_al={size:'大小',parity:'单双',sum:'合数单双',family:'家野',wave:'波色',element:'五行',app:'近6期已出/未出'};
+  h+='<div class="card" style="border:2px solid #2980b9"><h3>特码属性缩小范围（即使6码未中也可单独参考）</h3>'+Object.keys(_al).map(function(k){return '<div><b>'+_al[k]+'：</b>'+_ap[k].join('、')+'；逐期回测 '+bt.attr[k]+'/'+bt.total+'（'+(bt.total?(100*bt.attr[k]/bt.total).toFixed(1):'0.0')+'%）</div>';}).join('')+'<p style="font-size:10px;color:#555">属性由本期6个特码候选的多数结构产生；五行保留前2类。回测每一期只使用该期之前的数据。</p></div>';
+  var _coldAdvice=[].concat(planOmissionAdvice(rows,function(r){return gz(r.t);},ZODS,'特肖')).concat(planOmissionAdvice(rows,function(r){return String(gtl(r.t));},['0','1','2','3','4','5','6','7','8','9'],'尾')).concat(planOmissionAdvice(rows,function(r){return gwx(r.t);},['金','木','水','火','土'],'五行'));
+  h+='<div class="card"><h3>长期不出：追还是放弃</h3><p>'+_coldAdvice.join('<br>')+'</p><p style="font-size:10px;color:#555">只有“同等遗漏后的实际命中率 ÷ 常态命中率”≥1.20且样本足够才标为小幅追冷；≤0.80继续防冷；其余保持中性，避免把长期未出误当成必出。</p></div>';
   function nn(n){return String(n).padStart(2,'0');}
   function card(title,id,category,text,evidence){return '<div class="card"><h3>'+title+'</h3><pre id="'+id+'" style="white-space:pre-wrap;font-size:16px;line-height:1.8">'+text+'</pre><p>'+evidence+'</p><button class="btn btn-green" onclick="copyText(\''+id+'\',\''+category+'\')">复制方案</button></div>';}
-  var prefix=LOTTERIES[CUR_LOT].name+' 第'+(last.p+1)+'期 ';
+  var prefix=LOTTERIES[CUR_LOT].name+' 第'+NEXT+'期 ';
   h+=card('特码 · 6码候选','plan-te','特码',prefix+'特码：'+p.te.map(nn).join('、'),modeLabel(modes.te)+'；'+p.te.map(function(n){return nn(n)+'：'+p.teCounts[n]+'次';}).join('；'));
   h+=card('三中三 · 6码复式（20组）','plan-three','三中三',p.triples.map(function(g){return prefix+'三中三【'+g.map(nn).join('-')+'】';}).join('\n'),modeLabel(modes.zm)+'选出6码并生成C(6,3)=20组；当期6个正码中包含候选池任意3码，就至少有一组三中三命中。生肖只限定候选范围，不限制候选生肖数量。候选频次：'+p.pool6.map(function(n){return nn(n)+'：'+p.normalCounts[n]+'次';}).join('；'));
   h+=card(o.lxSize+'连肖 · 1组','plan-lx','连肖',prefix+o.lxSize+'连肖【'+p.lx.join('、')+'】',modeLabel(modes.lx)+'；'+p.lx.map(function(z){return z+'：'+p.zcounts[z]+'期';}).join('；')+'。当期7个号码先映射生肖再去重；所选'+o.lxSize+'肖全部出现才算命中。'+(o.includeTe?'当前按6个正码+特码统计':'当前仅计正码')+'。');
@@ -20200,6 +20265,10 @@ function render(){
   if(DR.length<10)statWarnings.push('⚠️ 仅'+DR.length+'期数据，统计分析可信度低，所有规律/趋势仅供参考，不构成投注建议。');
   else if(DR.length<30)statWarnings.push('💡 当前'+DR.length+'期数据，统计规律有一定参考价值但稳定性不足，极端值判断可能不准。');
   if(PREV&&LAST.t===PREV.t)statWarnings.push('⚠️ 上期特码与上上期相同（'+LAST.t+'），"同特码不连出"规律可能不适用。');
+  if(PREV&&sameDraw(PREV,LAST))statWarnings.push('⚠️ 第'+PREV.p+'期与第'+LAST.p+'期7个号码完全相同，疑似重复录入，请到记录页核对。');
+  var _recordIssues=recordDataIssues();
+  if(_recordIssues.wrongDates.length)statWarnings.push('⚠️ 有'+_recordIssues.wrongDates.length+'期日期与期号基准不符，可在记录页点“校正期号/日期”。');
+  if(LAST.p+1<NEXT)statWarnings.push('⚠️ 今天应预测第'+NEXT+'期，但最新记录仅到第'+LAST.p+'期；请先补录缺少的开奖，当前分析会明确标记数据滞后。');
   // 检查是否有空集风险
   if((UP.zm3_pick_zods||[]).length>0&&(UP.zm3_excl_zods||[]).length>0){
     var overlapZods=(UP.zm3_pick_zods||[]).filter(function(z){return (UP.zm3_excl_zods||[]).indexOf(z)>=0;});
@@ -20643,3 +20712,4 @@ if(_authed){
 </script>
 </body>
 </html>
+<!-- GitHub Pages deploy trigger: v10.0930.05 -->
