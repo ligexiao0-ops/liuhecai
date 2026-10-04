@@ -233,8 +233,8 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 </div>
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
-  <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.1004.01</span> · 云端动态数据 · 结论驱动</p>
+  <h1 id="appTitle">🎱 分析工具 v10.1004.02 · 预测第<span id="nextPeriod">--</span>期</h1>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.1004.02</span> · 云端动态数据 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -20097,6 +20097,162 @@ function planAttrHit(pick,n,history){
   var appeared=new Set(history.slice(-6).reduce(function(a,r){return a.concat(r.n,[r.t]);},[]));
   return {size:pick.size.indexOf(gsz(n))>=0,parity:pick.parity.indexOf(gpar(n))>=0,sum:pick.sum.indexOf(ghe(n))>=0,family:pick.family.indexOf(gfam(n))>=0,wave:pick.wave.indexOf(gwv(n))>=0,element:pick.element.indexOf(gwx(n))>=0,app:pick.app.indexOf(appeared.has(n)?'已出':'未出')>=0};
 }
+
+// 多步推理层：把统计转换为“证据 → 约束 → 候选”，不把低样本规律硬塞进结果。
+function planReasonAttr(rows){
+  var dims=[
+    {k:'size',label:'大小',get:gsz,take:1},{k:'parity',label:'单双',get:gpar,take:1},
+    {k:'sum',label:'合数单双',get:ghe,take:1},{k:'family',label:'家野',get:gfam,take:1},
+    {k:'wave',label:'波色',get:gwv,take:1},{k:'element',label:'五行',get:gwx,take:2},
+    {k:'tail',label:'尾数',get:function(n){return String(gtl(n));},take:3}
+  ],out={};
+  function pick(history,d,w,dir){
+    var c={};A49.forEach(function(n){c[d.get(n)]=0;});
+    history.slice(-w).forEach(function(r){var v=d.get(r.t);c[v]=(c[v]||0)+1;});
+    return Object.keys(c).sort(function(a,b){return (dir==='cold'?c[a]-c[b]:c[b]-c[a])||String(a).localeCompare(String(b));}).slice(0,d.take);
+  }
+  dims.forEach(function(d){
+    var candidates=[];[15,30,60].forEach(function(w){['hot','cold'].forEach(function(dir){
+      // 先在较早的校准段选规则，最后20个目标期只做留出验证，避免“挑中历史最好看”的过拟合。
+      var hit=0,total=0,base=0,valN=Math.min(20,Math.max(0,rows.length-w-5)),calEnd=rows.length-valN,calStart=Math.max(w,calEnd-25);
+      for(var i=calStart;i<calEnd;i++){
+        var vals=pick(rows.slice(0,i),d,w,dir);total++;
+        if(vals.indexOf(d.get(rows[i].t))>=0)hit++;
+        base+=A49.filter(function(n){return vals.indexOf(d.get(n))>=0;}).length/49;
+      }
+      var rate=total?hit/total:0,baseRate=total?base/total:0;
+      candidates.push({w:w,dir:dir,hit:hit,total:total,rate:rate,base:baseRate,edge:rate-baseRate});
+    });});
+    candidates.sort(function(a,b){return b.edge-a.edge||b.total-a.total;});
+    var best=candidates[0],vals=pick(rows,d,best.w,best.dir),vHit=0,vTotal=0,vBase=0,vStart=Math.max(best.w,rows.length-20);
+    for(var vi=vStart;vi<rows.length;vi++){
+      var vVals=pick(rows.slice(0,vi),d,best.w,best.dir);vTotal++;
+      if(vVals.indexOf(d.get(rows[vi].t))>=0)vHit++;
+      vBase+=A49.filter(function(n){return vVals.indexOf(d.get(n))>=0;}).length/49;
+    }
+    var vRate=vTotal?vHit/vTotal:0,vBaseRate=vTotal?vBase/vTotal:0,vEdge=vRate-vBaseRate;
+    var trusted=vTotal>=15&&vEdge>=0.05;
+    out[d.k]={label:d.label,get:d.get,values:vals,window:best.w,dir:best.dir,hit:vHit,total:vTotal,rate:vRate,base:vBaseRate,edge:vEdge,trusted:trusted};
+  });
+  return out;
+}
+function planOmissionModel(rows,kind){
+  var bins=[{a:0,b:0,l:'0期'},{a:1,b:2,l:'1-2期'},{a:3,b:5,l:'3-5期'},{a:6,b:9,l:'6-9期'},{a:10,b:999,l:'10期以上'}],r=bins.map(function(x){return Object.assign({sample:0,hit:0,rate:0,lift:1},x);});
+  function present(row,n){return kind==='te'?row.t===n:row.n.indexOf(n)>=0;}
+  for(var i=1;i<rows.length;i++)A49.forEach(function(n){
+    var om=0;for(var j=i-1;j>=0&&!present(rows[j],n);j--)om++;
+    var b=r.find(function(x){return om>=x.a&&om<=x.b;});b.sample++;if(present(rows[i],n))b.hit++;
+  });
+  var base=kind==='te'?1/49:6/49;r.forEach(function(x){x.rate=x.sample?x.hit/x.sample:0;x.lift=base?x.rate/base:1;});
+  return r;
+}
+function planCurrentOmission(rows,kind,n){
+  var om=0;for(var i=rows.length-1;i>=0;i--){var hit=kind==='te'?rows[i].t===n:rows[i].n.indexOf(n)>=0;if(hit)break;om++;}return om;
+}
+function planTeAllowed(n){
+  var p=UP,e=p.te_excl_attrs||{},q=p.te_pick_attrs||{},attr={大小:gsz,单双:gpar,合数:ghe,家野:gfam,五行:gwx,波色:gwv};
+  if((p.te_excl_nums||[]).indexOf(n)>=0||(p.te_excl_pool||[]).indexOf(n)>=0)return false;
+  if((p.te_pick_pool||[]).length&&p.te_pick_pool.indexOf(n)<0)return false;
+  if((p.te_excl_zods||[]).indexOf(gz(n))>=0||(p.te_pick_zods||[]).length&&p.te_pick_zods.indexOf(gz(n))<0)return false;
+  if((p.te_excl_tails||[]).indexOf(gtl(n))>=0||(p.te_pick_tails||[]).length&&p.te_pick_tails.indexOf(gtl(n))<0)return false;
+  if((p.te_excl_heads||[]).indexOf(ghd(n))>=0||(p.te_pick_heads||[]).length&&p.te_pick_heads.indexOf(ghd(n))<0)return false;
+  if((p.te_excl_wx_multi||[]).indexOf(gwx(n))>=0||(p.te_pick_wx_multi||[]).length&&p.te_pick_wx_multi.indexOf(gwx(n))<0)return false;
+  if((p.te_excl_wv_multi||[]).indexOf(gwv(n))>=0||(p.te_pick_wv_multi||[]).length&&p.te_pick_wv_multi.indexOf(gwv(n))<0)return false;
+  if((p.te_excl_diffs||[]).indexOf(gdf(n))>=0||(p.te_pick_diffs||[]).length&&p.te_pick_diffs.indexOf(gdf(n))<0)return false;
+  if((p.te_excl_hesums||[]).indexOf(ghesum(n))>=0||(p.te_pick_hesums||[]).length&&p.te_pick_hesums.indexOf(ghesum(n))<0)return false;
+  if(p.te_pick_app&&((p.te_pick_app==='已出')!==APP.includes(n)))return false;
+  if(p.te_excl_app&&APP.includes(n))return false;
+  if(Object.keys(q).some(function(k){return q[k]&&attr[k]&&attr[k](n)!==q[k];}))return false;
+  if(Object.keys(e).some(function(k){return e[k]&&attr[k]&&attr[k](n)===e[k];}))return false;
+  return true;
+}
+function planZ3Allowed(n){
+  var p=UP,e=p.zm3_excl_attrs||{},q=p.zm3_pick_attrs||{},attr={大小:gsz,单双:gpar,合数:ghe,家野:gfam,五行:gwx,波色:gwv};
+  if((p.zm3_excl_nums||[]).indexOf(n)>=0)return false;
+  if((p.zm3_pick_pool||[]).length&&p.zm3_pick_pool.indexOf(n)<0)return false;
+  if((p.zm3_excl_zods||[]).indexOf(gz(n))>=0||(p.zm3_pick_zods||[]).length&&p.zm3_pick_zods.indexOf(gz(n))<0)return false;
+  if((p.zm3_excl_tails||[]).indexOf(gtl(n))>=0||(p.zm3_pick_tails||[]).length&&p.zm3_pick_tails.indexOf(gtl(n))<0)return false;
+  if((p.zm3_excl_wx_multi||[]).indexOf(gwx(n))>=0)return false;
+  if(p.zm3_pick_app&&((p.zm3_pick_app==='已出')!==ZM_APP.includes(n)))return false;
+  if(p.zm3_excl_app&&ZM_APP.includes(n))return false;
+  if(Object.keys(q).some(function(k){return q[k]&&attr[k]&&attr[k](n)!==q[k];}))return false;
+  if(Object.keys(e).some(function(k){return e[k]&&attr[k]&&attr[k](n)===e[k];}))return false;
+  return true;
+}
+function planReasonScores(rows,kind,mode,attrs){
+  var longW=Math.min(mode.window,rows.length),shortW=Math.min(15,rows.length),omModel=planOmissionModel(rows,kind),targetBase=kind==='te'?1/49:6/49;
+  function counts(w){var c=Array(50).fill(0);rows.slice(-w).forEach(function(r){(kind==='te'?[r.t]:r.n).forEach(function(n){c[n]++;});});return c;}
+  var cs=counts(shortW),cl=counts(longW),allowed=kind==='te'?planTeAllowed:planZ3Allowed;
+  return A49.map(function(n){
+    var expS=shortW*targetBase,expL=longW*targetBase,dir=mode.dir==='cold'?-1:1;
+    var zS=(cs[n]-expS)/Math.sqrt(Math.max(.25,expS*(1-targetBase))),zL=(cl[n]-expL)/Math.sqrt(Math.max(.25,expL*(1-targetBase)));
+    var om=planCurrentOmission(rows,kind,n),ob=omModel.find(function(x){return om>=x.a&&om<=x.b;})||omModel[omModel.length-1];
+    var s=dir*(Math.max(-2,Math.min(2,zS))*.65+Math.max(-2,Math.min(2,zL))*.35)+Math.max(-1,Math.min(1,Math.log(Math.max(.35,ob.lift))));
+    var why=[(mode.dir==='hot'?'热度':'冷缺')+'：近'+shortW+'期'+cs[n]+'次/近'+longW+'期'+cl[n]+'次','遗漏'+om+'期，同档提升'+ob.lift.toFixed(2)];
+    if(kind==='te'&&attrs)Object.keys(attrs).forEach(function(k){var a=attrs[k];if(a.trusted&&a.values.indexOf(a.get(n))>=0){s+=.45;why.push(a.label+'验证通过');}});
+    return {n:n,s:s,why:why,allowed:allowed(n),om:om};
+  }).sort(function(a,b){return b.s-a.s||a.n-b.n;});
+}
+function planPickZ3(scores,count){
+  var out=[],pool=scores.filter(function(x){return x.allowed;});
+  pool.forEach(function(x){if(out.length>=count)return;var zc=out.filter(function(y){return gz(y.n)===gz(x.n);}).length,tc=out.filter(function(y){return gtl(y.n)===gtl(x.n);}).length;if(zc<2&&tc<2)out.push(x);});
+  pool.forEach(function(x){if(out.length<count&&!out.some(function(y){return y.n===x.n;}))out.push(x);});return out;
+}
+function planReasonLx(rows,size,mode){
+  var force=Array.from(new Set(UP.lx_force_zods||[])),excl=Array.from(new Set((UP.lx_excl_zods||[]).concat(UP.lx_ban_zods||[]))),no=UP.lx_no_together||[],grp=UP.lx_grp_limits||[];
+  var counts={};ZODS.forEach(function(z){counts[z]=0;});rows.slice(-mode.window).forEach(function(r){new Set(r.n.concat([r.t]).map(gz)).forEach(function(z){counts[z]++;});});
+  var current=new Set(rows[rows.length-1].n.concat([rows[rows.length-1].t]).map(gz));
+  var ranked=ZODS.map(function(z){var om=0;for(var i=rows.length-1;i>=0&&!new Set(rows[i].n.concat([rows[i].t]).map(gz)).has(z);i--)om++;var s=(mode.dir==='hot'?counts[z]:mode.window-counts[z])+Math.min(om,4)*.2;return{z:z,s:s,c:counts[z],om:om};}).sort(function(a,b){return b.s-a.s||ZODS.indexOf(a.z)-ZODS.indexOf(b.z);});
+  function valid(zs){
+    if(force.some(function(z){return zs.indexOf(z)<0;})||zs.some(function(z){return excl.indexOf(z)>=0;}))return false;
+    if(no.some(function(pair){return pair.filter(function(z){return zs.indexOf(z)>=0;}).length>1;}))return false;
+    if(grp.some(function(g){return zs.filter(function(z){return g.zods.indexOf(z)>=0;}).length>g.max;}))return false;
+    if(UP.lx_all_home&&zs.some(function(z){return WILD.includes(z);}))return false;
+    if(UP.lx_all_wild&&zs.some(function(z){return !WILD.includes(z);}))return false;
+    if(UP.lx_excl_all_home&&zs.every(function(z){return !WILD.includes(z);}))return false;
+    if(UP.lx_excl_all_wild&&zs.every(function(z){return WILD.includes(z);}))return false;
+    if(UP.lx_wild_ratio){var p=UP.lx_wild_ratio.split(':').map(Number),wc=zs.filter(function(z){return WILD.includes(z);}).length;if(wc!==p[0]||zs.length-wc!==p[1])return false;}
+    return true;
+  }
+  var combos=combNK(ranked.map(function(x){return x.z;}),size).filter(valid).map(function(zs){var score=zs.reduce(function(a,z){return a+ranked.find(function(x){return x.z===z;}).s;},0);var absent=zs.filter(function(z){return !current.has(z);}).length;score+=(absent>=1&&absent<=2)?1:0;return{zs:zs,score:score,absent:absent};}).sort(function(a,b){return b.score-a.score;});
+  return {best:combos[0]||null,alts:combos.slice(1,3),ranked:ranked,validCount:combos.length};
+}
+function renderReasonedPlan(rows,o,modes){
+  var prefKey=JSON.stringify({te:[UP.te_excl_nums,UP.te_excl_pool,UP.te_pick_pool,UP.te_excl_zods,UP.te_pick_zods,UP.te_excl_tails,UP.te_pick_tails,UP.te_excl_heads,UP.te_pick_heads,UP.te_excl_wx_multi,UP.te_pick_wx_multi,UP.te_excl_wv_multi,UP.te_pick_wv_multi,UP.te_excl_diffs,UP.te_pick_diffs,UP.te_excl_hesums,UP.te_pick_hesums,UP.te_pick_attrs,UP.te_excl_attrs,UP.te_pick_app,UP.te_excl_app],z3:[UP.zm3_excl_nums,UP.zm3_pick_pool,UP.zm3_excl_zods,UP.zm3_pick_zods,UP.zm3_excl_tails,UP.zm3_pick_tails,UP.zm3_excl_wx_multi,UP.zm3_pick_attrs,UP.zm3_excl_attrs,UP.zm3_pick_app,UP.zm3_excl_app,UP.zm3_no_together],lx:[UP.lx_force_zods,UP.lx_excl_zods,UP.lx_ban_zods,UP.lx_no_together,UP.lx_grp_limits,UP.lx_all_home,UP.lx_all_wild,UP.lx_excl_all_home,UP.lx_excl_all_wild,UP.lx_wild_ratio]});
+  var viewKey=CUR_LOT+'|'+rows.length+'|'+(rows.length?rows[rows.length-1].p:0)+'|'+NEXT+'|'+o.window+'|'+o.lxSize+'|'+JSON.stringify(modes)+'|'+prefKey;
+  if(renderReasonedPlan._cache&&renderReasonedPlan._cache.key===viewKey)return renderReasonedPlan._cache.html;
+  var attrs=planReasonAttr(rows),teScores=planReasonScores(rows,'te',modes.te,attrs),te=teScores.filter(function(x){return x.allowed;}).slice(0,6);
+  var teHot=planReasonScores(rows,'te',{window:modes.te.window,dir:'hot'},attrs).filter(function(x){return x.allowed;}).slice(0,6);
+  var teCold=planReasonScores(rows,'te',{window:modes.te.window,dir:'cold'},attrs).filter(function(x){return x.allowed;}).slice(0,6);
+  var zScores=planReasonScores(rows,'zm',modes.zm,null),zPick=planPickZ3(zScores,8),zNums=zPick.map(function(x){return x.n;}),no=UP.zm3_no_together||[];
+  var triples=combNK(zNums,3).filter(function(g){return !no.some(function(pair){return pair.filter(function(n){return g.indexOf(n)>=0;}).length>1;});});
+  var lx=planReasonLx(rows,o.lxSize,modes.lx),prefix=LOTTERIES[CUR_LOT].name+' 第'+NEXT+'期 ',nn=function(n){return String(n).padStart(2,'0');};
+  var hardTe=49-teScores.filter(function(x){return x.allowed;}).length,hardZ=49-zScores.filter(function(x){return x.allowed;}).length;
+  var h='<div class="card" style="border:3px solid #5b2c6f;background:linear-gradient(135deg,#fbf4ff,#eef7ff)">'+
+    '<div class="sec-title" style="color:#5b2c6f;border-bottom-color:#5b2c6f">🧠 GPT式多步推理方案（本机证据引擎）</div>'+
+    '<p style="font-size:10px;color:#555">执行顺序：①校验开奖记录 → ②只保留样本足够且高于理论基线的属性 → ③比较追热/取冷窗口 → ④严格执行当前玩法的必选与排除 → ⑤检查组合结构。它不会把低样本巧合包装成规律，也不会偷偷放宽你的限制。</p>'+
+    '<div style="padding:6px;background:#fff;border-radius:6px"><b>本次限制检查：</b>特码硬排除 '+hardTe+' 码，剩余 '+(49-hardTe)+' 码；三中三硬排除 '+hardZ+' 码，剩余 '+(49-hardZ)+' 码；连肖有效组合 '+lx.validCount+' 组。</div>';
+  h+='<h3>第一步｜特码属性先缩小范围</h3><div style="overflow-x:auto"><table><tr><th>属性</th><th>本期方向</th><th>严格程度</th><th>留出验证</th><th>相对基线</th></tr>'+
+    Object.keys(attrs).map(function(k){var a=attrs[k];return '<tr><td>'+a.label+'</td><td>'+(a.dir==='hot'?'追热':'防热取冷')+'：'+a.values.join('、')+'</td><td>'+(a.trusted?'<b style="color:#1e8449">进入主推理</b>':'<span style="color:#888">只观察</span>')+'</td><td>'+a.hit+'/'+a.total+'（'+(100*a.rate).toFixed(1)+'%）</td><td>'+((a.edge>=0?'+':'')+(100*a.edge).toFixed(1))+'个百分点</td></tr>';}).join('')+'</table></div>';
+  h+='<h3>第二步｜特码候选与两种防守</h3>'+
+    (te.length?'<div id="reason-te" style="font-size:18px;font-weight:bold;color:#c0392b">'+prefix+'特码【'+te.map(function(x){return nn(x.n);}).join('、')+'】</div>':'<div style="color:#c0392b">当前硬限制下不足1码，请检查互相冲突的必选/排除。</div>')+
+    '<p><b>追热备选：</b>'+teHot.map(function(x){return nn(x.n);}).join('、')+'　<b>冷号防守：</b>'+teCold.map(function(x){return nn(x.n);}).join('、')+'</p>'+
+    '<div style="overflow-x:auto"><table><tr><th>号码</th><th>生肖</th><th>属性</th><th>推理分</th><th>主要依据</th></tr>'+te.slice(0,6).map(function(x){return '<tr><td>'+nn(x.n)+'</td><td>'+EMJ[gz(x.n)]+gz(x.n)+'</td><td>'+gsz(x.n)+' / '+gpar(x.n)+' / '+ghe(x.n)+' / '+gfam(x.n)+' / '+gwv(x.n)+' / '+gwx(x.n)+' / 尾'+gtl(x.n)+'</td><td>'+x.s.toFixed(2)+'</td><td>'+x.why.join('；')+'</td></tr>';}).join('')+'</table></div>'+
+    (te.length?'<button class="btn btn-green" onclick="UP.te_pick_pool=['+te.map(function(x){return x.n;}).join(',')+'];saveData();render();showClickFeedback(\'已把推理特码写入候选池\')">应用为特码候选池</button> ':'')+
+    (te.length?'<button class="btn btn-blue" onclick="copyText(\'reason-te\',\'特码\')">复制特码方案</button>':'');
+  h+='<h3>第三步｜三中三按8码复式思考</h3>'+
+    (zNums.length>=3?'<div id="reason-z3" style="font-size:16px;font-weight:bold;color:#1e8449">'+prefix+'三中三8码池【'+zNums.map(nn).join('、')+'】；有效三数组 '+triples.length+' 组</div>':'<div style="color:#c0392b">当前严格限制后不足3码，无法组成三中三。</div>')+
+    '<p>选号时对同生肖和同尾适度分散，每个生肖、每个尾数先控制在2码内；若严格限制导致不足8码，只从仍符合限制的号码补足，不会把已排除号码放回来。候选依据：'+zPick.map(function(x){return nn(x.n)+'('+gz(x.n)+'，'+x.why[0]+')';}).join('；')+'</p>'+
+    (zNums.length?'<button class="btn btn-green" onclick="UP.zm3_pick_pool=['+zNums.join(',')+'];saveData();render();showClickFeedback(\'已把推理8码写入三中三候选池\')">应用8码候选池</button> ':'')+
+    (zNums.length>=3?'<button class="btn btn-blue" onclick="copyText(\'reason-z3\',\'三中三\')">复制三中三</button>':'');
+  h+='<h3>第四步｜连肖先遵守限制，再比较冷热与上期缺席肖</h3>';
+  if(lx.best){
+    h+='<div id="reason-lx" style="font-size:18px;font-weight:bold;color:#8e44ad">'+prefix+o.lxSize+'连肖【'+lx.best.zs.join('、')+'】</div><p>其中上期7个号码未出现生肖 '+lx.best.absent+' 个；当前模式为'+(modes.lx.dir==='hot'?'追热':'防热取冷')+'近'+modes.lx.window+'期。'+lx.best.zs.map(function(z){var q=lx.ranked.find(function(x){return x.z===z;});return EMJ[z]+z+'(近窗'+q.c+'期、遗漏'+q.om+'期)';}).join('；')+'</p>'+
+      '<button class="btn btn-green" onclick="UP.lx_force_zods='+JSON.stringify(lx.best.zs).replace(/"/g,"'")+';saveData();render();showClickFeedback(\'已应用推理连肖\')">应用为连肖必含</button> <button class="btn btn-blue" onclick="copyText(\'reason-lx\',\'连肖\')">复制连肖</button>';
+  }else h+='<div style="color:#c0392b">现有必含、排除、家野比例、分组或不得同选条件互相冲突，没有合规连肖；系统没有擅自放宽。</div>';
+  h+='<p style="font-size:9px;color:#666;margin-top:8px">“GPT式”表示按问题拆解、证据筛选、约束检查和多方案比较来给结论；网页没有调用外部GPT接口，也不会虚构实时判断。</p></div>';
+  renderReasonedPlan._cache={key:viewKey,html:h};return h;
+}
 function planOmissionAdvice(rows,get,categories,label){
   var current={},out=[];categories.forEach(function(v){current[v]=0;});
   for(var c=0;c<categories.length;c++){var v=categories[c],om=0;for(var i=rows.length-1;i>=0;i--){if(get(rows[i])===v)break;om++;}current[v]=om;}
@@ -20111,6 +20267,8 @@ function planOmissionAdvice(rows,get,categories,label){
   return out;
 }
 function planBacktest(rows,options){
+  var cacheKey=CUR_LOT+'|'+rows.length+'|'+(rows.length?rows[0].p:0)+'|'+(rows.length?rows[rows.length-1].p:0)+'|'+options.window+'|'+options.lxSize+'|'+options.includeTe;
+  if(planBacktest._cache&&planBacktest._cache.key===cacheKey)return planBacktest._cache.value;
   var result={total:0,te:0,triples:0,lx:0,attr:{size:0,parity:0,sum:0,family:0,wave:0,element:0,app:0}};
   for(var i=Math.max(options.window,rows.length-30);i<rows.length;i++){
     var history=rows.slice(0,i),modes=planChooseModes(history,options),p=planBuild(history,options,modes),target=rows[i],zs=new Set((options.includeTe?target.n.concat([target.t]):target.n).map(gz));
@@ -20120,7 +20278,7 @@ function planBacktest(rows,options){
     if(p.triples.some(function(g){return g.every(function(n){return target.n.indexOf(n)>=0;});}))result.triples++;
     if(p.lx.every(function(z){return zs.has(z);}))result.lx++;
   }
-  return result;
+  planBacktest._cache={key:cacheKey,value:result};return result;
 }
 function planSet(key,value){
   if(key==='window'&&[30,60,100].indexOf(Number(value))>=0)PLAN_OPTIONS.window=Number(value);
@@ -20141,7 +20299,7 @@ function renderPlan(){
     '<label>统计期数 <select onchange="planSet(\'window\',this.value)">'+opts([30,60,100],o.window)+'</select></label>　'+
     '<label>连肖个数 <select onchange="planSet(\'lxSize\',this.value)">'+opts([2,3,4,5],o.lxSize)+'</select></label>　'+
     '<label><input type="checkbox" '+(o.includeTe?'checked':'')+' onchange="planSet(\'includeTe\',this.checked)">连肖含特码</label>'+
-    '<p><b>三中三：</b>每注是3个号码，开奖的6个正码中同时出现这3个号码才命中；生肖只用于限定号码范围，可选1—12肖，不存在“最多3肖”的限制。<br><b>连肖：</b>把6个正码和1个特码共7个号码映射为生肖并去重；二连肖至五连肖均按所选生肖是否全部出现在该去重集合中判断。<br><b>特码：</b>只按第7个特码判断，可先用属性缩小范围，再从符合属性的号码中选择。</p><p>此页独立按出现次数排序，不套用其他页面的排除、必选或权重设置。同频号码按号码升序，生肖按映射表顺序排列。历史热度和遗漏仅是描述统计，不会提高独立开奖的必然命中率。</p></div>';
+    '<p><b>三中三：</b>每注是3个号码，开奖的6个正码中同时出现这3个号码才命中；生肖只用于限定号码范围，可选1—12肖，不存在“最多3肖”的限制。<br><b>连肖：</b>把6个正码和1个特码共7个号码映射为生肖并去重；二连肖至五连肖均按所选生肖是否全部出现在该去重集合中判断。<br><b>特码：</b>只按第7个特码判断，可先用属性缩小范围，再从符合属性的号码中选择。</p><p>上方冷热基线独立比较窗口；下方 GPT 式方案会读取当前玩法自己的必选、排除和结构限制，但不会把特码限制串到三中三或连肖。历史热度和遗漏只是证据之一，不会被当成必然命中。</p></div>';
   h+='<div class="card">数据检查：有效 '+rows.length+' 期；无效记录 '+clean.invalid+' 条；合并重复 '+clean.duplicates+' 条；期号冲突排除 '+clean.conflicts+' 条。';
   if(rows.length<10)return h+'至少需要10期有效记录才能生成方案。</div>';
   var modes=planChooseModes(rows,o),p=planBuild(rows,o,modes),last=rows[rows.length-1],bt=planBacktest(rows,o);
@@ -20149,19 +20307,12 @@ function renderPlan(){
   h+=renderValidatedGuidance();
   function modeLabel(m){return (m.dir==='hot'?'追热':'防热取冷')+'·近'+m.window+'期';}
   h+='<div class="card" style="background:#eef8ee"><b>本期经逐期比较选用：</b> 特码 '+modeLabel(modes.te)+'；三中三 '+modeLabel(modes.zm)+'；连肖 '+modeLabel(modes.lx)+'。<br><span style="font-size:10px;color:#555">系统只在近15期、近30期和所选长窗口的追热/取冷方案之间比较；每期开奖后重新选择，避免把某一固定冷热规则套在所有彩种。</span></div>';
-  var _ap=planAttrPick(rows,p.te),_al={size:'大小',parity:'单双',sum:'合数单双',family:'家野',wave:'波色',element:'五行',app:'近6期已出/未出'};
-  h+='<div class="card" style="border:2px solid #2980b9"><h3>特码属性缩小范围（即使6码未中也可单独参考）</h3>'+Object.keys(_al).map(function(k){return '<div><b>'+_al[k]+'：</b>'+_ap[k].join('、')+'；逐期回测 '+bt.attr[k]+'/'+bt.total+'（'+(bt.total?(100*bt.attr[k]/bt.total).toFixed(1):'0.0')+'%）</div>';}).join('')+'<p style="font-size:10px;color:#555">属性由本期6个特码候选的多数结构产生；五行保留前2类。回测每一期只使用该期之前的数据。</p></div>';
+  h+=renderReasonedPlan(rows,o,modes);
   var _coldAdvice=[].concat(planOmissionAdvice(rows,function(r){return gz(r.t);},ZODS,'特肖')).concat(planOmissionAdvice(rows,function(r){return String(gtl(r.t));},['0','1','2','3','4','5','6','7','8','9'],'尾')).concat(planOmissionAdvice(rows,function(r){return gwx(r.t);},['金','木','水','火','土'],'五行'));
   h+='<div class="card"><h3>长期不出：追还是放弃</h3><p>'+_coldAdvice.join('<br>')+'</p><p style="font-size:10px;color:#555">只有“同等遗漏后的实际命中率 ÷ 常态命中率”≥1.20且样本足够才标为小幅追冷；≤0.80继续防冷；其余保持中性，避免把长期未出误当成必出。</p></div>';
-  function nn(n){return String(n).padStart(2,'0');}
-  function card(title,id,category,text,evidence){return '<div class="card"><h3>'+title+'</h3><pre id="'+id+'" style="white-space:pre-wrap;font-size:16px;line-height:1.8">'+text+'</pre><p>'+evidence+'</p><button class="btn btn-green" onclick="copyText(\''+id+'\',\''+category+'\')">复制方案</button></div>';}
-  var prefix=LOTTERIES[CUR_LOT].name+' 第'+NEXT+'期 ';
-  h+=card('特码 · 6码候选','plan-te','特码',prefix+'特码：'+p.te.map(nn).join('、'),modeLabel(modes.te)+'；'+p.te.map(function(n){return nn(n)+'：'+p.teCounts[n]+'次';}).join('；'));
-  h+=card('三中三 · 6码复式（20组）','plan-three','三中三',p.triples.map(function(g){return prefix+'三中三【'+g.map(nn).join('-')+'】';}).join('\n'),modeLabel(modes.zm)+'选出6码并生成C(6,3)=20组；当期6个正码中包含候选池任意3码，就至少有一组三中三命中。生肖只限定候选范围，不限制候选生肖数量。候选频次：'+p.pool6.map(function(n){return nn(n)+'：'+p.normalCounts[n]+'次';}).join('；'));
-  h+=card(o.lxSize+'连肖 · 1组','plan-lx','连肖',prefix+o.lxSize+'连肖【'+p.lx.join('、')+'】',modeLabel(modes.lx)+'；'+p.lx.map(function(z){return z+'：'+p.zcounts[z]+'期';}).join('；')+'。当期7个号码先映射生肖再去重；所选'+o.lxSize+'肖全部出现才算命中。'+(o.includeTe?'当前按6个正码+特码统计':'当前仅计正码')+'。');
   function rate(n){return n+'/'+bt.total+'（'+(100*n/bt.total).toFixed(1)+'%）';}
-  h+='<div class="card"><h3>逐期回测 · 最近最多30个目标期</h3>';
-  if(bt.total)h+='<p>每个目标期只用之前数据重新选择窗口与冷热方向；当前方案未参与历史打分。</p><p>特码6码任一命中：'+rate(bt.te)+'<br>三中三6码复式至少1组全中：'+rate(bt.triples)+'<br>'+o.lxSize+'连肖整组全中：'+rate(bt.lx)+'</p><p>这是逐期滚动规则的历史检验，不是收益率，也不能保证未来表现。公平独立开奖下，特码6码的理论覆盖率为6/49≈12.24%。</p>';
+  h+='<div class="card"><h3>冷热基线逐期回测 · 最近最多30个目标期</h3>';
+  if(bt.total)h+='<p>这是用于选择“追热/取冷窗口”的基线回测，不冒充上方综合推理方案的历史成绩；每个目标期只使用此前记录。</p><p>特码6码任一命中：'+rate(bt.te)+'<br>三中三6码复式至少1组全中：'+rate(bt.triples)+'<br>'+o.lxSize+'连肖整组全中：'+rate(bt.lx)+'</p><p>这是逐期滚动规则的历史检验，不是收益率，也不能保证未来表现。公平独立开奖下，特码6码的理论覆盖率为6/49≈12.24%。</p>';
   else h+='<p>回测需要至少'+(o.window+1)+'期有效记录，当前不足；不显示虚构命中率。</p>';
   return h+'</div>';
 }
@@ -20204,7 +20355,7 @@ function render(){
   }
   document.getElementById('today-date').innerHTML=todayHtml;
   document.getElementById('lastPeriod').textContent=LAST.p;
-  document.getElementById('appTitle').innerHTML=LOTTERIES[CUR_LOT].icon+' '+LOTTERIES[CUR_LOT].name+'分析工具 v15 · 预测第<span id="nextPeriod">'+NEXT+'</span>期';
+  document.getElementById('appTitle').innerHTML=LOTTERIES[CUR_LOT].icon+' '+LOTTERIES[CUR_LOT].name+'分析工具 v10.1004.02 · 预测第<span id="nextPeriod">'+NEXT+'</span>期';
   document.getElementById('lastPeriod').textContent=LAST.p;
   document.getElementById('nextPeriod').textContent=NEXT;
   document.getElementById('hdr-last').textContent=LAST.p;
@@ -20670,4 +20821,4 @@ if(_authed){
 </script>
 </body>
 </html>
-<!-- GitHub Pages deploy trigger: v10.1004.01 -->
+<!-- GitHub Pages deploy trigger: v10.1004.02 -->
