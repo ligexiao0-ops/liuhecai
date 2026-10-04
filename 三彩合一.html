@@ -234,7 +234,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
   <h1 id="appTitle">🎱 分析工具 v15 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.0930.05</span> · 云端动态数据 · 结论驱动</p>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.1004.01</span> · 云端动态数据 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -345,7 +345,8 @@ let CUR_LOT='xa';
 
 // ===== 初始数据：新奥彩 =====
 const INIT_DR_XA=[
-  {p:154,d:"05/24",n:[38,26,22,14,42,31],t:22},
+  // 第154期原始内置记录的正码22与特码22重复，无法构成7个唯一号码；
+  // 在核对到可靠来源前不参与统计，避免污染冷热、遗漏和回测。
   {p:155,d:"05/25",n:[46,32,17,3,9,28],t:41},
   {p:156,d:"05/26",n:[23,7,44,36,18,49],t:14},
   {p:157,d:"05/27",n:[11,29,5,40,33,16],t:30},
@@ -9127,7 +9128,7 @@ function renderTeAttrVsNotNums(){
      '<br><span style="color:#888">注意：未出号码属性集中≠必开，主要用于排除过度集中属性，需结合特码评分与三大公式交集。</span></div>';
   h+='</div>';return h;
 }
-// ===== 【v10.0802.04】绝顶规律：按彩种独立统计"类别未出数量→下期特码命中率" =====
+// ===== 【v10.0802.04】实验性规律（不进入主评分）：按彩种独立统计"类别未出数量→下期特码命中率" =====
 // 对每个属性类别(尾数/生肖/五行/波色)，统计历史上"该类别未出数量=N"时下期特码属于该类别的命中率，
 // 自动发现"未出多/少→大概率开出/不开出"的规律。每个彩种独立计算(CUR_LOT)。
 function calcAttrOmitHit(){
@@ -12541,8 +12542,10 @@ function renderLX(){
       if(grpLimits.some(function(g){
         return combo.filter(function(c){return g.zods.indexOf(c.z)>=0;}).length>g.max;
       }))return false;
-      // 家野比
-      if(n>=4){
+      // 家野结构只在用户没有明确指定家野条件时作为默认约束。
+      // 用户选择“全家/全野/排除全家/排除全野/指定比例”时，显式条件优先。
+      var hasExplicitFamilyRule=!!(UP.lx_all_home||UP.lx_excl_all_home||UP.lx_all_wild||UP.lx_excl_all_wild||UP.lx_wild_ratio);
+      if(n>=4&&!hasExplicitFamilyRule){
         var wc=combo.filter(x=>x.wild).length,hc=combo.length-wc;
         if(wc>=n&&hc===0)return false;
         if(hc>=n&&wc===0)return false;
@@ -13966,37 +13969,28 @@ function renderLX(){
 }
 
 // 连肖回测：检查AI推荐生肖对近期开奖的命中率
-function renderLxBacktest(aiZSc,DR,LAST,lotLb){
-  if(DR.length<4)return '';
-  var top5=aiZSc.slice(0,5).map(function(x){return x.z;});
-  var top4=aiZSc.slice(0,4).map(function(x){return x.z;});
-  var top3=aiZSc.slice(0,3).map(function(x){return x.z;});
-  var h='<div class="card" style="border:2px dashed #8B008B;background:#fdf5ff">'+
-    '<b style="font-size:12px;color:#8B008B">🔬 连肖回测（AI TOP生肖 × 近期开奖，验证评分算法）</b>'+
-    '<div style="font-size:10px;color:#888;margin:4px 0">检查AI推荐的TOP5/4/3生肖，在各期正码+特码中的命中率</div>'+
-    '<table><tr><th>期</th><th>开奖生肖</th><th>TOP5命中</th><th>中/5</th><th>率</th><th>TOP3命中</th><th>中/3</th></tr>';
-  var t5Hits=0,t3Hits=0,t5Max=0,t3Max=0;
-  var testDraws=DR.slice(-Math.min(6,DR.length-1));
-  for(var di=testDraws.length-1;di>=0;di--){
-    var td=testDraws[di];
-    if(td.p===LAST.p)continue;
-    var drawZods=Array.from(new Set(td.n.concat(td.t).map(gz)));
-    var h5=top5.filter(function(z){return drawZods.indexOf(z)>=0;});
-    var h3=top3.filter(function(z){return drawZods.indexOf(z)>=0;});
-    t5Hits+=h5.length;t3Hits+=h3.length;t5Max+=5;t3Max+=3;
-    h+='<tr style="background:'+(h5.length>=3?'#e8f5e9':h5.length>=1?'#fff8e1':'#fff')+'">'+
-      '<td>#'+td.p+'</td>'+
-      '<td style="font-size:9px">'+drawZods.map(function(z){return EMJ[z]+z;}).join('')+'</td>'+
-      '<td>'+top5.map(function(z){return '<span style="display:inline-block;margin:1px;padding:1px 3px;border-radius:3px;font-size:9px;'+(h5.indexOf(z)>=0?'background:#27ae60;color:#fff':'background:#eee;color:#888')+'">'+EMJ[z]+z+'</span>';}).join('')+'</td>'+
-      '<td style="color:'+(h5.length>=3?'#27ae60':'#c0392b')+'">'+h5.length+'/5</td>'+
-      '<td style="color:'+(h5.length>=3?'#27ae60':'#c0392b')+'">'+Math.round(h5.length/5*100)+'%</td>'+
-      '<td>'+top3.map(function(z){return '<span style="display:inline-block;margin:1px;padding:1px 3px;border-radius:3px;font-size:9px;'+(h3.indexOf(z)>=0?'background:#27ae60;color:#fff':'background:#eee;color:#888')+'">'+EMJ[z]+z+'</span>';}).join('')+'</td>'+
-      '<td style="color:'+(h3.length>=2?'#27ae60':'#c0392b')+'">'+h3.length+'/3</td></tr>';
+function _btChoose(n,k){if(k<0||n<k)return 0;if(k===0||n===k)return 1;k=Math.min(k,n-k);var r=1;for(var i=1;i<=k;i++)r=r*(n-k+i)/i;return r;}
+function _lxRandomBaseline(zods){
+  if(!zods||!zods.length)return 0;
+  var total=_btChoose(49,7),sum=0,m=zods.length;
+  for(var mask=0;mask<(1<<m);mask++){
+    var removed=0,bits=0;
+    for(var i=0;i<m;i++)if(mask&(1<<i)){removed+=(ZM[zods[i]]||[]).length;bits++;}
+    sum+=(bits%2?-1:1)*_btChoose(49-removed,7);
   }
-  var o5=Math.round(t5Hits/Math.max(t5Max,1)*100),o3=Math.round(t3Hits/Math.max(t3Max,1)*100);
-  h+='<tr style="background:#1a1a2e;color:#fff"><td colspan="2"><b>总命中率</b></td><td colspan="2"><b>'+t5Hits+'/'+t5Max+'='+o5+'%</b></td><td colspan="2"><b>'+t3Hits+'/'+t3Max+'='+o3+'%</b></td></tr>'+
-    '</table><div style="font-size:9px;color:#888;margin-top:4px">💡 绿色=命中 | 连肖命中率越高组合评分越准</div></div>';
-
+  return total?sum/total:0;
+}
+function renderLxBacktest(aiZSc,DR,LAST,lotLb){
+  var rows=(UP.lx5_history||[]).filter(function(r){return r&&Array.isArray(r.main)&&r.main.length>0&&Array.isArray(r.actualZods);}).slice(-30);
+  var h='<div class="card" style="border:2px dashed #8B008B;background:#fdf5ff">'+
+    '<b style="font-size:12px;color:#8B008B">🔬 五连肖严格逐期回测</b>'+
+    '<div style="font-size:10px;color:#555;margin:4px 0">每个目标期只使用该期开奖前的数据重新生成主选；不再把今天的推荐套到过去开奖记录。</div>';
+  if(!rows.length)return h+'<div class="concl-warn">暂无严格回测样本。点击下方按钮按当前算法回放最近历史期。</div><button class="btn btn-blue" onclick="backfillRecHistory(30,function(r){showClickFeedback(r.ok?\'✅ 严格回测完成\':r.msg);render();})">回测最近30期</button></div>';
+  var full=0,hitSum=0,baseSum=0;
+  rows.forEach(function(r){hitSum+=r.mainCnt||0;if((r.mainCnt||0)>=r.main.length)full++;baseSum+=_lxRandomBaseline(r.main);});
+  var fullRate=full/rows.length,base=baseSum/rows.length;
+  h+='<table><tr><th>样本</th><th>整组全中</th><th>平均命中生肖</th><th>随机基线</th><th>提升倍数</th></tr><tr><td>'+rows.length+'期</td><td><b>'+full+'/'+rows.length+'（'+(fullRate*100).toFixed(1)+'%）</b></td><td>'+(hitSum/rows.length).toFixed(2)+'/'+rows[0].main.length+'</td><td>'+(base*100).toFixed(2)+'%</td><td>'+(base?fullRate/base:0).toFixed(2)+'</td></tr></table>'+
+    '<div style="font-size:9px;color:#666;margin-top:4px">随机基线按每期实际所选生肖对应4码/5码精确计算；样本少于30期仅作实验参考，少于10期不进入调权。</div></div>';
   // ===== 【v10.0802.03重写】绝顶规律验证：按具体属性(尾数/生肖/五行/波色)逐个统计未出数量→特码命中率 =====
   (function(){
     // 收集历史数据：每期开奖前近6期未出中各属性有多少个号码，以及下期特码是否命中该属性
@@ -14065,7 +14059,7 @@ function renderLxBacktest(aiZSc,DR,LAST,lotLb){
 
     // 渲染（未出分类数量→命中率表已移至42码统计Tab，见 renderAttrOmitHit）
     h+='<div class="card" style="border:2px solid #8B008B;background:#fdf5ff;margin-top:10px">'+
-       '<div class="sec-title" style="color:#8B008B;border-bottom-color:#8B008B">🧪 绝顶规律：九肖内外 / 连肖位置映射（未出分类表已移至42码统计Tab，按彩种独立统计）</div>';
+       '<div class="sec-title" style="color:#8B008B;border-bottom-color:#8B008B">🧪 实验性规律（不进入主评分）：九肖内外 / 连肖位置映射（未出分类表已移至42码统计Tab，按彩种独立统计）</div>';
 
     // 九肖内外 + 第1正码排除
     h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">'+
@@ -14094,9 +14088,10 @@ function renderLxBacktest(aiZSc,DR,LAST,lotLb){
 
     h+='</div>';
   })();
-
   return h;
 }
+
+
 
 // ===== Tab: 正特码冷热遗漏统计（数据核对用）=====
 function renderHotCold(){
@@ -17883,53 +17878,16 @@ function renderZ3(){
 }
 // 三中三回测：检查TOP推荐组合对近期开奖的命中率
 function renderZ3Backtest(top6,LAST,D6,lotLb,ZM2){
-  if(D6.length<3)return '';
+  var rows=(UP.z3l_history||[]).filter(function(r){return r&&Array.isArray(r.actualN)&&r.actualN.length===6&&Array.isArray(r.top6)&&r.top6.length>=3;}).slice(-30);
   var h='<div class="card" style="border:2px solid #e67e22;background:#fff8f0">'+
-    '<div class="sec-title" style="color:#e67e22;border-bottom-color:#e67e22">🔬 三中三回测（TOP6推荐码 × 近期开奖，验证评分算法）</div>'+
-    '<div style="font-size:10px;color:#888;margin-bottom:4px">取TOP6推荐码，检查在各期正码+特码中的命中率。用于调整评分权重。</div>'+
-    '<table><tr><th>期</th><th>开奖</th><th>TOP6推荐命中</th><th>命中数</th><th>命中率</th></tr>';
-  var totalHits=0,totalChecks=0;
-  var testDraws=DR.slice(-Math.min(6,DR.length-1));
-  for(var di=testDraws.length-1;di>=0;di--){
-    var testD=testDraws[di];
-    if(testD.p===LAST.p)continue;
-    var drawNums=testD.n.concat(testD.t);
-    var hitNums=top6.filter(function(n){return drawNums.indexOf(n)>=0;});
-    var hitCount=hitNums.length;
-    totalHits+=hitCount;totalChecks+=6;
-    var hitRate=Math.round(hitCount/6*100);
-    h+='<tr style="background:'+(hitCount>=3?'#e8f5e9':hitCount>=1?'#fff8e1':'#fff')+'">'+
-      '<td>#'+testD.p+'<br><span style="font-size:8px;color:#888">'+testD.d+'</span></td>'+
-      '<td style="font-size:9px">'+testD.n.map(function(n){return ball(n,14);}).join('')+ball(testD.t,14)+'</td>'+
-      '<td>'+top6.map(function(n){return '<span style="display:inline-block;margin:1px;padding:1px 3px;border-radius:3px;font-size:9px;'+(drawNums.indexOf(n)>=0?'background:#27ae60;color:#fff':'background:#eee;color:#888')+'">'+String(n).padStart(2,'0')+'</span>';}).join('')+'</td>'+
-      '<td style="color:'+(hitCount>=3?'#27ae60':hitCount>=1?'#e67e22':'#c0392b')+';font-weight:bold">'+hitCount+'/6</td>'+
-      '<td style="color:'+(hitRate>=50?'#27ae60':hitRate>=20?'#e67e22':'#c0392b')+'">'+hitRate+'%</td></tr>';
-  }
-  var overall=Math.round(totalHits/Math.max(totalChecks,1)*100);
-  h+='<tr style="background:#1a1a2e;color:#fff"><td colspan="3"><b>总命中率</b></td><td><b>'+totalHits+'/'+totalChecks+'</b></td><td><b>'+overall+'%</b></td></tr>'+
-    '</table>'+
-    '<div style="font-size:9px;color:#888;margin-top:4px">💡 绿色=命中 灰色=未命中 | 命中率越高评分越准 | TOP6：'+top6.map(function(n){return String(n).padStart(2,'0')+'('+gz(n)+')';}).join('、')+'</div>';
-  // 【v10.0806.04新增-复盘加强】基于回测命中分布给出方向性建议（#516整改）
-  var hitMap={};
-  top6.forEach(function(n){hitMap[n]=0;});
-  var testDrs2=DR.slice(-Math.min(6,DR.length-1));
-  for(var di2=testDrs2.length-1;di2>=0;di2--){
-    var testD2=testDrs2[di2];
-    if(testD2.p===LAST.p)continue;
-    var drawNums2=testD2.n.concat(testD2.t);
-    top6.forEach(function(n){if(drawNums2.indexOf(n)>=0)hitMap[n]++;});
-  }
-  var keepNums=top6.filter(function(n){return hitMap[n]>=2;});
-  var dropNums=top6.filter(function(n){return hitMap[n]===0;});
-  var advice=[];
-  if(overall>=50){advice.push('✅ 命中率'+overall+'%，评分方向正确，保持当前权重与候选池');}
-  else if(overall>=25){advice.push('⚠️ 命中率'+overall+'%，方向部分有效，保留近6期命中≥2次的号码，其余谨慎');}
-  else{advice.push('❌ 命中率仅'+overall+'%，TOP6与近期开奖脱节，建议改用"上期未开生肖/尾数"重选候选池');}
-  if(keepNums.length>0){advice.push('📌 保留码：'+keepNums.map(function(n){return String(n).padStart(2,'0')+'('+gz(n)+')';}).join('、')+'（回测命中≥2次，下期继续关注）');}
-  if(dropNums.length>0){advice.push('🗑️ 淘汰码：'+dropNums.map(function(n){return String(n).padStart(2,'0')+'('+gz(n)+')';}).join('、')+'（近6期0命中，下期建议替换）');}
-  h+='<div style="margin-top:6px;padding:6px;background:#fff3e0;border-radius:6px;border-left:3px solid #e67e22;font-size:10px">'+
-     '<b style="color:#e67e22">📌 复盘建议（v10.0806.04）</b><br>'+advice.join('<br>')+'</div>'+
-    '</div>';
+    '<div class="sec-title" style="color:#e67e22;border-bottom-color:#e67e22">🔬 三中三严格逐期回测</div>'+
+    '<div style="font-size:10px;color:#555;margin-bottom:4px">每个目标期只读取该期之前的数据重新生成候选；命中只核对6个正码，特码不参与。</div>';
+  if(!rows.length)return h+'<div class="concl-warn">暂无严格回测样本。点击下方按钮按当前算法回放最近历史期。</div><button class="btn btn-blue" onclick="backfillRecHistory(30,function(r){showClickFeedback(r.ok?\'✅ 严格回测完成\':r.msg);render();})">回测最近30期</button></div>';
+  var success=0,hitSum=0,baseSum=0;
+  rows.forEach(function(r){var k=r.top6.length,g=r.top6Cnt||0;hitSum+=g;if(g>=3)success++;var den=_btChoose(49,6),bp=0;for(var j=3;j<=Math.min(k,6);j++)bp+=_btChoose(k,j)*_btChoose(49-k,6-j)/den;baseSum+=bp;});
+  var rate=success/rows.length,base=baseSum/rows.length;
+  h+='<table><tr><th>样本</th><th>复式至少中3码</th><th>平均命中正码</th><th>随机基线</th><th>提升倍数</th></tr><tr><td>'+rows.length+'期</td><td><b>'+success+'/'+rows.length+'（'+(rate*100).toFixed(1)+'%）</b></td><td>'+(hitSum/rows.length).toFixed(2)+'码</td><td>'+(base*100).toFixed(2)+'%</td><td>'+(base?rate/base:0).toFixed(2)+'</td></tr></table>'+
+    '<div style="font-size:9px;color:#666;margin-top:4px">随机基线按每期实际候选池大小计算；6码复式的理论基线约1.86%。样本少于30期仅作实验参考，少于10期不进入调权。</div></div>';
   return h;
 }
 
@@ -20712,4 +20670,4 @@ if(_authed){
 </script>
 </body>
 </html>
-<!-- GitHub Pages deploy trigger: v10.0930.05 -->
+<!-- GitHub Pages deploy trigger: v10.1004.01 -->
