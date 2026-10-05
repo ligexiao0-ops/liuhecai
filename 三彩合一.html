@@ -657,9 +657,16 @@ function loadData(){
     UP._rulesV='v10_0930_rules';
     try{localStorage.setItem(cfg.up_key,JSON.stringify(UP));}catch(e){}
   }
+  // v10.1005.03：分析页默认必须使用云端最新一期。历史回看仍可手动回退，但不再默认少算1期。
+  if(UP._currentWindowV!=='v10_1005_03'){
+    UP.not_sub_latest=0;
+    UP._currentWindowV='v10_1005_03';
+    try{localStorage.setItem(cfg.up_key,JSON.stringify(UP));}catch(e){}
+  }
 }
 // 同步状态: idle/syncing/synced/error
-var SYNC_STATUS='idle',SYNC_MSG='',LAST_SYNC_AT=0,_syncDebounceTimer=null;
+var SYNC_STATUS='idle',SYNC_MSG='',LAST_SYNC_AT=0,_syncDebounceTimer=null,PREFS_CLOUD_DISABLED=false;
+function missingPrefsTable(err){var m=String((err&&err.message)||err||'');return /user_prefs/i.test(m)&&(/schema cache/i.test(m)||/PGRST205/i.test(m)||/does not exist/i.test(m));}
 function scheduleCloudSync(delay){
   try{if(_syncDebounceTimer)clearTimeout(_syncDebounceTimer);}catch(e){}
   _syncDebounceTimer=setTimeout(function(){_syncDebounceTimer=null;syncAllToServer();},delay==null?700:delay);
@@ -793,9 +800,10 @@ function syncAllToServer(){
   return (recs.length?_upsertChunked(recs):Promise.resolve()).then(function(){
     Object.keys(pending).forEach(function(k){if(s.pending[k]&&recordSignature(s.pending[k])===recordSignature(pending[k]))delete s.pending[k];});
     storePending(lot);
+    if(PREFS_CLOUD_DISABLED)return {error:null};
     return sb.from('user_prefs').upsert({lot_type:lot,prefs:prefs,updated_at:new Date().toISOString()},{onConflict:'lot_type'});
   }).then(function(res){
-    if(res&&res.error)throw new Error(res.error.message||'设置同步失败');
+    if(res&&res.error){if(missingPrefsTable(res.error)){PREFS_CLOUD_DISABLED=true;}else throw new Error(res.error.message||'设置同步失败');}
     if(lot===CUR_LOT){SYNC_STATUS='synced';SYNC_MSG='';updateSyncUI();}
   }).catch(function(e){if(lot===CUR_LOT){SYNC_STATUS='error';SYNC_MSG=e.message||'云端写入失败，待上传修改已保留';updateSyncUI();}}).finally(function(){
     s.writing=false;s.epoch++;
@@ -816,9 +824,10 @@ function refreshFromServer(){
     s.verified={time:Date.now(),latest:server.length?server[server.length-1]:null,count:server.length};
     SYNC_STATUS=Object.keys(s.pending).length?'error':'synced';SYNC_MSG=Object.keys(s.pending).length?'本机有待上传修改':'已读取云端最新记录';updateSyncUI();
     if(dataChanged){_renderZ3Cache=null;_z3StaticCache=null;calcDerived();if(window._appInited)render();}
+    if(PREFS_CLOUD_DISABLED)return;
     return sb.from('user_prefs').select('prefs,updated_at').eq('lot_type',lot).then(function(pr){
       if(lot!==CUR_LOT||s.writing||s.epoch!==epoch||s.request!==request)return;
-      if(pr.error)throw new Error(pr.error.message||'云端设置读取失败');
+      if(pr.error){if(missingPrefsTable(pr.error)){PREFS_CLOUD_DISABLED=true;SYNC_STATUS='synced';SYNC_MSG='开奖记录已同步；筛选设置保存在本机';updateSyncUI();return;}throw new Error(pr.error.message||'云端设置读取失败');}
       var row=pr.data&&pr.data[0],time=row&&Date.parse(row.updated_at);
       if(row&&row.prefs&&time>(UP._syncedAt||0)){
         Object.keys(UP).forEach(function(k){if(k!=='_init')delete UP[k];});
@@ -2661,7 +2670,7 @@ let UP={
   z3l_history:[],       // 历史复盘 [{p,d,poolTop,top3,top6,actualN,actualT,poolCnt,top3Cnt,top3Nums,top6Cnt,top6Nums,quality}]
   lx5_snapshot:null,    // 本期五连肖推荐快照 {p, main, alt1, alt2, ts}
   lx5_history:[],       // 历史复盘 [{p,d,main,alt1,alt2,actualZods,mainCnt,mainZods,alt1Cnt,alt1Zods,alt2Cnt,alt2Zods,bestCnt,bestSrc}]
-  not_sub_latest:1, // 【v10.0805.02】未出号码窗口：减去最近N期开奖记录(默认1期)。如最新210-215，则未出窗口用209-214，避免用最新的开奖污染"已出/未出"判断
+  not_sub_latest:0, // 默认使用云端最新一期；需要复盘时再由用户手动回退窗口
   // 图片识别文字笔记和自定义规则
   img_notes:[], // 保存的文字描述列表 [{text, time, fields}]
   img_custom_rules:[], // 自定义识别规则 [{name, pattern, field}]
