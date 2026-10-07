@@ -233,8 +233,8 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 </div>
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
-  <h1 id="appTitle">🎱 分析工具 v10.1007.01 · 预测第<span id="nextPeriod">--</span>期</h1>
-  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.1007.01</span> · 云端动态数据 · 结论驱动</p>
+  <h1 id="appTitle">🎱 分析工具 v10.1007.02 · 预测第<span id="nextPeriod">--</span>期</h1>
+  <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · <span style="background:#ff0000;color:#fff;padding:2px 8px;border-radius:4px;font-weight:bold">v10.1007.02</span> · 云端动态数据 · 结论驱动</p>
 </div>
 <div class="tabs" id="tabBar"></div>
 <div class="content">
@@ -20419,7 +20419,7 @@ function render(){
   }
   document.getElementById('today-date').innerHTML=todayHtml;
   document.getElementById('lastPeriod').textContent=LAST.p;
-  document.getElementById('appTitle').innerHTML=LOTTERIES[CUR_LOT].icon+' '+LOTTERIES[CUR_LOT].name+'分析工具 v10.1007.01 · 预测第<span id="nextPeriod">'+NEXT+'</span>期';
+  document.getElementById('appTitle').innerHTML=LOTTERIES[CUR_LOT].icon+' '+LOTTERIES[CUR_LOT].name+'分析工具 v10.1007.02 · 预测第<span id="nextPeriod">'+NEXT+'</span>期';
   document.getElementById('lastPeriod').textContent=LAST.p;
   document.getElementById('nextPeriod').textContent=NEXT;
   document.getElementById('hdr-last').textContent=LAST.p;
@@ -20884,7 +20884,7 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1007.js?v=10100701"></script>
+<script src="analytics-v1007-02.js?v=10100702"></script>
 </body>
 </html>
-<!-- GitHub Pages deploy trigger: v10.1007.01 -->
+<!-- GitHub Pages deploy trigger: v10.1007.02 -->
