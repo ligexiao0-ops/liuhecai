@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v10.1008.03';
+  var VERSION = 'v10.1009.03';
   var PAGE = 0;
   var CURRENT = {};
   var CACHE = {};
@@ -69,8 +69,9 @@
     for (var i = start; i < rows.length; i++) { var pool = balancedPool(rows.slice(0, i), model, 8, false), hits = rows[i].n.filter(function (n) { return pool.indexOf(n) >= 0; }); full += hits.length >= 3 ? 1 : 0; totalHits += hits.length; d.push({source:rows[i-1].p,target:rows[i].p,date:rows[i].d,pool:pool,hits:hits}); }
     return {model:model,n:d.length,full:full,mean:totalHits / Math.max(1, d.length),detail:d};
   }
+  function dataKey(rows) { return rows.map(function(r){return [r.p,r.d,r.n.join(','),r.t].join(':');}).join('|'); }
   function bestZ3(rows) {
-    var key = CUR_LOT + '|z3|' + rows.length; if (CACHE[key]) return CACHE[key];
+    var key = CUR_LOT + '|z3|' + dataKey(rows); if (CACHE[key]) return CACHE[key];
     var a = Object.keys(NUM_MODELS).map(function (m) { return auditZ3(rows, m, 70); });
     a.sort(function (x, y) { return (y.full + 1) / (y.n + 2) - (x.full + 1) / (x.n + 2) || y.mean - x.mean; }); return CACHE[key] = a[0];
   }
@@ -88,7 +89,7 @@
     for (var i = start; i < rows.length; i++) { var pool = lxPool(rows.slice(0,i), model, false), actual = drawZods(rows[i]), hits = pool.filter(function (z) { return actual.indexOf(z) >= 0; }); full += hits.length >= 5 ? 1 : 0; sum += hits.length; d.push({source:rows[i-1].p,target:rows[i].p,date:rows[i].d,pool:pool,hits:hits}); }
     return {model:model,n:d.length,full:full,mean:sum/Math.max(1,d.length),detail:d};
   }
-  function bestLX(rows) { var key=CUR_LOT+'|lx|'+rows.length; if(CACHE[key])return CACHE[key]; var a=Object.keys(LX_MODELS).map(function(m){return auditLX(rows,m,70);}); a.sort(function(x,y){return (y.full+1)/(y.n+2)-(x.full+1)/(x.n+2)||y.mean-x.mean;}); return CACHE[key]=a[0]; }
+  function bestLX(rows) { var key=CUR_LOT+'|lx|'+dataKey(rows); if(CACHE[key])return CACHE[key]; var a=Object.keys(LX_MODELS).map(function(m){return auditLX(rows,m,70);}); a.sort(function(x,y){return (y.full+1)/(y.n+2)-(x.full+1)/(x.n+2)||y.mean-x.mean;}); return CACHE[key]=a[0]; }
 
   function ensureEvidence() {
     UP.v1008_forecasts = UP.v1008_forecasts || [];
