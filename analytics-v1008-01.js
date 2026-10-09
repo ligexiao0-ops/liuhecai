@@ -118,7 +118,7 @@
     var lx=typeof planReasonLx==='function'?planReasonLx(rows,5,{window:60}):null;
     return {lot:CUR_LOT,meta:targetMeta(rows),rows:rows.map(function(r){return {p:r.p,n:r.n.slice(),t:r.t};}),normal:normal,special:special,lx:lx?[lx.best].concat(lx.alts||[]).filter(Boolean).map(function(x){return x.zs;}):[],
       blockedTe:A49.filter(function(n){return typeof planTeAllowed==='function'&&!planTeAllowed(n);}),blockedZ3:A49.filter(function(n){return !practicalAllowed(n);}),blockedLx:uniq((UP.lx_excl_zods||[]).concat(UP.lx_ban_zods||[])),noTogether:UP.zm3_no_together||[],
-      attrs:function(n){return {生肖:gz(n),大小:gsz(n),单双:gpar(n),合数单双:ghe(n),家野:gfam(n),波色:gwv(n),五行:gwx(n),尾数:String(n%10)};},zod:zod,
+      attrs:function(n){return {生肖:gz(n),大小:gsz(n),单双:gpar(n),合数单双:ghe(n),家野:gfam(n),波色:gwv(n),五行:gwx(n),尾数:String(n%10)};},zod:zod,zodElement:typeof zodWx==='function'?zodWx:null,
       teAllowed:function(n){return typeof planTeAllowed!=='function'||planTeAllowed(n);},z3Allowed:practicalAllowed,poolValid:pairsValid,tripleValid:trioValid};
   };
   function dayPillar(d) { var base=new Date(2026,9,8), delta=Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-base)/86400000), gan=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'], zhi=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']; return gan[(1+delta%10+10)%10]+zhi[(3+delta%12+12)%12]; }
