@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v10.1009.04';
+  var VERSION = 'v10.1009.05';
   var PAGE = 0;
   var CURRENT = {};
   var CACHE = {};
@@ -107,6 +107,20 @@
   }
   function analyze(rows) { var z=bestZ3(rows), l=bestLX(rows), x={meta:targetMeta(rows),z:z,l:l,p8:balancedPool(rows,z.model,8,true),p13:balancedPool(rows,z.model,13,true),lx:lxPool(rows,l.model,true)};x.saved=saveForecast(x);CURRENT[CUR_LOT]=x;return x; }
 
+  window.getPracticeContext=function(){
+    var rows=DR,normal={},special={};if(!rows||rows.length<31)return null;
+    var hot=A49.slice().sort(function(a,b){return (Z100[b]||0)-(Z100[a]||0);}).slice(0,10),cold=A49.slice().sort(function(a,b){return (Z100[a]||0)-(Z100[b]||0);}).slice(0,10),om=calcZm2Om(),omRank=A49.slice().sort(function(a,b){return (om[b]||0)-(om[a]||0);}),omCold=A49.slice().sort(function(a,b){return (om[a]||0)-(om[b]||0);});
+    function practicalAllowed(n){if(!allowedNumber(n))return false;var checks=[['zm3_z100_hot',hot,true],['zm3_z100_cold',cold,true],['zm3_z100_hot7',hot.slice(0,7),true],['zm3_z100_cold7',cold.slice(0,7),true],['zm3_zm2_om10',omRank.slice(0,20),true],['zm3_excl_z100_hot',hot,false],['zm3_excl_z100_cold',cold,false],['zm3_excl_z100_hot7',hot.slice(0,7),false],['zm3_excl_z100_cold7',cold.slice(0,7),false],['zm3_excl_zm2_om10',omRank.slice(0,20),false],['zm3_excl_om7',omRank.slice(0,7),false],['zm3_excl_om7_cold',omCold.slice(0,7),false]];return !checks.some(function(c){return UP[c[0]]&&(c[1].includes(n)!==c[2]);});}
+    function pairsValid(ns){if(UP.zm3_base_9x&&(UP.lx9_seq1||[]).length===9&&ns.filter(function(n){return !UP.lx9_seq1.includes(gz(n));}).length>(typeof UP.zm3_base_9x_out==='number'?UP.zm3_base_9x_out:2))return false;return !(UP.zm3_no_together||[]).some(function(pair){return pair.length>=2&&pair.slice(0,2).every(function(v){return ns.some(function(n){return typeof v==='number'?n===v:gz(n)===v;});});});}
+    function trioValid(ns){if(!pairsValid(ns))return false;var counts={};ns.forEach(function(n){var z=gz(n);counts[z]=(counts[z]||0)+1;});var doubled=Object.keys(counts).filter(function(z){return counts[z]>=2;}).length,last=rows[rows.length-1].n.concat(rows[rows.length-1].t);return !(UP.zm3_one_zod_2&&doubled!==1||UP.zm3_two_zod_2&&doubled!==2||UP.zm3_same_tail&&!ns.some(function(n){return last.some(function(q){return q%10===n%10;});})||UP.zm3_same_zod&&!ns.every(function(n){return last.some(function(q){return gz(q)===gz(n);});}));}
+    ['balance','continuity','complement'].forEach(function(m){normal[m]=numberRank(rows,m,'n').list.filter(practicalAllowed);});
+    ['balance','frequency','rebound'].forEach(function(m){special[m]=numberRank(rows,m,'t').list.filter(function(n){return typeof planTeAllowed!=='function'||planTeAllowed(n);});});
+    var lx=typeof planReasonLx==='function'?planReasonLx(rows,5,{window:60}):null;
+    return {lot:CUR_LOT,meta:targetMeta(rows),rows:rows.map(function(r){return {p:r.p,n:r.n.slice(),t:r.t};}),normal:normal,special:special,lx:lx?[lx.best].concat(lx.alts||[]).filter(Boolean).map(function(x){return x.zs;}):[],
+      blockedTe:A49.filter(function(n){return typeof planTeAllowed==='function'&&!planTeAllowed(n);}),blockedZ3:A49.filter(function(n){return !practicalAllowed(n);}),blockedLx:uniq((UP.lx_excl_zods||[]).concat(UP.lx_ban_zods||[])),noTogether:UP.zm3_no_together||[],
+      attrs:function(n){return {生肖:gz(n),大小:gsz(n),单双:gpar(n),合数单双:ghe(n),家野:gfam(n),波色:gwv(n),五行:gwx(n),尾数:String(n%10)};},zod:zod,
+      teAllowed:function(n){return typeof planTeAllowed!=='function'||planTeAllowed(n);},z3Allowed:practicalAllowed,poolValid:pairsValid,tripleValid:trioValid};
+  };
   function dayPillar(d) { var base=new Date(2026,9,8), delta=Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-base)/86400000), gan=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'], zhi=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']; return gan[(1+delta%10+10)%10]+zhi[(3+delta%12+12)%12]; }
   function luckyZods(dayZ) { var six={鼠:'牛',牛:'鼠',虎:'猪',猪:'虎',兔:'狗',狗:'兔',龙:'鸡',鸡:'龙',蛇:'猴',猴:'蛇',马:'羊',羊:'马'}, tri=[['猴','鼠','龙'],['虎','马','狗'],['猪','兔','羊'],['蛇','鸡','牛']], out=[six[dayZ]];tri.forEach(function(g){if(g.indexOf(dayZ)>=0)out=out.concat(g.filter(function(z){return z!==dayZ;}));});return uniq(out); }
   function calendarCard(rows) { var meta=targetMeta(rows),md=meta.estimatedDate, d=parseMD(md)||new Date(), dz=typeof getDayZod==='function'?getDayZod(md):'', ch=typeof getDayChong==='function'?getDayChong(md):'', lucky=luckyZods(dz); return '<div class="v10-card v10-cal"><b>目标期万年历参考｜'+md+' '+dayPillar(d)+'日</b><div class="v10-big">日肖 '+dz+'　冲煞 '+(ch?'冲'+ch:'--')+'　幸运生肖 '+lucky.join('、')+'</div><small>冲煞按目标开奖日期的万年历固定规则显示；幸运生肖只作为平特肖辅助参考，不作为硬排除条件。</small></div>'; }
