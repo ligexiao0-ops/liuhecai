@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-10-09T08:10:59.477903+08:00",
+  "lot": "gc",
+  "source": "香港赛马会官方",
+  "mode": "next-day",
+  "enabled": true,
+  "status": "conflict",
+  "added": [
+    107
+  ],
+  "conflicts": [
+    98,
+    99,
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106
+  ],
+  "otherLots": "新澳/老澳来源未接通，保留手工录入",
+  "pending": [
+    107
+  ],
+  "latestPeriod": 107,
+  "sourceLatestPeriod": 107
+}
