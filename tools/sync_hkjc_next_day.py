@@ -27,7 +27,7 @@ def plan(raw,existing,today):
  for r in incoming:
   old=by.get(r['period'])
   if old:
-   if any(old[k]!=r[k] for k in ['date','t']+[f'n{i}' for i in range(1,7)]):conflicts.append(r['period'])
+   if old['date']!=r['date'] or old['t']!=r['t'] or sorted(old[f'n{i}'] for i in range(1,7))!=sorted(r[f'n{i}'] for i in range(1,7)):conflicts.append(r['period'])
   elif r['period']>last:
    if r['period']!=last+1:raise ValueError('Gap before period '+str(r['period'])+'; do not infer history')
    prev=by.get(last)
@@ -37,7 +37,7 @@ def plan(raw,existing,today):
 
 def main():
  p=argparse.ArgumentParser();p.add_argument('--write',action='store_true');a=p.parse_args();now=datetime.now(TZ)
- status={'checkedAt':now.isoformat(),'lot':'gc','source':'香港赛马会官方','mode':'next-day','enabled':True,'status':'checking','added':[],'conflicts':[],'otherLots':'新澳/老澳来源未接通，保留手工录入'}
+ status={'checkedAt':now.isoformat(),'lot':'gc','source':'香港赛马会官方','mode':'next-day','enabled':True,'status':'checking','added':[],'conflicts':[],'normalOrder':'官方公布列表顺序，不宣称为落球顺序','otherLots':'新澳/老澳来源未接通，保留手工录入'}
  try:
   q=json.loads((ROOT/'tools/hkjc_query.json').read_text(encoding='utf-8'));tokens=re.findall(r'\.\.\.|[A-Za-z_][A-Za-z_0-9]*|[0-9]+|[^\s,]',q['query']);compact=''
   for t in tokens:
