@@ -233,7 +233,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 </div>
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
-  <h1 id="appTitle">🎱 分析工具 v10.1010.01 · 预测第<span id="nextPeriod">--</span>期</h1>
+  <h1 id="appTitle">🎱 分析工具 v10.1010.02 · 预测第<span id="nextPeriod">--</span>期</h1>
   <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · 云端动态数据 · 结论驱动</p>
 </div>
 <div id="latest-draw-strip" style="padding:10px;background:#eef6ff;color:#12345b;line-height:1.8;overflow-wrap:anywhere"></div>
@@ -4571,7 +4571,7 @@ function applyZm3Struct(){
     var zeroW=Object.keys(lastWx).filter(function(w){return lastWx[w]===0;});
     s.wx.回补=zeroW.filter(function(w){return (st.dims.wx.perClass[w].prediction||0)>0;});
     var maxW=Object.keys(lastWx).sort(function(a,b){return lastWx[b]-lastWx[a];})[0];
-    if(lastWx[maxW]>=2)s.wx.hot=[maxW];
+    s.wx.hot=[]; // 上期五行集中不作为降权依据
     UP.zm3_struct=s;
     saveData();render();
   }catch(e){alert('应用结构失败：'+e.message);}
@@ -5733,7 +5733,7 @@ function scoreZheng(extraPrefs){
     if(prevTails.includes(gtl(n))&&!lastN.includes(n)){var _dT=validatedDelta(VPZ.prevTail,8,1.2);s+=_dT;if(Math.abs(_dT)>=0.15)rs.push("同尾验证×"+VPZ.prevTail.lift.toFixed(2));}
 
     // ===== 【弱化】五行 — 大幅降权 =====
-    if(gwx(n)===maxWx){s-=0.2;}                                 // -0.3→-0.2
+    /* 上期五行数量不再降权 */                                 // -0.3→-0.2
     if(zeroWx.includes(gwx(n))){s+=0.5;rs.push("缺行"+gwx(n)+"(弱)");} // +1→+0.5
 
     // ===== 上期正码（降权）=====
@@ -20868,20 +20868,21 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10101001"></script>
-<script src="discovery-ui.js?v=10101001"></script>
-<script src="reference-rules.js?v=10101001"></script>
-<script src="reference-system.js?v=10101001"></script>
-<script src="practice-engine.js?v=10101001"></script>
-<script src="practice-ui.js?v=10101001"></script>
-<script src="discovery-engine.js?v=10101001"></script>
-<script src="transition-audit.js?v=10101001"></script>
-<script src="transition-audit-ui.js?v=10101001"></script>
-<script src="history-profile.js?v=10101001"></script>
-<script src="history-profile-ui.js?v=10101001"></script>
-<script src="file-rules.js?v=10101001"></script>
-<script src="file-rules-ui.js?v=10101001"></script>
-<script src="navigation-guard.js?v=10101001"></script>
+<script src="analytics-v1008-01.js?v=10101002"></script>
+<script src="discovery-ui.js?v=10101002"></script>
+<script src="reference-rules.js?v=10101002"></script>
+<script src="reference-system.js?v=10101002"></script>
+<script src="practical-actions.js?v=10101002"></script>
+<script src="practice-engine.js?v=10101002"></script>
+<script src="practice-ui.js?v=10101002"></script>
+<script src="discovery-engine.js?v=10101002"></script>
+<script src="transition-audit.js?v=10101002"></script>
+<script src="transition-audit-ui.js?v=10101002"></script>
+<script src="history-profile.js?v=10101002"></script>
+<script src="history-profile-ui.js?v=10101002"></script>
+<script src="file-rules.js?v=10101002"></script>
+<script src="file-rules-ui.js?v=10101002"></script>
+<script src="navigation-guard.js?v=10101002"></script>
 </body>
 </html>
 <!-- GitHub Pages deploy trigger: v10.1008.03 -->
