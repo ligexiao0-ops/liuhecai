@@ -1,0 +1,4 @@
+(function(root){'use strict';function numbers(s){return [...new Set((String(s).normalize('NFKC').match(/\d+/g)||[]).map(Number).filter(n=>n>=1&&n<=49))].sort((a,b)=>a-b);}
+function compare(rows,lot,period,game,ids){const chosen=ids.map(id=>rows.find(r=>r.id===id&&r.lot===lot&&Number(r.period)===Number(period)&&r.game===game));if(chosen.some(r=>!r))return {error:'请选择同彩种、同期、同玩法的三个来源集合'};if(new Set(chosen.map(r=>r.source)).size!==3)return {error:'必须来自三个不同网址，不能将同站不同方案冒充三个来源'};const intersect=sets=>sets[0].filter(x=>sets.slice(1).every(s=>s.includes(x)));return {chosen,pairs:[[0,1],[0,2],[1,2]].map(([a,b])=>({label:String.fromCharCode(65+a)+'∩'+String.fromCharCode(65+b),pool:intersect([chosen[a].pool,chosen[b].pool])})),all:intersect(chosen.map(r=>r.pool))};}
+root.SourceIntersection={numbers,compare};if(typeof module!=='undefined')module.exports=root.SourceIntersection;
+})(typeof window!=='undefined'?window:globalThis);
