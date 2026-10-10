@@ -10661,27 +10661,30 @@ var ZOD_ORDER=['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗'
   });
 })();
 function buildVerifiedFormulaBlock(){
+  var LAST=DR[DR.length-1];
   if(!LAST||!LAST.t)return '';
   var te=LAST.t,zod=gz(te),tail=te%10,group=null;
   for(var g in VF_GROUPS){if(VF_GROUPS[g].indexOf(te)>=0){group=g;break;}}
   var h='<div class="card" style="border:2px solid #e8a838;padding:10px;margin-bottom:8px">';
-  h+='<div class="sec-title">📊 验证公式信号（76期回测）</div>';
+  h+='<div class="sec-title">📊 验证公式信号（当前已录入数据）</div>';
   h+='<div style="font-size:10px;color:#888;margin-bottom:8px">上期特码='+te+'('+zod+', 尾'+tail+(group?', 组'+group:'')+')</div>';
   // 1.生肖→波色
-  var zodWv=VF_ZOD_WV[zod],zodRate=VF_ZOD_WV_RATE[zod];
+  var zodWv=VF_ZOD_WV[zod],zodN=0,zodH=0;
+  for(var vi=1;vi<DR.length;vi++){if(DR[vi].p===DR[vi-1].p+1&&gz(DR[vi-1].t)===zod&&zodWv){zodN++;if(zodWv.indexOf(gwv(DR[vi].t))>=0)zodH++;}}
+  var zodRate=zodN?Math.round(100*zodH/zodN):null;
   if(zodWv){
-    var zodBase=Math.round(zodWv.length/3*100);
+    var zodBase=Math.round(100*A49.filter(function(n){return zodWv.indexOf(gwv(n))>=0;}).length/49);
     var zodBg=zodRate>=70?'#d4edda':zodRate<35?'#f8d7da':'#fff3cd';
     h+='<div style="margin-bottom:6px;padding:8px;border-radius:6px;background:'+zodBg+'">';
-    h+='<b style="font-size:12px">🎨 生肖→波色</b> <span style="font-size:10px;color:#666">'+zod+'→'+zodWv.join('/')+' = '+zodRate+'% (基线'+zodBase+'%)</span><br>';
+    h+='<b style="font-size:12px">🎨 生肖→波色</b> <span style="font-size:10px;color:#666">'+zod+'→'+zodWv.join('/')+' = '+(zodRate===null?'无样本':zodH+'/'+zodN+'='+zodRate+'%')+' (基线'+zodBase+'%)</span><br>';
     // 波色推荐号码
     var wvNums=[];zodWv.forEach(function(w){wvNums=wvNums.concat(WV[w]);});wvNums.sort(function(a,b){return a-b;});
-    if(zodRate>=70){
+    if(zodRate!==null&&zodRate>=70){
       h+='<span style="font-size:11px;color:#155724">✅ 正向：下期特码波色大概率在 '+zodWv.join('/')+' 中</span><br>';
       h+='<span style="font-size:10px">推荐号码('+wvNums.length+'码): '+wvNums.map(function(n){return String(n).padStart(2,'0');}).join(' ')+'</span>';
       h+='<br><button class="btn btn-green" style="font-size:9px;padding:2px 6px;margin-top:4px" onclick="applyVfPick(\'wv\',\''+zodWv.join('')+'\',\''+zodWv.join('/')+'波\')">⚡ 选用'+zodWv.join('/')+'波</button>';
       h+=' <button class="btn btn-blue" style="font-size:9px;padding:2px 6px;margin-top:4px" onclick="copyAiRec(this,\''+lotLabel()+'生肖→波色('+zod+') '+zodWv.join('/')+' '+wvNums.map(function(n){return String(n).padStart(2,'0');}).join(' ')+'\')">📋复制</button>';
-    }else if(zodRate<35){
+    }else if(zodRate!==null&&zodRate<35){
       var revWv=zodWv[0];
       h+='<span style="font-size:11px;color:#721c24">🔄 反向：'+zod+'→'+revWv+'仅'+zodRate+'%，下期大概率非'+revWv+'波</span><br>';
       var nonNums=[];for(var w in WV){if(w!==revWv)nonNums=nonNums.concat(WV[w]);}nonNums.sort(function(a,b){return a-b;});
@@ -20863,39 +20866,40 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10101015"></script>
-<script src="discovery-ui.js?v=10101015"></script>
-<script src="reference-rules.js?v=10101015"></script>
-<script src="reference-system.js?v=10101015"></script>
-<script src="prediction-review.js?v=10101015"></script>
-<script src="practical-actions.js?v=10101015"></script>
-<script src="practice-engine.js?v=10101015"></script>
-<script src="practice-ui.js?v=10101015"></script>
-<script src="discovery-engine.js?v=10101015"></script>
-<script src="transition-audit.js?v=10101015"></script>
-<script src="transition-audit-ui.js?v=10101015"></script>
-<script src="history-profile.js?v=10101015"></script>
-<script src="history-profile-ui.js?v=10101015"></script>
-<script src="file-rules.js?v=10101015"></script>
-<script src="file-rules-ui.js?v=10101015"></script>
-<script src="range-audit.js?v=10101015"></script>
-<script src="range-audit-ui.js?v=10101015"></script>
-<script src="image-formula-audit.js?v=10101015"></script>
-<script src="image-formula-audit-ui.js?v=10101015"></script>
-<script src="traditional-audit.js?v=10101015"></script>
-<script src="traditional-audit-ui.js?v=10101015"></script>
-<script src="heat-practice.js?v=10101015"></script>
-<script src="heat-practice-ui.js?v=10101015"></script>
-<script src="prediction-review-ui.js?v=10101015"></script>
-<script src="image-batch.js?v=10101015"></script>
-<script src="source-intersection.js?v=10101015"></script>
-<script src="manual-entry-ui.js?v=10101015"></script>
-<script src="web-text-rules.js?v=10101015"></script>
-<script src="web-text-ui.js?v=10101015"></script>
-<script src="applied-audit.js?v=10101015"></script>
-<script src="applied-audit-ui.js?v=10101015"></script>
-<script src="recommendation-routing.js?v=10101015"></script>
-<script src="navigation-guard.js?v=10101015"></script>
+<script src="analytics-v1008-01.js?v=10101016"></script>
+<script src="discovery-ui.js?v=10101016"></script>
+<script src="reference-rules.js?v=10101016"></script>
+<script src="reference-system.js?v=10101016"></script>
+<script src="prediction-review.js?v=10101016"></script>
+<script src="practical-actions.js?v=10101016"></script>
+<script src="practice-engine.js?v=10101016"></script>
+<script src="practice-ui.js?v=10101016"></script>
+<script src="discovery-engine.js?v=10101016"></script>
+<script src="transition-audit.js?v=10101016"></script>
+<script src="transition-audit-ui.js?v=10101016"></script>
+<script src="history-profile.js?v=10101016"></script>
+<script src="history-profile-ui.js?v=10101016"></script>
+<script src="file-rules.js?v=10101016"></script>
+<script src="file-rules-ui.js?v=10101016"></script>
+<script src="range-audit.js?v=10101016"></script>
+<script src="range-audit-ui.js?v=10101016"></script>
+<script src="image-formula-audit.js?v=10101016"></script>
+<script src="image-formula-audit-ui.js?v=10101016"></script>
+<script src="traditional-audit.js?v=10101016"></script>
+<script src="traditional-audit-ui.js?v=10101016"></script>
+<script src="heat-practice.js?v=10101016"></script>
+<script src="heat-practice-ui.js?v=10101016"></script>
+<script src="prediction-review-ui.js?v=10101016"></script>
+<script src="image-batch.js?v=10101016"></script>
+<script src="source-intersection.js?v=10101016"></script>
+<script src="manual-entry-ui.js?v=10101016"></script>
+<script src="web-text-rules.js?v=10101016"></script>
+<script src="web-text-ui.js?v=10101016"></script>
+<script src="applied-audit.js?v=10101016"></script>
+<script src="applied-audit-ui.js?v=10101016"></script>
+<script src="recommendation-routing.js?v=10101016"></script>
+<script src="live-insights.js?v=10101016"></script>
+<script src="navigation-guard.js?v=10101016"></script>
 </body>
 </html>
 <!-- GitHub Pages deploy trigger: v10.1008.03 -->

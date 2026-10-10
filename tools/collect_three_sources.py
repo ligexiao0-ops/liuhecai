@@ -33,7 +33,17 @@ def collect(item):
  return result
 def main():
  with concurrent.futures.ThreadPoolExecutor(3) as p:sources=list(p.map(collect,enumerate(URLS)))
- out={'capturedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'sources':sources}
+ captured=datetime.datetime.now(datetime.timezone.utc).isoformat()
+ path=ROOT/'three-source-cache.json'
+ try:previous=json.loads(path.read_text(encoding='utf-8'))
+ except (OSError,ValueError):previous={'sources':[]}
+ by={s['source']:s for s in previous['sources']}
+ for i,s in enumerate(sources):
+  old=by.get(s['source'],{})
+  if not s.get('entries') and old.get('entries'):
+   sources[i]={**old,'capturedAt':old.get('capturedAt',previous.get('capturedAt')),'lastAttemptAt':captured,'lastAttemptStatus':s['status']}
+  else:s['capturedAt']=captured
+ out={'capturedAt':captured,'sources':sources}
  (ROOT/'three-source-cache.json').write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
  print('Source entry counts:',[(s['source'],len(s['entries'])) for s in sources])
 if __name__=='__main__':main()
