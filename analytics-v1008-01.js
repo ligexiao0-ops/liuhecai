@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v10.1009.07';
+  var VERSION = 'v10.1010.01';
   var PAGE = 0;
   var CURRENT = {};
   var CACHE = {};
@@ -116,11 +116,13 @@
     ['balance','continuity','complement'].forEach(function(m){normal[m]=numberRank(rows,m,'n').list.filter(practicalAllowed);});
     ['balance','frequency','rebound'].forEach(function(m){special[m]=numberRank(rows,m,'t').list.filter(function(n){return typeof planTeAllowed!=='function'||planTeAllowed(n);});});
     var lx=typeof planReasonLx==='function'?planReasonLx(rows,5,{window:60}):null;
-    return {lot:CUR_LOT,meta:targetMeta(rows),rows:rows.map(function(r){return {p:r.p,n:r.n.slice(),t:r.t};}),normal:normal,special:special,lx:lx?[lx.best].concat(lx.alts||[]).filter(Boolean).map(function(x){return x.zs;}):[],
+    return {lot:CUR_LOT,meta:targetMeta(rows),rows:rows.map(function(r){return {p:r.p,d:r.d,n:r.n.slice(),t:r.t};}),normal:normal,special:special,lx:lx?[lx.best].concat(lx.alts||[]).filter(Boolean).map(function(x){return x.zs;}):[],
       blockedTe:A49.filter(function(n){return typeof planTeAllowed==='function'&&!planTeAllowed(n);}),blockedZ3:A49.filter(function(n){return !practicalAllowed(n);}),blockedLx:uniq((UP.lx_excl_zods||[]).concat(UP.lx_ban_zods||[])),noTogether:UP.zm3_no_together||[],
       attrs:function(n){return {生肖:gz(n),大小:gsz(n),单双:gpar(n),合数单双:ghe(n),家野:gfam(n),波色:gwv(n),五行:gwx(n),尾数:String(n%10),头数:String(Math.floor(n/10))};},zod:zod,zodElement:typeof zodWx==='function'?zodWx:null,
       teAllowed:function(n){return typeof planTeAllowed!=='function'||planTeAllowed(n);},z3Allowed:practicalAllowed,poolValid:pairsValid,tripleValid:trioValid};
   };
+  var preferenceContext=window.getPracticeContext;
+  window.getPracticeContext=function(independent){if(!independent)return preferenceContext();var savedPrefs=UP;try{UP={};var c=preferenceContext();if(c){c.teAllowed=function(){return true;};c.z3Allowed=function(){return true;};c.poolValid=function(){return true;};c.tripleValid=function(){return true;};c.noTogether=[];c.blockedTe=[];c.blockedZ3=[];c.blockedLx=[];}return c;}finally{UP=savedPrefs;}};
   function dayPillar(d) { var base=new Date(2026,9,8), delta=Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-base)/86400000), gan=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'], zhi=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']; return gan[(1+delta%10+10)%10]+zhi[(3+delta%12+12)%12]; }
   function luckyZods(dayZ) { var six={鼠:'牛',牛:'鼠',虎:'猪',猪:'虎',兔:'狗',狗:'兔',龙:'鸡',鸡:'龙',蛇:'猴',猴:'蛇',马:'羊',羊:'马'}, tri=[['猴','鼠','龙'],['虎','马','狗'],['猪','兔','羊'],['蛇','鸡','牛']], out=[six[dayZ]];tri.forEach(function(g){if(g.indexOf(dayZ)>=0)out=out.concat(g.filter(function(z){return z!==dayZ;}));});return uniq(out); }
   function calendarCard(rows) { var meta=targetMeta(rows),md=meta.estimatedDate, d=parseMD(md)||new Date(), dz=typeof getDayZod==='function'?getDayZod(md):'', ch=typeof getDayChong==='function'?getDayChong(md):'', lucky=luckyZods(dz); return '<div class="v10-card v10-cal"><b>目标期万年历参考｜'+md+' '+dayPillar(d)+'日</b><div class="v10-big">日肖 '+dz+'　冲煞 '+(ch?'冲'+ch:'--')+'　幸运生肖 '+lucky.join('、')+'</div><small>冲煞按目标开奖日期的万年历固定规则显示；幸运生肖只作为平特肖辅助参考，不作为硬排除条件。</small></div>'; }

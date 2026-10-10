@@ -233,7 +233,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 </div>
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
-  <h1 id="appTitle">🎱 分析工具 v10.1009.07 · 预测第<span id="nextPeriod">--</span>期</h1>
+  <h1 id="appTitle">🎱 分析工具 v10.1010.01 · 预测第<span id="nextPeriod">--</span>期</h1>
   <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · 云端动态数据 · 结论驱动</p>
 </div>
 <div id="latest-draw-strip" style="padding:10px;background:#eef6ff;color:#12345b;line-height:1.8;overflow-wrap:anywhere"></div>
@@ -11225,15 +11225,7 @@ function applyVfExcl(type,val){
   else if(type==='tailnums'||type==='group'||type==='groupnext'){nums=val.split(',').map(function(n){return parseInt(n,10);});}
   var added=0;
   nums.forEach(function(n){if(UP.te_excl_nums.indexOf(n)<0){UP.te_excl_nums.push(n);added++;}});
-  // 【v10.0803.01】同步到连肖：号码所属生肖加入lx_excl_zods
-  var zAdded=0;
-  if(typeof gz==='function'&&typeof ZODS!=='undefined'){
-    if(!UP.lx_excl_zods)UP.lx_excl_zods=[];
-    nums.forEach(function(n){
-      var z=gz(n);
-      if(z&&ZODS.indexOf(z)>=0&&UP.lx_excl_zods.indexOf(z)<0){UP.lx_excl_zods.push(z);zAdded++;}
-    });
-  }
+  var zAdded=0; // 特码号码排除不等同于连肖整肖排除。
   saveData();render();
   showClickFeedback('已排除'+added+'码'+(zAdded>0?'+连肖排除'+zAdded+'肖':'')+(added<nums.length?' (其余已有)':''));
 }
@@ -11327,14 +11319,9 @@ function applyVfZodExcl(zodsStr){
   zods.forEach(function(z){
     if(UP.te_excl_zods.indexOf(z)<0){UP.te_excl_zods.push(z);added++;}
   });
-  // 【v10.0803.01】同步到连肖：让这些生肖在连肖中也排除
-  if(!UP.lx_excl_zods)UP.lx_excl_zods=[];
-  var lxAdded=0;
-  zods.forEach(function(z){
-    if(UP.lx_excl_zods.indexOf(z)<0){UP.lx_excl_zods.push(z);lxAdded++;}
-  });
+  var lxAdded=0; // 保持玩法隔离，不改连肖选择。
   saveData();render();
-  showClickFeedback('已排除特码生肖: '+zods.join(' ')+' (新增'+added+'个) — 特码生效；连肖同步排除'+(lxAdded>0?lxAdded+'个':'(已存在)'));
+  showClickFeedback('已排除特码生肖: '+zods.join(' ')+' (新增'+added+'个) — 仅特码生效');
 }
 // 选用：将生肖加入特码必出生肖池（对应杀肖公式反用：某肖命中断率高→选它为必出）；同步到连肖必出生肖池
 function applyVfZodPick(zodsStr,label){
@@ -11345,13 +11332,9 @@ function applyVfZodPick(zodsStr,label){
     if(UP.te_pick_zods.indexOf(z)<0){UP.te_pick_zods.push(z);added++;}
   });
   // 【v10.0803.01】同步到连肖：让这些生肖在连肖中也是必出
-  if(!UP.lx_force_zods)UP.lx_force_zods=[];
-  var lxAdded=0;
-  zods.forEach(function(z){
-    if(UP.lx_force_zods.indexOf(z)<0){UP.lx_force_zods.push(z);lxAdded++;}
-  });
+  var lxAdded=0; // 特码公式选用不自动成为连肖必含。
   saveData();render();
-  showClickFeedback('已选'+label+'→特码必出生肖: '+zods.join(' ')+' (新增'+added+'个)；连肖同步必出'+(lxAdded>0?lxAdded+'个':'(已存在)'));
+  showClickFeedback('已选'+label+'→特码必出生肖: '+zods.join(' ')+' (新增'+added+'个)；仅特码生效');
 }
 // 生肖类公式统一 选用(必出)/排除(杀肖)/复制 三按钮
 function vfZodBtnGroup(zods,copyTxt,size){
@@ -17107,11 +17090,11 @@ function renderZ3(){
   var d6Once=d6AppNums.filter(function(n){return d6NumCnt[n]===1;});
   h+='<div class="card" style="border:2px solid #c0392b;background:#fff5f5">'+
      '<b style="font-size:11px;color:#c0392b">📊 近6期号码出现次数（三中三关键参考）</b>'+
-     '<div style="font-size:9px;color:#888;margin-top:2px">已出号码中重复2次以上的号码→下期继续出概率降低，选三中三时应避开或降权</div>'+
+     '<div style="font-size:9px;color:#888;margin-top:2px">近6期重复2次以上仅是次数统计；是否降低下期概率须看独立验证，不能自动排除或降权</div>'+
      '<div style="margin-top:6px">';
   if(d6Multi.length>0){
     var d6MultiStr=d6Multi.sort(function(a,b){return a-b;}).join(',');
-    h+='<div style="margin-bottom:4px"><b style="color:#c0392b">⚠️ 出现2次以上（建议避开）：';
+    h+='<div style="margin-bottom:4px"><b style="color:#c0392b">出现2次以上（仅统计，不默认排除）：';
     d6Multi.sort(function(a,b){return d6NumCnt[b]-d6NumCnt[a];}).forEach(function(n){
       h+='<span style="display:inline-block;margin:2px;padding:2px 6px;background:#c0392b;color:#fff;border-radius:10px;font-size:10px">'+String(n).padStart(2,'0')+'('+gz(n)+'×'+d6NumCnt[n]+')</span>';
     });
@@ -17125,7 +17108,7 @@ function renderZ3(){
   h+='<div><b style="color:#1e8449">未出现（'+NOT.length+'个，优先关注）：';
   var notTop=NOT.slice(0,20).map(function(n){return String(n).padStart(2,'0');});
   h+='<span style="font-size:10px">'+notTop.join(' ')+'</span></b></div>';
-  h+=concl('三中三选号建议：从未出号码（'+NOT.length+'个）中优先选2-3个 + 已出但仅出现1次的号码中选1-2个，避开出现2次以上的'+d6Multi.length+'个号码。')+
+  h+=concl('近6期重复≥2次有'+d6Multi.length+'码，未出'+NOT.length+'码；两类均可入选，重复次数本身不证明应排除。')+
      '</div>';
 
   // ===== 三中三选号/排除思路 =====
@@ -17147,7 +17130,7 @@ function renderZ3(){
   h+='<div style="margin-bottom:6px"><b style="font-size:11px;color:#c0392b">🚫 建议排除方向：</b>'+
      '<div style="font-size:10px;line-height:1.8;margin-top:4px">'+
      '• 刚开出号码：上期正码'+lastN.map(function(n){return ball(n,16);}).join('')+'中，重复率低时建议少选；重复率高时可保留'+keepCnt+'个左右。<br>'+
-     '• 过热五行：'+maxWx+'行在上期出现'+wxC[maxWx]+'个，下期该五行不宜再集中，可适当降低权重。<br>'+
+     '• 过热五行：'+maxWx+'行在上期出现'+wxC[maxWx]+'个，是否继续集中尚待独立验证，不因上期较多就默认降权。<br>'+
      '• 100期热门前7（出现次数多，可能进入回调）：'+hotTop.map(function(x){return ball(x.n,16);}).join('')+'。可作为排除参考，但热号延续也常见，建议只排除其中2-3个而非全部。'+
      '</div></div>';
   // 操作建议
@@ -20885,15 +20868,20 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10100907"></script>
-<script src="discovery-ui.js?v=10100907"></script>
-<script src="reference-rules.js?v=10100907"></script>
-<script src="reference-system.js?v=10100907"></script>
-<script src="practice-engine.js?v=10100907"></script>
-<script src="practice-ui.js?v=10100907"></script>
-<script src="discovery-engine.js?v=10100907"></script>
-<script src="transition-audit.js?v=10100907"></script>
-<script src="transition-audit-ui.js?v=10100907"></script>
+<script src="analytics-v1008-01.js?v=10101001"></script>
+<script src="discovery-ui.js?v=10101001"></script>
+<script src="reference-rules.js?v=10101001"></script>
+<script src="reference-system.js?v=10101001"></script>
+<script src="practice-engine.js?v=10101001"></script>
+<script src="practice-ui.js?v=10101001"></script>
+<script src="discovery-engine.js?v=10101001"></script>
+<script src="transition-audit.js?v=10101001"></script>
+<script src="transition-audit-ui.js?v=10101001"></script>
+<script src="history-profile.js?v=10101001"></script>
+<script src="history-profile-ui.js?v=10101001"></script>
+<script src="file-rules.js?v=10101001"></script>
+<script src="file-rules-ui.js?v=10101001"></script>
+<script src="navigation-guard.js?v=10101001"></script>
 </body>
 </html>
 <!-- GitHub Pages deploy trigger: v10.1008.03 -->
