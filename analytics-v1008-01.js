@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v10.1010.11';
+  var VERSION = 'v10.1010.12';
   var PAGE = 0;
   var CURRENT = {};
   var CACHE = {};
