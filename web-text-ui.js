@@ -7,7 +7,7 @@ function update(){const el=document.getElementById('web-text');if(el)el.value=te
 function key(value){try{const u=new URL(value);return u.origin+u.pathname.replace(/\/$/,'');}catch(_){return '';}}
 async function cached(u,lot,target){
  const r=await fetch('three-source-cache.json?ts='+Date.now());if(!r.ok)throw Error('来源缓存读取失败 HTTP '+r.status);
- const cache=await r.json(),source=(cache.sources||[]).find(s=>key(s.url)===key(u)||key(s.resolvedUrl)===key(u));
+ const cache=await r.json(),source=(cache.sources||[]).find(s=>key(s.url)===key(u)||key(s.resolvedUrl)===key(u)||(s.aliases||[]).some(a=>key(a)===key(u)));
  if(!source)return null;
  const entries=(source.entries||[]).filter(x=>x.lot===lot),matched=entries.filter(x=>+x.period===+target);
  if(!matched.length){const blocks=String(source.text||'').split(/(?=\d{1,3}期)/).filter(b=>new RegExp('^'+target+'期').test(b));if(blocks.some(b=>/(?:00[\s.,，、]*){6,}/.test(b)))return {text:target+'期：待网站更新（全00占位）',results:[],status:'第'+target+'期全00是待更新占位，网址尚未发布号码；不计失败、不用旧期替代。'};const periods=[...new Set(entries.map(x=>x.period))].sort((a,b)=>a-b);throw Error(periods.length?'来源'+source.source+'已有第'+periods.join('、')+'期资料，但第'+target+'期暂无可提取资料；不会用旧期资料代替':'来源'+source.source+'采集端未取得正文（'+(source.status||'未知原因')+'）。浏览器可打开不代表采集端获得同样内容');}

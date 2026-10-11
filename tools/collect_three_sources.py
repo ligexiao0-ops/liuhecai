@@ -3,9 +3,9 @@ import concurrent.futures,datetime,json,re,urllib.parse
 from pathlib import Path
 from collect_website_text import plain,read
 ROOT=Path(__file__).resolve().parents[1]
-URLS=['https://zzyymm49347.490151gg.app:8450/ok.html','https://nttlbzlsfq.18149fj.app:3082/18149.html','https://yyaaff018899.49018899gg.app:8450/ok.html','https://juyhgt28888.28888b.app:8445/ok.html']
+URLS=['https://zzyymm49347.490151gg.app:8450/ok.html','https://gggds8f2sdjss1s48hld0us5k9d5k.ai49gg65gshd5k6s7k8xha9.kediups.com/html/index.html','https://yyaaff018899.49018899gg.app:8450/ok.html','https://juyhgt28888.28888b.app:8445/ok.html']
 def collect(item):
- i,url=item;origin=url;url='https://gggds8f2sdjss1s48hld0us5k9d5k.ai49gg65gshd5k6s7k8xha9.kediups.com/html/index.html' if i==1 else url;result={'source':chr(65+i),'url':origin,'entries':[]}
+ i,url=item;origin=url;url='https://gggds8f2sdjss1s48hld0us5k9d5k.ai49gg65gshd5k6s7k8xha9.kediups.com/html/index.html' if i==1 else url;result={'source':chr(65+i),'url':origin,'entries':[], 'aliases':['https://nttlbzlsfq.18149fj.app:3082/18149.html'] if i==1 else []}
  try:
   for depth in range(7):
    s=read(url)
