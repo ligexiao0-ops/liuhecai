@@ -10507,7 +10507,7 @@ var VF_KILL_ZOD_FORMULAS=[
   {id:10,desc:'上期开奖日农历日数=杀肖数→对应生肖',fn:function(prev){if(!prev.lunarDay)return null;var n=prev.lunarDay%12;return n===0?12:n;}}
 ];
 // ZOD_AGE: 生肖年龄对照表（用于杀肖公式计算）
-var ZOD_AGE={'鼠':1,'牛':2,'虎':3,'兔':4,'龙':5,'蛇':6,'马':7,'羊':8,'猴':9,'鸡':10,'狗':11,'猪':12};
+var ZOD_AGE={'马':1,'蛇':2,'龙':3,'兔':4,'虎':5,'牛':6,'鼠':7,'猪':8,'狗':9,'鸡':10,'猴':11,'羊':12};
 // ===== 尾数/生肖运算公式（来自文件2：第2026072期特码44的尾数）=====
 // 每条公式表达：对前一期数据的某种运算→预测下期的号码/生肖/尾数/属性
 var VF_MATH_FORMULAS=[
@@ -10661,6 +10661,7 @@ var ZOD_ORDER=['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗'
   });
 })();
 function buildVerifiedFormulaBlock(){
+  if(typeof FormulaAudit!=='undefined')FormulaAudit.refreshRates();
   var LAST=DR[DR.length-1];
   if(!LAST||!LAST.t)return '';
   var te=LAST.t,zod=gz(te),tail=te%10,group=null;
@@ -10746,7 +10747,7 @@ function buildVerifiedFormulaBlock(){
     h+='</div>';
   }
   h+='<div style="font-size:9px;color:#aaa;margin-top:4px">数据来源：新奥32期+老奥29期+港彩14期=76期回测</div>';
-  if(typeof FormulaSignals!=='undefined')h=FormulaSignals.panel()+'<details><summary>其他人工公式与详细验证（展开）</summary>';
+  if(typeof FormulaSignals!=='undefined')h=FormulaSignals.panel()+(typeof FormulaAudit!=='undefined'?FormulaAudit.panel():'')+'<details><summary>其他人工公式与详细验证（展开）</summary>';
   // ===== 落球顺序公式验证 =====
   var dropVF=verifyDropOrderFormulas();
   if(dropVF){
@@ -11108,9 +11109,9 @@ function buildVerifiedFormulaBlock(){
     var highMath=mathVF.filter(function(m){return m.rate>=60;});
     var currentMath=[], currentPingTail=[];
     VF_MATH_FORMULAS.forEach(function(mf){
-      if(mf.needsHistory)return;
+      if(mf.needsHistory&&DR.length<mf.needsHistory)return;
       try{
-        var predVal=mf.fn(LAST);
+        var predVal=mf.fn(LAST,DR.slice());
         if(predVal===null||predVal===undefined)return;
         var vfRec=mathVF.find(function(m){return m.id===mf.id;});
         var item={id:mf.id,desc:mf.desc,cat:mf.cat,predict:mf.predict,value:predVal,rate:vfRec?vfRec.rate:null};
@@ -11126,9 +11127,9 @@ function buildVerifiedFormulaBlock(){
         if(mPrev&&mLatest&&mPrev.t&&mLatest.t&&mPrev.n){
           var mlhItems=[];
           VF_MATH_FORMULAS.forEach(function(mf){
-            if(mf.needsHistory)return;
+            if(mf.needsHistory&&DR.length<mf.needsHistory)return;
             try{
-              var mpv=mf.fn(mPrev);
+              var mpv=mf.fn(mPrev,DR.slice(0,-1));
               if(mpv===null||mpv===undefined)return;
               var mav;
               if(mf.predict==='tail')mav=mLatest.t%10;
@@ -11295,7 +11296,7 @@ function verifyDropOrderFormulas(){
   var maxMinKillZod={total:0,fail:0,details:[]};
   for(var i=0;i<DR.length-1;i++){
     var cur=DR[i],next=DR[i+1];
-    if(!cur||!next||!cur.n||cur.n.length<6)continue;
+    if(!cur||!next||next.p!==cur.p+1||!cur.n||cur.n.length<6)continue;
     // 优先使用drop字段(落球顺序)，无则用n(手动录入的n也是落球顺序)
     var dropArr=cur.drop||cur.n;
     var ball6=dropArr[5]; // 第6个落球号码
@@ -11352,6 +11353,7 @@ function vfZodBtnGroup(zods,copyTxt,size){
 }
 // ===== 统一反推理回测（录入开奖后自动调用）=====
 function backtestAllFormulas(newDraw){
+  if(typeof FormulaAudit!=='undefined')FormulaAudit.refreshRates();
   if(!DR||DR.length<3)return null;
   var latest=DR[DR.length-1]; // 刚录入的当期
   var prev=DR[DR.length-2];   // 上期（用于上期→当期验证）
@@ -11560,7 +11562,7 @@ function backtestAllFormulas(newDraw){
   var mathSection={name:'运算公式(尾数/生肖)',icon:'🧮',type:'math_formulas',items:[],total:0,hit:0};
   VF_MATH_FORMULAS.forEach(function(mf){
     try{
-      if(mf.needsHistory)return; // 需要多期历史的公式暂跳过
+      if(mf.needsHistory&&DR.length<mf.needsHistory)return; // 需要多期历史的公式暂跳过
       var predVal=mf.fn(prev);
       if(predVal===null||predVal===undefined)return;
       var actualVal,isHit=false;
@@ -11613,7 +11615,7 @@ function verifyZodToTeZod(){
   var result={total:0,hit:0,byZod:{}};
   for(var i=0;i<DR.length-1;i++){
     var cur=DR[i],next=DR[i+1];
-    if(!cur||!next||!cur.t||!next.t)continue;
+    if(!cur||!next||next.p!==cur.p+1||!cur.t||!next.t)continue;
     var curZod=gz(cur.t),nextZod=gz(next.t);
     var preds=VF_ZOD_TO_TEZOD[curZod];
     if(!preds)continue;
@@ -11637,7 +11639,7 @@ function verifyKillZodFormulas(){
     var r={id:kf.id,desc:kf.desc,total:0,hit:0};
     for(var i=0;i<DR.length-1;i++){
       var cur=DR[i],next=DR[i+1];
-      if(!cur||!next||!cur.t||!next.t)continue;
+      if(!cur||!next||next.p!==cur.p+1||!cur.t||!next.t)continue;
       try{
         var kzNum=kf.fn(cur);
         if(kzNum===null||kzNum===undefined)continue;
@@ -11657,13 +11659,14 @@ function verifyMathFormulas(){
   if(!DR||DR.length<2)return null;
   var results=[];
   VF_MATH_FORMULAS.forEach(function(mf){
-    if(mf.needsHistory)return;
+    if(mf.needsHistory&&DR.length<mf.needsHistory)return;
     var r={id:mf.id,desc:mf.desc,cat:mf.cat,total:0,hit:0};
     for(var i=0;i<DR.length-1;i++){
       var cur=DR[i],next=DR[i+1];
-      if(!cur||!next||!cur.t||!next.t||!cur.n||cur.n.length<6)continue;
+      if(!cur||!next||next.p!==cur.p+1||!cur.t||!next.t||!cur.n||cur.n.length<6)continue;
       try{
-        var predVal=mf.fn(cur);
+        if(mf.needsHistory&&i+1<mf.needsHistory)continue;
+        var predVal=mf.fn(cur,DR.slice(0,i+1));
         if(predVal===null||predVal===undefined)continue;
         var actualVal;
         if(mf.predict==='tail')actualVal=next.t%10;
@@ -11915,7 +11918,7 @@ function calcMeihuaForPeriod(period){
     predTails:predTails,predNums:predNums
   };
 }
-function calcMeihua(){return (LAST&&LAST.p)?calcMeihuaForPeriod(LAST.p):null;}
+function calcMeihua(){var last=DR[DR.length-1];return last?calcMeihuaForPeriod(last.p):null;}
 function changeTrigramLine(trigram,linePos){
   // 简化：根据动爻位置变换八卦
   // 八卦二进制：乾111,兑110,离101,震100,巽011,坎010,艮001,坤000
@@ -12029,10 +12032,11 @@ function calcFilterStrategyAt(endIdx){
 function calcFilterStrategy(){return calcFilterStrategyAt(DR.length-1);}
 // ===== 【v10.0730.02新增】三大公式分项统计：全年固定/梅花易数/三减二加5项 =====
 function calcThreeFormulaStats(){
+  var LAST=DR[DR.length-1];
   var stats={group:{name:'全年固定公式',total:0,hit:0,items:[]},meihua:{name:'梅花易数',total:0,hit:0,items:[]},filter:{name:'三减二加',total:0,hit:0,steps:{one:{name:'一减-5期已出',total:0,hit:0},two:{name:'二减-排上期7码',total:0,hit:0},three:{name:'三减-排近热',total:0,hit:0},add1:{name:'一加-邻号同尾',total:0,hit:0},add2:{name:'二加-重复号',total:0,hit:0}},items:[]},intersection:[]};
   if(!DR||DR.length<7)return stats;
   for(var i=5;i<DR.length-1;i++){
-    var base=DR[i],next=DR[i+1],actual=next.t;
+    var base=DR[i],next=DR[i+1],actual=next.t;if(next.p!==base.p+1)continue;
     // 1. 全年固定公式：base.t所属组 -> next.t是否在公式号池
     var g=null;for(var gg in VF_GROUPS){if((VF_GROUPS[gg]||[]).indexOf(base.t)>=0){g=gg;break;}}
     if(g&&VF_GROUP_NEXT[g]){
@@ -12081,6 +12085,7 @@ function renderThreeFormulaStats(){
 }
 // ===== 中间号码(第4号)属性参考分析 =====
 function calcMidNumRef(){
+  var LAST=DR[DR.length-1];
   if(!LAST||!LAST.n||LAST.n.length<6)return null;
   var allNums=LAST.n.slice();allNums.push(LAST.t);allNums.sort(function(a,b){return a-b;});
   var mid=allNums[3],tail=mid%10,tailRange=[];
@@ -12130,6 +12135,7 @@ function buildMidNumRefBlock(){
 
 // ===== Tab: 特码预测（含反向思维 + 生肖输入 + 候选池 + 复制框）=====
 function renderTE(){
+  var LAST=DR[DR.length-1];
   const TM=calcTmOm(),T100=calcT100();
   const sc=A49.map(n=>scoreTE_full(n,TM,T100)).sort((a,b)=>b.s-a.s);
   // 【v10.0803.02】特码预测快照：首次预测某期时锁定全49号评分排名，开奖录入后用于复盘提醒（命中TOP3高亮）
@@ -20868,41 +20874,42 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10101018"></script>
-<script src="discovery-ui.js?v=10101018"></script>
-<script src="reference-rules.js?v=10101018"></script>
-<script src="reference-system.js?v=10101018"></script>
-<script src="prediction-review.js?v=10101018"></script>
-<script src="practical-actions.js?v=10101018"></script>
-<script src="practice-engine.js?v=10101018"></script>
-<script src="formula-signals.js?v=10101018"></script>
-<script src="practice-ui.js?v=10101018"></script>
-<script src="discovery-engine.js?v=10101018"></script>
-<script src="transition-audit.js?v=10101018"></script>
-<script src="transition-audit-ui.js?v=10101018"></script>
-<script src="history-profile.js?v=10101018"></script>
-<script src="history-profile-ui.js?v=10101018"></script>
-<script src="file-rules.js?v=10101018"></script>
-<script src="file-rules-ui.js?v=10101018"></script>
-<script src="range-audit.js?v=10101018"></script>
-<script src="range-audit-ui.js?v=10101018"></script>
-<script src="image-formula-audit.js?v=10101018"></script>
-<script src="image-formula-audit-ui.js?v=10101018"></script>
-<script src="traditional-audit.js?v=10101018"></script>
-<script src="traditional-audit-ui.js?v=10101018"></script>
-<script src="heat-practice.js?v=10101018"></script>
-<script src="heat-practice-ui.js?v=10101018"></script>
-<script src="prediction-review-ui.js?v=10101018"></script>
-<script src="image-batch.js?v=10101018"></script>
-<script src="source-intersection.js?v=10101018"></script>
-<script src="manual-entry-ui.js?v=10101018"></script>
-<script src="web-text-rules.js?v=10101018"></script>
-<script src="web-text-ui.js?v=10101018"></script>
-<script src="applied-audit.js?v=10101018"></script>
-<script src="applied-audit-ui.js?v=10101018"></script>
-<script src="recommendation-routing.js?v=10101018"></script>
-<script src="live-insights.js?v=10101018"></script>
-<script src="navigation-guard.js?v=10101018"></script>
+<script src="analytics-v1008-01.js?v=10101019"></script>
+<script src="discovery-ui.js?v=10101019"></script>
+<script src="reference-rules.js?v=10101019"></script>
+<script src="reference-system.js?v=10101019"></script>
+<script src="prediction-review.js?v=10101019"></script>
+<script src="practical-actions.js?v=10101019"></script>
+<script src="practice-engine.js?v=10101019"></script>
+<script src="formula-audit.js?v=10101019"></script>
+<script src="formula-signals.js?v=10101019"></script>
+<script src="practice-ui.js?v=10101019"></script>
+<script src="discovery-engine.js?v=10101019"></script>
+<script src="transition-audit.js?v=10101019"></script>
+<script src="transition-audit-ui.js?v=10101019"></script>
+<script src="history-profile.js?v=10101019"></script>
+<script src="history-profile-ui.js?v=10101019"></script>
+<script src="file-rules.js?v=10101019"></script>
+<script src="file-rules-ui.js?v=10101019"></script>
+<script src="range-audit.js?v=10101019"></script>
+<script src="range-audit-ui.js?v=10101019"></script>
+<script src="image-formula-audit.js?v=10101019"></script>
+<script src="image-formula-audit-ui.js?v=10101019"></script>
+<script src="traditional-audit.js?v=10101019"></script>
+<script src="traditional-audit-ui.js?v=10101019"></script>
+<script src="heat-practice.js?v=10101019"></script>
+<script src="heat-practice-ui.js?v=10101019"></script>
+<script src="prediction-review-ui.js?v=10101019"></script>
+<script src="image-batch.js?v=10101019"></script>
+<script src="source-intersection.js?v=10101019"></script>
+<script src="manual-entry-ui.js?v=10101019"></script>
+<script src="web-text-rules.js?v=10101019"></script>
+<script src="web-text-ui.js?v=10101019"></script>
+<script src="applied-audit.js?v=10101019"></script>
+<script src="applied-audit-ui.js?v=10101019"></script>
+<script src="recommendation-routing.js?v=10101019"></script>
+<script src="live-insights.js?v=10101019"></script>
+<script src="navigation-guard.js?v=10101019"></script>
 </body>
 </html>
 <!-- GitHub Pages deploy trigger: v10.1008.03 -->

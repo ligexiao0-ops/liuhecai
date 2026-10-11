@@ -5,11 +5,12 @@ from collect_website_text import plain,read
 ROOT=Path(__file__).resolve().parents[1]
 URLS=['https://zzyymm49347.490151gg.app:8450/ok.html','https://nttlbzlsfq.18149fj.app:3082/18149.html','https://yyaaff018899.49018899gg.app:8450/ok.html','https://juyhgt28888.28888b.app:8445/ok.html']
 def collect(item):
- i,url=item;origin=url;result={'source':chr(65+i),'url':url,'entries':[]}
+ i,url=item;origin=url;url='https://gggds8f2sdjss1s48hld0us5k9d5k.ai49gg65gshd5k6s7k8xha9.kediups.com/html/index.html' if i==1 else url;result={'source':chr(65+i),'url':origin,'entries':[]}
  try:
   for depth in range(7):
    s=read(url)
    if re.search('<title>Security</title>',s,re.I):raise RuntimeError('安全校验页，未取得资料正文')
+   if '新澳门精品站点' in plain(s) and re.search(r'特围.{0,8}码',plain(s)):break
    m=re.search(r"null,'([0-9A-Za-z]+)'",s)
    if m:
     decoded=''.join(chr(int(n)) for n in re.split('[A-Za-z]+',m.group(1)) if n)
