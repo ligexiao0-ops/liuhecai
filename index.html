@@ -11700,7 +11700,7 @@ function renderBacktestSummary(bt){
  h+='<article class="formula-family"><b>'+sec.icon+' '+sec.name+'</b> <span class="'+(sec.hit===sec.total?'good':sec.hit===0?'bad':'warn')+'">上期 '+sec.hit+'/'+sec.total+'条准</span>';
  if(family&&family.stats.n)h+='<small class="muted"> 历史逐公式 '+family.stats.h+'/'+family.stats.n+' = '+(100*family.stats.h/family.stats.n).toFixed(1)+'%（非整组全中率）</small>';
  else h+='<small class="muted"> 本栏仅展示该期核对，不把该期比例当历史准确率</small>';
- if(family&&family.current.length)h+='<details'+(family.current.length<=4?' open':'')+'><summary class="good">'+latest.p+'→'+(latest.p+1)+'期具体候选</summary>'+family.current.map(function(r){return '<div><small>'+r.label+'</small><div>'+(typeof CandidateDisplay!=='undefined'?CandidateDisplay.pool(r.pool):r.pool.join('、'))+'</div>'+PracticalActions.buttons(r.pool,r.game||'te','公式当前·'+r.label,r.action||'track')+'</div>';}).join('')+'</details>';
+ if(family&&family.current.length)h+='<details'+(family.current.length<=4?' open':'')+'><summary class="good">'+latest.p+'→'+(latest.p+1)+'期具体候选</summary>'+family.current.map(function(r){return '<div><small>'+r.label+'</small><div>'+(typeof CandidateDisplay!=='undefined'?CandidateDisplay.summary(r.pool):r.pool.join('、'))+'</div>'+PracticalActions.buttons(r.pool,r.game||'te','公式当前·'+r.label,r.action||'track')+'</div>';}).join('')+'</details>';
  h+='<details><summary>复盘 '+prev.p+'→'+latest.p+'期 · 逐条准错</summary>'+(sec.items||[]).map(function(it){return '<p class="'+(it.hit?'good':'bad')+'">'+(it.hit?'✓ 准':'✗ 错')+' · '+it.trigger+' → '+it.pred+' · '+it.actual+'</p>';}).join('')+'</details></article>';
  });return h+'</section>';
 }
@@ -17432,14 +17432,14 @@ function renderZ3(){
   var exclCnt49=scSorted.filter(function(x){return x.s<=-8;}).length; // 被强排除(-999)或被大幅降权的号码数
   var top3Nums=scSorted.slice(0,3).map(function(x){return x.n;});
   // 折叠面板：默认展开
-  h+='<details open style="margin-top:8px;border:2px solid #1a6baa;border-radius:6px;background:#f4f9ff">'+
+  h+='<details style="margin-top:8px;border:2px solid #1a6baa;border-radius:6px;background:#f4f9ff">'+
      '<summary style="cursor:pointer;padding:6px 8px;font-weight:bold;font-size:11px;color:#1a6baa;background:#e8f1fb">📊 全49码评分排名（你的筛选后）'+
-     '<span style="font-size:9px;color:#888;font-weight:normal">　点击收起/展开 ｜ 已排除 '+exclCnt49+' 码</span></summary>'+
+     '<span style="font-size:9px;color:#888;font-weight:normal">　点击展开/收起 ｜ 已排除 '+exclCnt49+' 码</span></summary>'+
      '<div style="padding:6px;font-size:9px;color:#555;background:#fff">'+
      '<b>说明：</b>此表用 <b>scoreZheng（含你的全部筛选设置）</b>，反映真实可出号码。'+
      '标红=被排除/大幅降权，标绿=连肖TOP8生肖内号码，⭐=TOP3。已出/未出、100期冷热、±3尾数、1-2期关联均计入。'+
      '</div>'+
-     '<div style="overflow-x:auto"><table>'+
+     '<div style="overflow-x:auto"><table class="compact-normal-rank">'+
      '<tr><th>排名</th><th>号</th><th>肖</th><th>五行</th><th>尾</th><th>100期出次</th><th>当前遗漏</th><th>近6期</th><th>连肖TOP8</th><th>±3尾数</th><th>评分</th><th>加减分明细</th></tr>';
   scSorted.forEach(function(it,idx){
     var z2=ZM2[it.n]||0,zc49=Z100[it.n]||0;
@@ -20796,43 +20796,43 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10101023"></script>
-<script src="discovery-ui.js?v=10101023"></script>
-<script src="reference-rules.js?v=10101023"></script>
-<script src="reference-system.js?v=10101023"></script>
-<script src="prediction-review.js?v=10101023"></script>
-<script src="candidate-display.js?v=10101023"></script>
-<script src="practical-actions.js?v=10101023"></script>
-<script src="practice-engine.js?v=10101023"></script>
-<script src="formula-audit.js?v=10101023"></script>
-<script src="formula-signals.js?v=10101023"></script>
-<script src="practice-ui.js?v=10101023"></script>
-<script src="discovery-engine.js?v=10101023"></script>
-<script src="transition-audit.js?v=10101023"></script>
-<script src="transition-audit-ui.js?v=10101023"></script>
-<script src="history-profile.js?v=10101023"></script>
-<script src="history-profile-ui.js?v=10101023"></script>
-<script src="file-rules.js?v=10101023"></script>
-<script src="file-rules-ui.js?v=10101023"></script>
-<script src="range-audit.js?v=10101023"></script>
-<script src="range-audit-ui.js?v=10101023"></script>
-<script src="image-formula-audit.js?v=10101023"></script>
-<script src="image-formula-audit-ui.js?v=10101023"></script>
-<script src="traditional-audit.js?v=10101023"></script>
-<script src="traditional-audit-ui.js?v=10101023"></script>
-<script src="heat-practice.js?v=10101023"></script>
-<script src="heat-practice-ui.js?v=10101023"></script>
-<script src="prediction-review-ui.js?v=10101023"></script>
-<script src="image-batch.js?v=10101023"></script>
-<script src="source-intersection.js?v=10101023"></script>
-<script src="manual-entry-ui.js?v=10101023"></script>
-<script src="web-text-rules.js?v=10101023"></script>
-<script src="web-text-ui.js?v=10101023"></script>
-<script src="applied-audit.js?v=10101023"></script>
-<script src="applied-audit-ui.js?v=10101023"></script>
-<script src="recommendation-routing.js?v=10101023"></script>
-<script src="live-insights.js?v=10101023"></script>
-<script src="navigation-guard.js?v=10101023"></script>
+<script src="analytics-v1008-01.js?v=10101024"></script>
+<script src="discovery-ui.js?v=10101024"></script>
+<script src="reference-rules.js?v=10101024"></script>
+<script src="reference-system.js?v=10101024"></script>
+<script src="prediction-review.js?v=10101024"></script>
+<script src="candidate-display.js?v=10101024"></script>
+<script src="practical-actions.js?v=10101024"></script>
+<script src="practice-engine.js?v=10101024"></script>
+<script src="formula-audit.js?v=10101024"></script>
+<script src="formula-signals.js?v=10101024"></script>
+<script src="practice-ui.js?v=10101024"></script>
+<script src="discovery-engine.js?v=10101024"></script>
+<script src="transition-audit.js?v=10101024"></script>
+<script src="transition-audit-ui.js?v=10101024"></script>
+<script src="history-profile.js?v=10101024"></script>
+<script src="history-profile-ui.js?v=10101024"></script>
+<script src="file-rules.js?v=10101024"></script>
+<script src="file-rules-ui.js?v=10101024"></script>
+<script src="range-audit.js?v=10101024"></script>
+<script src="range-audit-ui.js?v=10101024"></script>
+<script src="image-formula-audit.js?v=10101024"></script>
+<script src="image-formula-audit-ui.js?v=10101024"></script>
+<script src="traditional-audit.js?v=10101024"></script>
+<script src="traditional-audit-ui.js?v=10101024"></script>
+<script src="heat-practice.js?v=10101024"></script>
+<script src="heat-practice-ui.js?v=10101024"></script>
+<script src="prediction-review-ui.js?v=10101024"></script>
+<script src="image-batch.js?v=10101024"></script>
+<script src="source-intersection.js?v=10101024"></script>
+<script src="manual-entry-ui.js?v=10101024"></script>
+<script src="web-text-rules.js?v=10101024"></script>
+<script src="web-text-ui.js?v=10101024"></script>
+<script src="applied-audit.js?v=10101024"></script>
+<script src="applied-audit-ui.js?v=10101024"></script>
+<script src="recommendation-routing.js?v=10101024"></script>
+<script src="live-insights.js?v=10101024"></script>
+<script src="navigation-guard.js?v=10101024"></script>
 </body>
 </html>
 <!-- GitHub Pages deploy trigger: v10.1008.03 -->
