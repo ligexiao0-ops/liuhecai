@@ -1,5 +1,5 @@
 """Collect the three user-selected public sources; report unavailable data explicitly."""
-import concurrent.futures,datetime,json,re,urllib.parse
+import concurrent.futures,datetime,json,re,urllib.parse,unicodedata
 from pathlib import Path
 from collect_website_text import plain,read
 ROOT=Path(__file__).resolve().parents[1]
@@ -10,6 +10,7 @@ def collect(item):
   for depth in range(7):
    s=read(url)
    if re.search('<title>Security</title>',s,re.I):raise RuntimeError('安全校验页，未取得资料正文')
+   if i==2 and '平特一肖' in plain(s) and '码中特' in plain(s):break
    if '新澳门精品站点' in plain(s) and re.search(r'特围.{0,8}码',plain(s)):break
    m=re.search(r"null,'([0-9A-Za-z]+)'",s)
    if m:
@@ -22,12 +23,12 @@ def collect(item):
     script=read(urllib.parse.urljoin(url,'/js/home.js'));f=re.search(r"var url\s*=\s*'([^']+)'",script)
     if f:url=urllib.parse.urljoin(url,f[1]);continue
    break
-  t=plain(s);result['text']=t;result['resolvedUrl']=url
+  t=unicodedata.normalize('NFKC',plain(s));result['text']=t;result['resolvedUrl']=url
   if '新澳门精品站点' in t:lot='xa'
   elif i==2 and urllib.parse.urlparse(origin).hostname=='yfc3vz6y.blancaihemnt892.com':lot='xa' # Root navigation explicitly labels current new-Macau material.
   else:lot=None
   # Numeric-only continuation lines, never include printed draw results or period digits.
-  for m in re.finditer(r'(\d{1,3})期[^\n]*?(?:特围|精选|围特)?(\d{1,2})码[^\n]*\n((?:[ \t]*[\d.,，、]+[ \t]*\r?\n)+)',t):
+  for m in re.finditer(r'(\d{1,3})期[^\n]*?(?:特围|精选|围特)?(\d{1,2})码[^\n]*\n((?:[ \t]*[()\[\]【】\d.,，、]+[ \t]*\r?\n)+)',t):
    ns=sorted(set(int(n) for n in re.findall(r'\d+',m[3]) if 1<=int(n)<=49))
    if ns and len(ns)==int(m[2]) and lot:result['entries'].append({'lot':lot,'period':int(m[1]),'game':'te','label':m[2]+'码范围','pool':ns,'source':result['source'],'url':origin,'retrospective':True})
   if i==2 and lot:
