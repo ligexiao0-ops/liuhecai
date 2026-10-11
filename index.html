@@ -10984,11 +10984,11 @@ function buildVerifiedFormulaBlock(){
       // 上期准否标注
       if(z2zLastHit){
         var z2zlhBg=z2zLastHit.ok?'#d4edda':'#f8d7da';
-        var z2zlhIcon=z2zLastHit.ok?'✅ 上期命中':'❌ 上期未命中';
+        var z2zlhIcon=z2zLastHit.ok?'✅ 复盘命中':'❌ 复盘未命中';
         var z2zlhColor=z2zLastHit.ok?'#27ae60':'#c0392b';
-        h+=' <span style="font-size:10px;background:'+z2zlhBg+';color:'+z2zlhColor+';padding:2px 6px;border-radius:4px;font-weight:bold">'+z2zlhIcon+' ('+z2zLastHit.fromZod+'→'+z2zLastHit.preds.join('/')+' 实际:'+z2zLastHit.actual+')</span>';
+        h+=' <span style="font-size:10px;background:'+z2zlhBg+';color:'+z2zlhColor+';padding:2px 6px;border-radius:4px;font-weight:bold">'+z2zlhIcon+' ('+'第'+DR[DR.length-2].p+'期 '+z2zLastHit.fromZod+'→第'+DR[DR.length-1].p+'期 '+z2zLastHit.preds.join('/')+' 实际:'+z2zLastHit.actual+')</span>';
       }
-      h+='<br><span style="font-size:10px;color:#333">上期特肖='+zod+' → 下期必出特肖: '+z2zPred.join('、')+'</span>';
+      h+='<br><span style="font-size:10px;color:#333">本期预测依据第'+LAST.p+'期特肖='+zod+' → 第'+(LAST.p+1)+'期候选特肖: '+z2zPred.join('、')+'</span>';
       // 列出这些生肖对应的所有号码
       var z2zNums=[];
       z2zPred.forEach(function(z){z2zNums=z2zNums.concat(ZM[z]||[]);});
@@ -11528,7 +11528,7 @@ function backtestAllFormulas(newDraw){
   var z2zPred=VF_ZOD_TO_TEZOD[prevZod];
   if(z2zPred){
     var z2zHit=z2zPred.indexOf(gz(latest.t))>=0;
-    z2zSection.items.push({trigger:'上期特肖='+prevZod,pred:'下期必出: '+z2zPred.join(''),actual:'下期特肖='+gz(latest.t)+(z2zHit?' ✅':' ❌'),hit:z2zHit});
+    z2zSection.items.push({trigger:'复盘依据第'+prev.p+'期特肖='+prevZod,pred:'核对第'+latest.p+'期候选: '+z2zPred.join(''),actual:'第'+latest.p+'期实际特肖='+gz(latest.t)+(z2zHit?' ✅':' ❌'),hit:z2zHit});
     z2zSection.total=1;z2zSection.hit=(z2zHit?1:0);
   }
   bt.sections.push(z2zSection);
@@ -11696,7 +11696,7 @@ function renderBacktestSummary(bt){
   var h='<div style="margin-top:8px;padding:10px;background:#f5f0ff;border-radius:8px;border:2px solid #7c4dff">';
   // 标题
   h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-  h+='<b style="font-size:14px;color:#4a148c">🔄 公式反推理总结（第'+latest.p+'期 vs 上期第'+prev.p+'期）</b>';
+  h+='<b style="font-size:14px;color:#4a148c">🔄 已开奖复盘，非下期预测（第'+latest.p+'期 vs 上期第'+prev.p+'期）</b>';
   var or=bt.overallRate;
   var orColor=or>=70?'#27ae60':or>=50?'#f39c12':'#c0392b';
   h+='<span style="font-size:12px;font-weight:bold;color:'+orColor+';background:#fff;padding:3px 10px;border-radius:12px">总体命中率: '+or+'% ('+bt.totalHits+'/'+bt.totalTests+')</span>';
@@ -20868,41 +20868,41 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10101017"></script>
-<script src="discovery-ui.js?v=10101017"></script>
-<script src="reference-rules.js?v=10101017"></script>
-<script src="reference-system.js?v=10101017"></script>
-<script src="prediction-review.js?v=10101017"></script>
-<script src="practical-actions.js?v=10101017"></script>
-<script src="practice-engine.js?v=10101017"></script>
-<script src="formula-signals.js?v=10101017"></script>
-<script src="practice-ui.js?v=10101017"></script>
-<script src="discovery-engine.js?v=10101017"></script>
-<script src="transition-audit.js?v=10101017"></script>
-<script src="transition-audit-ui.js?v=10101017"></script>
-<script src="history-profile.js?v=10101017"></script>
-<script src="history-profile-ui.js?v=10101017"></script>
-<script src="file-rules.js?v=10101017"></script>
-<script src="file-rules-ui.js?v=10101017"></script>
-<script src="range-audit.js?v=10101017"></script>
-<script src="range-audit-ui.js?v=10101017"></script>
-<script src="image-formula-audit.js?v=10101017"></script>
-<script src="image-formula-audit-ui.js?v=10101017"></script>
-<script src="traditional-audit.js?v=10101017"></script>
-<script src="traditional-audit-ui.js?v=10101017"></script>
-<script src="heat-practice.js?v=10101017"></script>
-<script src="heat-practice-ui.js?v=10101017"></script>
-<script src="prediction-review-ui.js?v=10101017"></script>
-<script src="image-batch.js?v=10101017"></script>
-<script src="source-intersection.js?v=10101017"></script>
-<script src="manual-entry-ui.js?v=10101017"></script>
-<script src="web-text-rules.js?v=10101017"></script>
-<script src="web-text-ui.js?v=10101017"></script>
-<script src="applied-audit.js?v=10101017"></script>
-<script src="applied-audit-ui.js?v=10101017"></script>
-<script src="recommendation-routing.js?v=10101017"></script>
-<script src="live-insights.js?v=10101017"></script>
-<script src="navigation-guard.js?v=10101017"></script>
+<script src="analytics-v1008-01.js?v=10101018"></script>
+<script src="discovery-ui.js?v=10101018"></script>
+<script src="reference-rules.js?v=10101018"></script>
+<script src="reference-system.js?v=10101018"></script>
+<script src="prediction-review.js?v=10101018"></script>
+<script src="practical-actions.js?v=10101018"></script>
+<script src="practice-engine.js?v=10101018"></script>
+<script src="formula-signals.js?v=10101018"></script>
+<script src="practice-ui.js?v=10101018"></script>
+<script src="discovery-engine.js?v=10101018"></script>
+<script src="transition-audit.js?v=10101018"></script>
+<script src="transition-audit-ui.js?v=10101018"></script>
+<script src="history-profile.js?v=10101018"></script>
+<script src="history-profile-ui.js?v=10101018"></script>
+<script src="file-rules.js?v=10101018"></script>
+<script src="file-rules-ui.js?v=10101018"></script>
+<script src="range-audit.js?v=10101018"></script>
+<script src="range-audit-ui.js?v=10101018"></script>
+<script src="image-formula-audit.js?v=10101018"></script>
+<script src="image-formula-audit-ui.js?v=10101018"></script>
+<script src="traditional-audit.js?v=10101018"></script>
+<script src="traditional-audit-ui.js?v=10101018"></script>
+<script src="heat-practice.js?v=10101018"></script>
+<script src="heat-practice-ui.js?v=10101018"></script>
+<script src="prediction-review-ui.js?v=10101018"></script>
+<script src="image-batch.js?v=10101018"></script>
+<script src="source-intersection.js?v=10101018"></script>
+<script src="manual-entry-ui.js?v=10101018"></script>
+<script src="web-text-rules.js?v=10101018"></script>
+<script src="web-text-ui.js?v=10101018"></script>
+<script src="applied-audit.js?v=10101018"></script>
+<script src="applied-audit-ui.js?v=10101018"></script>
+<script src="recommendation-routing.js?v=10101018"></script>
+<script src="live-insights.js?v=10101018"></script>
+<script src="navigation-guard.js?v=10101018"></script>
 </body>
 </html>
 <!-- GitHub Pages deploy trigger: v10.1008.03 -->

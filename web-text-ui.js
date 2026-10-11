@@ -10,7 +10,7 @@ async function cached(u,lot,target){
  const cache=await r.json(),source=(cache.sources||[]).find(s=>key(s.url)===key(u)||key(s.resolvedUrl)===key(u));
  if(!source)return null;
  const entries=(source.entries||[]).filter(x=>x.lot===lot),matched=entries.filter(x=>+x.period===+target);
- if(!matched.length){const periods=[...new Set(entries.map(x=>x.period))].sort((a,b)=>a-b);throw Error(periods.length?'来源'+source.source+'已有第'+periods.join('、')+'期资料，但第'+target+'期暂无可提取资料；不会用旧期资料代替':'来源'+source.source+'采集端未取得正文（'+(source.status||'未知原因')+'）。浏览器可打开不代表采集端获得同样内容');}
+ if(!matched.length){const blocks=String(source.text||'').split(/(?=\d{1,3}期)/).filter(b=>new RegExp('^'+target+'期').test(b));if(blocks.some(b=>/(?:00[\s.,，、]*){6,}/.test(b)))return {text:target+'期：待网站更新（全00占位）',results:[],status:'第'+target+'期全00是待更新占位，网址尚未发布号码；不计失败、不用旧期替代。'};const periods=[...new Set(entries.map(x=>x.period))].sort((a,b)=>a-b);throw Error(periods.length?'来源'+source.source+'已有第'+periods.join('、')+'期资料，但第'+target+'期暂无可提取资料；不会用旧期资料代替':'来源'+source.source+'采集端未取得正文（'+(source.status||'未知原因')+'）。浏览器可打开不代表采集端获得同样内容');}
  return {text:source.text||matched.map(x=>x.period+'期：'+x.label+'【'+x.pool.join('、')+'】').join('\n'),results:matched.map(x=>({period:+x.period,label:x.label,kind:x.game==='lx'?'生肖':'号码',values:x.pool,game:x.game,action:x.action||'track'})),status:'已提取来源'+source.source+' 第'+target+'期 '+matched.length+'组；云端快照 '+(source.capturedAt||cache.capturedAt)+'，请核对期数。'+(source.lastAttemptStatus?' 最近重新采集未成功，保留旧快照。':'')};
 }
 document.addEventListener('click',async e=>{
@@ -31,7 +31,7 @@ document.addEventListener('click',async e=>{
  finally{clearTimeout(timer);}
  }
  if(CUR_LOT!==lot){message('读取期间切换了彩种，本次结果未应用；请在对应彩种重新读取。');return;}
- results=data.results;text=results.map(r=>r.period+'期：'+r.label+'【'+r.values.join('、')+'】').join('\n');update();message(data.status+(results.length?'':'；该期未发现可提取资料'));
+ results=data.results;text=results.map(r=>r.period+'期：'+r.label+'【'+r.values.join('、')+'】').join('\n');update();message(data.status+(results.length||/待更新/.test(data.status)?'':'；该期未发现可提取资料'));
  }catch(err){message('读取／提取失败：'+err.message+'。可粘贴网页文字后提取。');try{update();}catch(_){}if(typeof showClickFeedback==='function')showClickFeedback('读取未成功，请查看网址下方原因');}
  finally{busy=false;}
 });
