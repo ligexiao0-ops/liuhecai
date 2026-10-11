@@ -8333,141 +8333,8 @@ function renderTeAnalysis(){
 
 // ===== 生肖连续/断开统计（热力图法）=====
 function renderZodStreak(){
-  if(DR.length<3)return '';
-  var showN=Math.min(DR.length,30);
-  var startIdx=DR.length-showN;
-  var periods=DR.slice(startIdx);
-
-  var zodData={};
-  ZODS.forEach(function(z){
-    zodData[z]={appearances:[],streak:0,maxStreak:0,maxBreak:0,curBreak:0,totalApp:0};
-  });
-
-  DR.forEach(function(d,i){
-    var allNums=[].concat(d.n,[d.t]);
-    var zodsInPeriod=Array.from(new Set(allNums.map(gz)));
-    ZODS.forEach(function(z){
-      var appeared=zodsInPeriod.indexOf(z)>=0;
-      if(i>=startIdx)zodData[z].appearances.push({p:d.p,app:appeared});
-      if(appeared){
-        zodData[z].streak++;
-        zodData[z].curBreak=0;
-        if(zodData[z].streak>zodData[z].maxStreak)zodData[z].maxStreak=zodData[z].streak;
-        zodData[z].totalApp++;
-      }else{
-        zodData[z].streak=0;
-        zodData[z].curBreak++;
-        if(zodData[z].curBreak>zodData[z].maxBreak)zodData[z].maxBreak=zodData[z].curBreak;
-      }
-    });
-  });
-
-  // 计算每个生肖当前连续出现期数（从最近一期往前数）
-  ZODS.forEach(function(z){
-    var zd=zodData[z];
-    zd.curStreak=0;
-    for(var ai=zd.appearances.length-1;ai>=0;ai--){
-      if(zd.appearances[ai].app)zd.curStreak++;
-      else break;
-    }
-  });
-
-  var h='<div class="sec-title">🔤 生肖连续/断开统计（热力图·近'+showN+'期）</div>';
-  h+='<div class="card" style="background:#f8f9fa;border:2px solid #3498db;margin-top:6px">'+
-     '<div style="font-size:10px;color:#555;margin-bottom:6px;line-height:1.6">'+
-     '<b>说明：</b>每行=1个生肖，每列=1期。<span style="background:#2ecc71;color:#fff;padding:1px 4px;border-radius:3px">绿■</span>=出现，<span style="background:#e0e0e0;color:#999;padding:1px 4px;border-radius:3px">灰□</span>=未出。'+
-     '右侧柱状图=出现频率(全'+showN+'期)。<b style="color:#e74c3c">红</b>底=当前断开≥5期，<b style="color:#e67e22">橙</b>底=断开3-4期。</div>';
-
-  // 找最大出现次数用于柱状图比例
-  var maxApp=Math.max.apply(null,ZODS.map(function(z){return zodData[z].totalApp;}));
-
-  // 表格主体
-  h+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:9px;min-width:700px">'+
-     '<thead><tr style="background:#3498db;color:#fff">'+
-     '<th style="padding:4px;border:1px solid #2980b9;white-space:nowrap">生肖</th>'+
-     '<th style="padding:4px;border:1px solid #2980b9">总次</th>'+
-     '<th style="padding:4px;border:1px solid #2980b9">频率</th>'+
-     '<th style="padding:4px;border:1px solid #2980b9">最长连</th>'+
-     '<th style="padding:4px;border:1px solid #2980b9">当前连</th>'+
-     '<th style="padding:4px;border:1px solid #2980b9">当前断</th>'+
-     '<th style="padding:4px;border:1px solid #2980b9">最长断</th>'+
-     '<th style="padding:4px;border:1px solid #2980b9">近'+showN+'期热力走势（■=出现 □=未出）</th>'+
-     '<th style="padding:4px;border:1px solid #2980b9;white-space:nowrap">操作</th>'+
-     '<th style="padding:4px;border:1px solid #2980b9;white-space:nowrap">生肖</th>'+
-     '</tr></thead><tbody>';
-
-  var sortedZods=ZODS.slice().sort(function(a,b){
-    return zodData[b].totalApp-zodData[a].totalApp;
-  });
-
-  sortedZods.forEach(function(z,idx){
-    var zd=zodData[z];
-    var pct=Math.round(zd.totalApp/showN*100);
-    var barW=Math.max(2,Math.round(zd.totalApp/maxApp*100));
-    var rowBg=zd.curBreak>=5?'#fff0f0':zd.curBreak>=3?'#fff8e1':(idx%2?'#fff':'#f0f7ff');
-    var curBreakColor=zd.curBreak>=8?'#c0392b':zd.curBreak>=5?'#e67e22':zd.curBreak>=3?'#f39c12':'#1e8449';
-    var maxStreakColor=zd.maxStreak>=4?'#c0392b':zd.maxStreak>=3?'#e67e22':'#555';
-
-    var curStreakColor=zd.curStreak>=3?'#c0392b':zd.curStreak>=2?'#e67e22':'#1e8449';
-    var curStreakText=zd.curStreak>=1?zd.curStreak+'连出':'0连出';
-
-    h+='<tr style="background:'+rowBg+'">'+
-       '<td style="padding:3px;border:1px solid #ddd;text-align:center;font-weight:bold;white-space:nowrap">'+
-       '<span style="font-size:14px">'+EMJ[z]+'</span> '+z+'</td>'+
-       '<td style="padding:3px;border:1px solid #ddd;text-align:center;font-weight:bold;font-size:12px;color:#2c3e50">'+zd.totalApp+'</td>'+
-       '<td style="padding:3px;border:1px solid #ddd;text-align:center;min-width:80px">'+
-         '<div style="display:flex;align-items:center;gap:3px;justify-content:center">'+
-         '<div style="background:linear-gradient(90deg,#2ecc71,#27ae60);height:12px;border-radius:3px;width:'+barW+'px" title="'+zd.totalApp+'次"></div>'+
-         '<span style="font-size:8px;color:#666">'+pct+'%</span></div></td>'+
-       '<td style="padding:3px;border:1px solid #ddd;text-align:center;color:'+maxStreakColor+';font-weight:bold">'+zd.maxStreak+'连</td>'+
-       '<td style="padding:3px;border:1px solid #ddd;text-align:center;color:'+curStreakColor+';font-weight:bold">'+curStreakText+'</td>'+
-       '<td style="padding:3px;border:1px solid #ddd;text-align:center;color:'+curBreakColor+';font-weight:bold">'+zd.curBreak+'期</td>'+
-       '<td style="padding:3px;border:1px solid #ddd;text-align:center;color:#7f8c8d">'+zd.maxBreak+'期</td>'+
-       '<td style="padding:3px;border:1px solid #ddd">';
-
-    // 热力图走势：带连续数字标注
-    var runLen=0;
-    zd.appearances.forEach(function(a){
-      if(a.app){runLen++;}else{runLen=0;}
-      if(a.app){
-        var showNum=runLen>=2?runLen:'';
-        h+='<span style="display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;background:#2ecc71;color:#fff;border-radius:2px;font-size:'+(showNum?'7px':'8px')+';margin:1px;vertical-align:middle;font-weight:bold" title="'+a.p+'期: '+z+'出现'+(showNum?' (连续'+runLen+'期)':'')+'">'+(showNum||'■')+'</span>';
-      }else{
-        h+='<span style="display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;background:#eee;color:#ccc;border-radius:2px;font-size:8px;margin:1px;vertical-align:middle" title="'+a.p+'期: 未出">□</span>';
-      }
-    });
-    h+='</td>'+
-       '<td style="padding:3px;border:1px solid #ddd;text-align:center;white-space:nowrap">'+
-         '<button class="btn" style="font-size:8px;padding:1px 4px;background:'+(UP.lx_force_zods&&UP.lx_force_zods.indexOf(z)>=0?'#27ae60':'#e8f5e9')+';color:'+(UP.lx_force_zods&&UP.lx_force_zods.indexOf(z)>=0?'#fff':'#27ae60')+';border:1px solid #27ae60;border-radius:3px;margin:1px;cursor:pointer" data-action="heatPickZod" data-zod="'+z+'" title="加入连肖必含">'+(UP.lx_force_zods&&UP.lx_force_zods.indexOf(z)>=0?'✓':'⚡')+'选</button> '+
-         '<button class="btn" style="font-size:8px;padding:1px 4px;background:'+(UP.lx_excl_zods&&UP.lx_excl_zods.indexOf(z)>=0?'#c0392b':'#fdf2f2')+';color:'+(UP.lx_excl_zods&&UP.lx_excl_zods.indexOf(z)>=0?'#fff':'#c0392b')+';border:1px solid #c0392b;border-radius:3px;margin:1px;cursor:pointer" data-action="heatExclZod" data-zod="'+z+'" title="加入连肖排除">'+(UP.lx_excl_zods&&UP.lx_excl_zods.indexOf(z)>=0?'✓':'🚫')+'连肖排</button>'+
-       '</td>'+
-       '<td style="padding:3px;border:1px solid #ddd;text-align:center;font-weight:bold;white-space:nowrap">'+
-       '<span style="font-size:14px">'+EMJ[z]+'</span> '+z+'</td></tr>';
-  });
-
-  h+='</tbody></table></div>';
-
-  // 统计总结
-  var hotZods=sortedZods.filter(function(z){return zodData[z].curBreak<=2&&zodData[z].totalApp>=3;});
-  var coldZods=sortedZods.filter(function(z){return zodData[z].curBreak>=6;});
-  var readyZods=sortedZods.filter(function(z){return zodData[z].curBreak>=4&&zodData[z].curBreak<=8;});
-
-  h+='<div style="margin-top:6px;font-size:10px;line-height:1.8">';
-  if(hotZods.length>0)h+='<div>🔥 <b>近期热门</b>（当前断开≤2期）：'+hotZods.map(function(z){return EMJ[z]+z+'(断'+zodData[z].curBreak+'期)';}).join('、')+'</div>';
-  if(readyZods.length>0)h+='<div>⏰ <b>回补关注</b>（断开4-8期，可能即将出）：'+readyZods.map(function(z){return EMJ[z]+z+'(断'+zodData[z].curBreak+'期)';}).join('、')+'</div>';
-  if(coldZods.length>0)h+='<div>❄️ <b>超冷门</b>（断开≥9期）：'+coldZods.map(function(z){return EMJ[z]+z+'(断'+zodData[z].curBreak+'期)';}).join('、')+'</div>';
-  h+='</div>';
-  // 快捷批量操作
-  h+='<div style="margin-top:8px;padding:8px;background:#e3f2fd;border-radius:6px;border:1px solid #90caf9">'+
-     '<b style="font-size:10px;color:#1565c0">⚡ 快捷操作</b><br>'+
-     '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">'+
-     (hotZods.length>0?'<button class="btn btn-green" data-action="heatBatchPick" data-zods="'+hotZods.join(',')+'" style="font-size:9px;padding:3px 8px">🔥热门全选入连肖</button>':'')+
-     (readyZods.length>0?'<button class="btn btn-blue" data-action="heatBatchPick" data-zods="'+readyZods.join(',')+'" style="font-size:9px;padding:3px 8px">⏰回补全选入连肖</button>':'')+
-     (coldZods.length>0?'<button class="btn" data-action="heatBatchExcl" data-zods="'+coldZods.join(',')+'" style="font-size:9px;padding:3px 8px;background:#c0392b;color:#fff">❄️冷门加入连肖排除</button>':'')+
-     '<button class="btn btn-gray" data-action="clearPrefs" data-keys="lx_force_zods|lx_excl_zods" style="font-size:9px;padding:3px 8px">🔄清空连肖选择</button>'+
-     '</div></div></div>';
-
-  return h;
+ if(!DR.length)return '';const end=DR.at(-1).p;const data=ZODS.map(z=>{const has=r=>r.n.concat(r.t).some(n=>gz(n)===z);let on=0,off=0;for(let i=DR.length-1;i>=0;i--){if(i<DR.length-1&&DR[i+1].p!==DR[i].p+1)break;if(has(DR[i]))on++;else break;}for(let i=DR.length-1;i>=0;i--){if(i<DR.length-1&&DR[i+1].p!==DR[i].p+1)break;if(!has(DR[i]))off++;else break;}return {z,on,off};});const max=Math.max(1,...data.map(x=>Math.max(x.on,x.off)));
+ return '<section id="zodiac-streak-bars" class="card"><h3>生肖连续出现／未出 · 截至第'+end+'期</h3><p class="muted">绿柱＝当前连续出现，橙柱＝当前连续未出；按6个正码＋1个特码去重统计，不跨缺期。数字为期数。</p><div class="streak-chart" role="img" aria-label="十二生肖连续出现和未出期数柱状图">'+data.map(x=>'<div class="streak-column"><div class="streak-values"><span class="good">'+x.on+'</span> / <span class="warn">'+x.off+'</span></div><div class="streak-pair"><span class="streak-on" style="height:'+Math.round(100*x.on/max)+'px" title="'+x.z+' 连出'+x.on+'期"></span><span class="streak-off" style="height:'+Math.round(100*x.off/max)+'px" title="'+x.z+' 未出'+x.off+'期"></span></div><b>'+x.z+'</b><div><button data-action="heatPickZod" data-zod="'+x.z+'" title="选用连肖">✓</button><button data-action="heatExclZod" data-zod="'+x.z+'" title="排除连肖">⊘</button></div></div>').join('')+'</div><p class="muted">连续出现或未出只是历史统计，不代表下一期必出或必不出。</p></section>';
 }
 
 // ===== Tab: 复盘（含7号码属性对照下期特码属性）=====
@@ -11222,7 +11089,7 @@ function buildVerifiedFormulaBlock(){
   // === 正码平码尾数预测（在特码预测区底部展示结果，不占特码栏） ===
   h+='</div>';
   if(typeof FormulaSignals!=='undefined')h+='</details>';
-  return h;
+  return h.replace(/上期(准|错|命中|未命中|未准|未触发)/g,'核对第'+LAST.p+'期：$1');
 }
 function applyVfExcl(type,val){
   if(!UP.te_excl_nums)UP.te_excl_nums=[];
@@ -20796,43 +20663,47 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10101025"></script>
-<script src="discovery-ui.js?v=10101025"></script>
-<script src="reference-rules.js?v=10101025"></script>
-<script src="reference-system.js?v=10101025"></script>
-<script src="prediction-review.js?v=10101025"></script>
-<script src="candidate-display.js?v=10101025"></script>
-<script src="practical-actions.js?v=10101025"></script>
-<script src="practice-engine.js?v=10101025"></script>
-<script src="formula-audit.js?v=10101025"></script>
-<script src="formula-signals.js?v=10101025"></script>
-<script src="practice-ui.js?v=10101025"></script>
-<script src="discovery-engine.js?v=10101025"></script>
-<script src="transition-audit.js?v=10101025"></script>
-<script src="transition-audit-ui.js?v=10101025"></script>
-<script src="history-profile.js?v=10101025"></script>
-<script src="history-profile-ui.js?v=10101025"></script>
-<script src="file-rules.js?v=10101025"></script>
-<script src="file-rules-ui.js?v=10101025"></script>
-<script src="range-audit.js?v=10101025"></script>
-<script src="range-audit-ui.js?v=10101025"></script>
-<script src="image-formula-audit.js?v=10101025"></script>
-<script src="image-formula-audit-ui.js?v=10101025"></script>
-<script src="traditional-audit.js?v=10101025"></script>
-<script src="traditional-audit-ui.js?v=10101025"></script>
-<script src="heat-practice.js?v=10101025"></script>
-<script src="heat-practice-ui.js?v=10101025"></script>
-<script src="prediction-review-ui.js?v=10101025"></script>
-<script src="image-batch.js?v=10101025"></script>
-<script src="source-intersection.js?v=10101025"></script>
-<script src="manual-entry-ui.js?v=10101025"></script>
-<script src="web-text-rules.js?v=10101025"></script>
-<script src="web-text-ui.js?v=10101025"></script>
-<script src="applied-audit.js?v=10101025"></script>
-<script src="applied-audit-ui.js?v=10101025"></script>
-<script src="recommendation-routing.js?v=10101025"></script>
-<script src="live-insights.js?v=10101025"></script>
-<script src="navigation-guard.js?v=10101025"></script>
+<script src="analytics-v1008-01.js?v=10101026"></script>
+<script src="discovery-ui.js?v=10101026"></script>
+<script src="reference-rules.js?v=10101026"></script>
+<script src="reference-system.js?v=10101026"></script>
+<script src="prediction-review.js?v=10101026"></script>
+<script src="candidate-display.js?v=10101026"></script>
+<script src="practical-actions.js?v=10101026"></script>
+<script src="practice-engine.js?v=10101026"></script>
+<script src="formula-audit.js?v=10101026"></script>
+<script src="formula-signals.js?v=10101026"></script>
+<script src="practice-ui.js?v=10101026"></script>
+<script src="discovery-engine.js?v=10101026"></script>
+<script src="transition-audit.js?v=10101026"></script>
+<script src="transition-audit-ui.js?v=10101026"></script>
+<script src="history-profile.js?v=10101026"></script>
+<script src="history-profile-ui.js?v=10101026"></script>
+<script src="file-rules.js?v=10101026"></script>
+<script src="file-rules-ui.js?v=10101026"></script>
+<script src="range-audit.js?v=10101026"></script>
+<script src="range-audit-ui.js?v=10101026"></script>
+<script src="image-formula-audit.js?v=10101026"></script>
+<script src="image-formula-audit-ui.js?v=10101026"></script>
+<script src="traditional-audit.js?v=10101026"></script>
+<script src="traditional-audit-ui.js?v=10101026"></script>
+<script src="heat-practice.js?v=10101026"></script>
+<script src="heat-practice-ui.js?v=10101026"></script>
+<script src="prediction-review-ui.js?v=10101026"></script>
+<script src="image-batch.js?v=10101026"></script>
+<script src="source-intersection.js?v=10101026"></script>
+<script src="manual-entry-ui.js?v=10101026"></script>
+<script src="web-text-rules.js?v=10101026"></script>
+<script src="web-text-ui.js?v=10101026"></script>
+<script src="applied-audit.js?v=10101026"></script>
+<script src="applied-audit-ui.js?v=10101026"></script>
+<script src="recommendation-routing.js?v=10101026"></script>
+<script src="live-insights.js?v=10101026"></script>
+<script src="copy-audit.js?v=10101026"></script>
+<script src="copy-audit-ui.js?v=10101026"></script>
+<script src="random-control.js?v=10101026"></script>
+<script src="random-control-ui.js?v=10101026"></script>
+<script src="navigation-guard.js?v=10101026"></script>
 </body>
 </html>
 <!-- GitHub Pages deploy trigger: v10.1008.03 -->
