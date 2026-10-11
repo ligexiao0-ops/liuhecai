@@ -1,7 +1,7 @@
 name: Refresh website reference text
 on:
   schedule:
-    - cron: '15 0 * * *'
+    - cron: '15 * * * *'
   workflow_dispatch:
 permissions:
   contents: write
@@ -16,6 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 tools/collect_website_text.py
+        continue-on-error: true
       - run: python3 tools/collect_three_sources.py
       - name: Save reference snapshot
         run: |
