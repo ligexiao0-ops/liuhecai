@@ -10746,6 +10746,7 @@ function buildVerifiedFormulaBlock(){
     h+='</div>';
   }
   h+='<div style="font-size:9px;color:#aaa;margin-top:4px">数据来源：新奥32期+老奥29期+港彩14期=76期回测</div>';
+  if(typeof FormulaSignals!=='undefined')h=FormulaSignals.panel()+'<details><summary>其他人工公式与详细验证（展开）</summary>';
   // ===== 落球顺序公式验证 =====
   var dropVF=verifyDropOrderFormulas();
   if(dropVF){
@@ -11219,6 +11220,7 @@ function buildVerifiedFormulaBlock(){
   }
   // === 正码平码尾数预测（在特码预测区底部展示结果，不占特码栏） ===
   h+='</div>';
+  if(typeof FormulaSignals!=='undefined')h+='</details>';
   return h;
 }
 function applyVfExcl(type,val){
@@ -20866,40 +20868,41 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10101016"></script>
-<script src="discovery-ui.js?v=10101016"></script>
-<script src="reference-rules.js?v=10101016"></script>
-<script src="reference-system.js?v=10101016"></script>
-<script src="prediction-review.js?v=10101016"></script>
-<script src="practical-actions.js?v=10101016"></script>
-<script src="practice-engine.js?v=10101016"></script>
-<script src="practice-ui.js?v=10101016"></script>
-<script src="discovery-engine.js?v=10101016"></script>
-<script src="transition-audit.js?v=10101016"></script>
-<script src="transition-audit-ui.js?v=10101016"></script>
-<script src="history-profile.js?v=10101016"></script>
-<script src="history-profile-ui.js?v=10101016"></script>
-<script src="file-rules.js?v=10101016"></script>
-<script src="file-rules-ui.js?v=10101016"></script>
-<script src="range-audit.js?v=10101016"></script>
-<script src="range-audit-ui.js?v=10101016"></script>
-<script src="image-formula-audit.js?v=10101016"></script>
-<script src="image-formula-audit-ui.js?v=10101016"></script>
-<script src="traditional-audit.js?v=10101016"></script>
-<script src="traditional-audit-ui.js?v=10101016"></script>
-<script src="heat-practice.js?v=10101016"></script>
-<script src="heat-practice-ui.js?v=10101016"></script>
-<script src="prediction-review-ui.js?v=10101016"></script>
-<script src="image-batch.js?v=10101016"></script>
-<script src="source-intersection.js?v=10101016"></script>
-<script src="manual-entry-ui.js?v=10101016"></script>
-<script src="web-text-rules.js?v=10101016"></script>
-<script src="web-text-ui.js?v=10101016"></script>
-<script src="applied-audit.js?v=10101016"></script>
-<script src="applied-audit-ui.js?v=10101016"></script>
-<script src="recommendation-routing.js?v=10101016"></script>
-<script src="live-insights.js?v=10101016"></script>
-<script src="navigation-guard.js?v=10101016"></script>
+<script src="analytics-v1008-01.js?v=10101017"></script>
+<script src="discovery-ui.js?v=10101017"></script>
+<script src="reference-rules.js?v=10101017"></script>
+<script src="reference-system.js?v=10101017"></script>
+<script src="prediction-review.js?v=10101017"></script>
+<script src="practical-actions.js?v=10101017"></script>
+<script src="practice-engine.js?v=10101017"></script>
+<script src="formula-signals.js?v=10101017"></script>
+<script src="practice-ui.js?v=10101017"></script>
+<script src="discovery-engine.js?v=10101017"></script>
+<script src="transition-audit.js?v=10101017"></script>
+<script src="transition-audit-ui.js?v=10101017"></script>
+<script src="history-profile.js?v=10101017"></script>
+<script src="history-profile-ui.js?v=10101017"></script>
+<script src="file-rules.js?v=10101017"></script>
+<script src="file-rules-ui.js?v=10101017"></script>
+<script src="range-audit.js?v=10101017"></script>
+<script src="range-audit-ui.js?v=10101017"></script>
+<script src="image-formula-audit.js?v=10101017"></script>
+<script src="image-formula-audit-ui.js?v=10101017"></script>
+<script src="traditional-audit.js?v=10101017"></script>
+<script src="traditional-audit-ui.js?v=10101017"></script>
+<script src="heat-practice.js?v=10101017"></script>
+<script src="heat-practice-ui.js?v=10101017"></script>
+<script src="prediction-review-ui.js?v=10101017"></script>
+<script src="image-batch.js?v=10101017"></script>
+<script src="source-intersection.js?v=10101017"></script>
+<script src="manual-entry-ui.js?v=10101017"></script>
+<script src="web-text-rules.js?v=10101017"></script>
+<script src="web-text-ui.js?v=10101017"></script>
+<script src="applied-audit.js?v=10101017"></script>
+<script src="applied-audit-ui.js?v=10101017"></script>
+<script src="recommendation-routing.js?v=10101017"></script>
+<script src="live-insights.js?v=10101017"></script>
+<script src="navigation-guard.js?v=10101017"></script>
 </body>
 </html>
 <!-- GitHub Pages deploy trigger: v10.1008.03 -->
