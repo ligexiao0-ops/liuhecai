@@ -1,0 +1,4 @@
+(function(root){'use strict';
+function rank(rows,kind='normal',size=3,zod){const counts=new Map();let n=0;for(const row of rows){const a=[...new Set(kind==='zodiac'?row.n.concat(row.t).map(zod):row.n)].sort((x,y)=>String(x).localeCompare(String(y)));n++;function walk(start,p){if(p.length===size){const k=JSON.stringify(p),r=counts.get(k)||{pool:p.slice(),count:0,lastPeriod:null};r.count++;r.lastPeriod=row.p;counts.set(k,r);return;}for(let i=start;i<=a.length-(size-p.length);i++)walk(i+1,p.concat(a[i]));}walk(0,[]);}return [...counts.values()].map(r=>({...r,samples:n,rate:n?r.count/n:0})).sort((a,b)=>b.count-a.count||b.lastPeriod-a.lastPeriod||JSON.stringify(a.pool).localeCompare(JSON.stringify(b.pool)));}
+root.FrequentCombos={rank};if(typeof module!=='undefined')module.exports=root.FrequentCombos;
+})(typeof window==='undefined'?globalThis:window);
