@@ -19,17 +19,17 @@ def parse(s,url,lot,period):
  for block in blocks:
   raw=block[0];t=plain(raw).strip();m=re.match(r'(\d{2,4})期\s*[:：]?\s*(.*)',t,re.S)
   if not m or int(m[1])!=period or len(re.findall(r'\d{2,4}期',t))!=1:continue
-  heading=[v for v in re.findall(r'【([^】]+)】',plain(s[:block.start()])) if re.search('复式|复试|三中|3中|中特|杀|肖|特|尾|波',v)]
+  heading=[v for v in re.findall(r'【([^】]+)】',plain(s[:block.start()])) if re.search('复式|复试|三中|3中|平码|二中二|中特|杀|肖|特|尾|波',v)]
   lines=[v.strip() for v in m[2].splitlines() if v.strip()];title=lines[0];body=' '.join(lines[1:])
-  if not re.search(r'复式|复试|三中|3中|中特|杀|肖|特|尾|波',title):
+  if not re.search(r'复式|复试|三中|3中|平码|二中二|中特|杀|肖|特|尾|波',title):
    if not heading:continue
    title=heading[-1]
-  if not re.search(r'复式|复试|三中|3中|中特|杀|肖|特|尾|波',title):continue
+  if not re.search(r'复式|复试|三中|3中|平码|二中二|中特|杀|肖|特|尾|波',title):continue
   if not body:continue
   key=title+'|'+body
   if key in seen:continue
   seen.add(key)
-  game='z3' if re.search('三中三|3中3',title) else 'z3in2' if '三中二' in title else 'z2' if '二中二' in title else 'lx' if '连肖' in title else 'pt' if '平特' in title else 'te'
+  game='z3' if re.search('三中三|3中3',title) else 'z3in2' if '三中二' in title else 'z2' if '二中二' in title else 'normal' if '平码' in title else 'lx' if '连肖' in title else 'pt' if '平特' in title else 'te'
   # Never count period or printed result as predicted numbers.
   prediction=re.split(r'开[:：]|特开|开奖',body)[0].strip()
   nums=list(dict.fromkeys(int(n) for n in re.findall(r'(?<!\d)\d{1,2}(?!\d)',prediction) if 1<=int(n)<=49))
