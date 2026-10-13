@@ -64,7 +64,7 @@ def main():
    s=read(url);pages={url:s}
    for href,label in re.findall(r'<a\b[^>]*href=["\x27]([^"\x27]+)["\x27][^>]*>(.*?)</a>',s,re.S|re.I):
     u=urllib.parse.urljoin(url,html.unescape(href));label=plain(label)
-    if urllib.parse.urlparse(u).netloc!=urllib.parse.urlparse(url).netloc or not re.search(r'\bbbs',u) or not re.search('复式|复试|中|特|肖|杀|尾|波',label) or str(args.period)+'期' not in label:continue
+    if urllib.parse.urlparse(u).netloc!=urllib.parse.urlparse(url).netloc or not re.search(r'\bbbs',u) or not re.search('复式|复试|中|特|肖|杀|尾|头|波|五行|单双|大小|家禽|野兽',label) or str(args.period)+'期' not in label:continue
     if u in pages:continue
     try:pages[u]=read(u)
     except Exception as e:row['errors'].append({'url':u,'error':str(e)})
