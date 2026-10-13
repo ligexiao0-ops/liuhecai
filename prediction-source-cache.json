@@ -5,7 +5,7 @@
       "lot": "xa",
       "url": "https://bdw-1.baddw.com:2028/yjjy/default.html",
       "period": 286,
-      "capturedAt": "2026-10-13T04:56:07.406438+00:00",
+      "capturedAt": "2026-10-13T07:46:30.092622+00:00",
       "entries": [
         {
           "lot": "xa",
@@ -79,11 +79,15 @@
           "title": "八码中特",
           "game": "te",
           "action": "track",
-          "predictionText": "强烈推荐<暴-富>一码爆中迎风起",
-          "numbers": [],
-          "zodiacs": [],
-          "rawText": "286期:强烈推荐<暴-富>一码爆中迎风起",
-          "rawHtml": "<tr><td style=\"text-align:center; background: #98FB98;\" width=\"100%\" colspan=\"2\">\n<font color=\"#0000FF\">286期:强烈推荐</font><font color=\"#FF0000\"><span class=\"xz3\">&lt;暴-富&gt;</span></font><font color=\"#0000FF\">一码爆中迎风起</font></td></tr>",
+          "predictionText": "强烈推荐<鸡-34>一码爆中迎风起",
+          "numbers": [
+            34
+          ],
+          "zodiacs": [
+            "鸡"
+          ],
+          "rawText": "286期:强烈推荐<鸡-34>一码爆中迎风起",
+          "rawHtml": "<tr><td style=\"text-align:center; background: #98FB98;\" width=\"100%\" colspan=\"2\">\n<font color=\"#0000FF\">286期:强烈推荐</font><font color=\"#FF0000\"><span class=\"xz3\">&lt;鸡-34&gt;</span></font><font color=\"#0000FF\">一码爆中迎风起</font></td></tr>",
           "struck": false,
           "colors": [
             "#0000FF",
@@ -292,14 +296,17 @@
         {
           "lot": "xa",
           "period": 286,
-          "title": "家禽+猴鼠",
+          "title": "家禽+鼠蛇",
           "game": "te",
           "action": "track",
-          "predictionText": "【正在+更新】",
+          "predictionText": "【家禽+鼠蛇】",
           "numbers": [],
-          "zodiacs": [],
-          "rawText": "286期【正在+更新】开:￥00",
-          "rawHtml": "<tr>\n<th width=\"23%\"><font color=\"#800000\">286期</font></th><td><span class=\"zl\">【正在+更新】</td><th width=\"25%\"><font color=\"#800000\">开:￥00</font></th>\n</tr>",
+          "zodiacs": [
+            "鼠",
+            "蛇"
+          ],
+          "rawText": "286期【家禽+鼠蛇】开:￥00",
+          "rawHtml": "<tr>\n<th width=\"23%\"><font color=\"#800000\">286期</font></th><td><span class=\"zl\">【家禽+鼠蛇】</td><th width=\"25%\"><font color=\"#800000\">开:￥00</font></th>\n</tr>",
           "struck": false,
           "colors": [
             "#800000"
@@ -392,14 +399,14 @@
         {
           "lot": "xa",
           "period": 286,
-          "title": "暴富+x头",
+          "title": "小数+4头",
           "game": "te",
           "action": "track",
-          "predictionText": "大小1头【暴富+x头】",
+          "predictionText": "大小1头【小数+4头】",
           "numbers": [],
           "zodiacs": [],
-          "rawText": "286期:大小①头【暴富+x头】开:￥00",
-          "rawHtml": "<tr>\n<td><font color=\"#000\"><span style=\"font-size: 16pt\">\n286期:</span></font><span style=\"font-size: 16pt\"><font color=\"#0000FF\">大小①头</font>【暴富+x头】<font color=\"#000\">开:</font>￥00</span></td>\n</tr>",
+          "rawText": "286期:大小①头【小数+4头】开:￥00",
+          "rawHtml": "<tr>\n<td><font color=\"#000\"><span style=\"font-size: 16pt\">\n286期:</span></font><span style=\"font-size: 16pt\"><font color=\"#0000FF\">大小①头</font>【小数+4头】<font color=\"#000\">开:</font>￥00</span></td>\n</tr>",
           "struck": false,
           "colors": [
             "#000",
@@ -432,17 +439,17 @@
           "title": "单双中特",
           "game": "te",
           "action": "track",
-          "predictionText": "送三字「更新中」 解(x尾)",
+          "predictionText": "送三字「六六顺」 解(6尾)",
           "numbers": [],
           "zodiacs": [],
-          "rawText": "286期:送三字「更新中」\n解(x尾)开￥00",
-          "rawHtml": "<tr>\n<td><font color=\"#000000\"><span style=\"font-size: 15pt\">286期:送三字</span></font><span style=\"font-size: 15pt\">「更新中」\n<font color=\"#000000\">解</font>(x尾)</span><font color=\"#000000\"><span style=\"font-size: 15pt\">开￥00</span></font></td>\n</tr>",
+          "rawText": "286期:送三字「六六顺」\n解(6尾)开￥00",
+          "rawHtml": "<tr>\n<td><font color=\"#000000\"><span style=\"font-size: 15pt\">286期:送三字</span></font><span style=\"font-size: 15pt\">「六六顺」\n<font color=\"#000000\">解</font>(6尾)</span><font color=\"#000000\"><span style=\"font-size: 15pt\">开￥00</span></font></td>\n</tr>",
           "struck": false,
           "colors": [
             "#000000"
           ],
           "url": "https://bdw-1.baddw.com:2028/yjjy/default.html",
-          "status": "pending"
+          "status": "needs_review"
         },
         {
           "lot": "xa",
@@ -450,17 +457,21 @@
           "title": "规律一波",
           "game": "te",
           "action": "track",
-          "predictionText": "二连【好料】三连【更新中】",
+          "predictionText": "二连【马蛇】三连【马蛇猪】",
           "numbers": [],
-          "zodiacs": [],
-          "rawText": "286期:二连【好料】三连【更新中】",
-          "rawHtml": "<tr>\n<td><font color=\"#000000\"><span style=\"font-size: 16pt\">\n286期:二连</span></font><span style=\"font-size: 16pt\">【好料】<font color=\"#000000\">三连</font>【更新中】</span></td>\n</tr>",
+          "zodiacs": [
+            "马",
+            "蛇",
+            "猪"
+          ],
+          "rawText": "286期:二连【马蛇】三连【马蛇猪】",
+          "rawHtml": "<tr>\n<td><font color=\"#000000\"><span style=\"font-size: 16pt\">\n286期:二连</span></font><span style=\"font-size: 16pt\">【马蛇】<font color=\"#000000\">三连</font>【马蛇猪】</span></td>\n</tr>",
           "struck": false,
           "colors": [
             "#000000"
           ],
           "url": "https://bdw-1.baddw.com:2028/yjjy/default.html",
-          "status": "pending"
+          "status": "needs_review"
         },
         {
           "lot": "xa",
@@ -468,18 +479,28 @@
           "title": "九码复式三中二",
           "game": "z3in2",
           "action": "track",
-          "predictionText": "九码复式三中二 宝典网466488.com更新中",
-          "numbers": [],
+          "predictionText": "九码复式三中二 02.46.09.10.12.25.06.21.24",
+          "numbers": [
+            2,
+            46,
+            9,
+            10,
+            12,
+            25,
+            6,
+            21,
+            24
+          ],
           "zodiacs": [],
-          "rawText": "286期:九码复式三中二\n宝典网466488.com更新中",
-          "rawHtml": "<tr>\n<td><font color=\"#000000\"><span style=\"font-size: 16pt\">286期:</span></font><span style=\"font-size: 16pt\"><font color=\"#0000FF\">九码复式三中二</font><br>宝典网466488.com更新中</span>\n</tr>",
+          "rawText": "286期:九码复式三中二\n02.46.09.10.12.25.06.21.24",
+          "rawHtml": "<tr>\n<td><font color=\"#000000\"><span style=\"font-size: 16pt\">286期:</span></font><span style=\"font-size: 16pt\"><font color=\"#0000FF\">九码复式三中二</font><br>02.46.09.10.12.25.06.21.24</span>\n</tr>",
           "struck": false,
           "colors": [
             "#000000",
             "#0000FF"
           ],
           "url": "https://bdw-1.baddw.com:2028/yjjy/default.html",
-          "status": "pending"
+          "status": "needs_review"
         },
         {
           "lot": "xa",
@@ -1489,18 +1510,30 @@
           "title": "寶典爆5肖---",
           "game": "te",
           "action": "track",
-          "predictionText": "寶典爆5肖--- (猫00)(猫00)(猫00)(猫00)(猫00)",
-          "numbers": [],
-          "zodiacs": [],
-          "rawText": "286期:寶典爆５肖---开:￥00准\n\n(猫00)(猫00)(猫00)(猫00)(猫00)",
-          "rawHtml": "<tr>\n<td><font color=\"#000000\"><span style=\"font-size: 16pt\">286期:寶典爆５肖---开:</span></font><span style=\"font-size: 16pt\"><font color=\"#008000\">￥00</font><font color=\"#000000\">准</font>\n<br>(猫00)(猫00)(猫00)(猫00)(猫00)</span></td>\n</tr>",
+          "predictionText": "寶典爆5肖--- (蛇14)(鸡22)(鼠43)(虎29)(狗45)",
+          "numbers": [
+            14,
+            22,
+            43,
+            29,
+            45
+          ],
+          "zodiacs": [
+            "蛇",
+            "鸡",
+            "鼠",
+            "虎",
+            "狗"
+          ],
+          "rawText": "286期:寶典爆５肖---开:￥00准\n\n(蛇14)(鸡22)(鼠43)(虎29)(狗45)",
+          "rawHtml": "<tr>\n<td><font color=\"#000000\"><span style=\"font-size: 16pt\">286期:寶典爆５肖---开:</span></font><span style=\"font-size: 16pt\"><font color=\"#008000\">￥00</font><font color=\"#000000\">准</font>\n<br>(蛇14)(鸡22)(鼠43)(虎29)(狗45)</span></td>\n</tr>",
           "struck": false,
           "colors": [
             "#000000",
             "#008000"
           ],
           "url": "https://bdw-1.baddw.com:2028/yjjy/default.html",
-          "status": "pending"
+          "status": "needs_review"
         },
         {
           "lot": "xa",
@@ -1508,18 +1541,36 @@
           "title": "双波八码",
           "game": "te",
           "action": "track",
-          "predictionText": "【双波八码】 更新:【466488.com更新中】 更新:【466488.com更新中】",
-          "numbers": [],
+          "predictionText": "【双波八码】 蓝波:【14.15.09.31.41.48.04.42】 红波:【08.02.29.30.40.46.23.01】",
+          "numbers": [
+            14,
+            15,
+            9,
+            31,
+            41,
+            48,
+            4,
+            42,
+            8,
+            2,
+            29,
+            30,
+            40,
+            46,
+            23,
+            1
+          ],
           "zodiacs": [],
-          "rawText": "286期:【双波八码】开 ￥00准\n\n更新：【466488.com更新中】\n\n更新：【466488.com更新中】",
-          "rawHtml": "<tr>\n<td><font color=\"#000000\"><span style=\"font-size: 16pt\">286期:【双波八码】开 </span></font><span style=\"font-size: 16pt\">￥00准</span><br>\n<span style=\"font-size: 16pt\"><font color=\"#FF00FF\">更新：【466488.com更新中】</font></span><br>\n<span style=\"font-size: 16pt\"><font color=\"#FF00FF\">更新：【466488.com更新中】</font></span>\n</tr>",
+          "rawText": "286期:【双波八码】开 ￥00准\n\n蓝波：【14.15.09.31.41.48.04.42】\n\n红波：【08.02.29.30.40.46.23.01】",
+          "rawHtml": "<tr>\n<td><font color=\"#000000\"><span style=\"font-size: 16pt\">286期:【双波八码】开 </span></font><span style=\"font-size: 16pt\">￥00准</span><br>\n<span style=\"font-size: 16pt\"><font color=\"#0000FF\">蓝波：【14.15.09.31.41.48.04.42】</font></span><br>\n<span style=\"font-size: 16pt\"><font color=\"#FF0000\">红波：【08.02.29.30.40.46.23.01】</font></span>\n</tr>",
           "struck": false,
           "colors": [
             "#000000",
-            "#FF00FF"
+            "#0000FF",
+            "#FF0000"
           ],
           "url": "https://bdw-1.baddw.com:2028/yjjy/default.html",
-          "status": "pending"
+          "status": "needs_review"
         },
         {
           "lot": "xa",
@@ -1527,11 +1578,21 @@
           "title": "爆庄九肖",
           "game": "te",
           "action": "track",
-          "predictionText": "爆庄九肖 【宝典网466488.com】",
+          "predictionText": "爆庄九肖 【兔牛虎猪羊蛇鼠猴狗】",
           "numbers": [],
-          "zodiacs": [],
-          "rawText": "286期:爆庄九肖开:￥00准\n\n【宝典网466488.com】",
-          "rawHtml": "<tr>\n<td><font color=\"#000\"><span style=\"font-size: 16pt\">286期:</span></font><span style=\"font-size: 16pt\">爆庄九肖<font color=\"#000\">开:</font>￥00<font color=\"#000\">准</font><br></span>\n<font color=\"#0000FF\"><span style=\"font-size: 16pt\">【宝典网466488.com】</span></font></td>\n</tr>",
+          "zodiacs": [
+            "兔",
+            "牛",
+            "虎",
+            "猪",
+            "羊",
+            "蛇",
+            "鼠",
+            "猴",
+            "狗"
+          ],
+          "rawText": "286期:爆庄九肖开:￥00准\n\n【兔牛虎猪羊蛇鼠猴狗】",
+          "rawHtml": "<tr>\n<td><font color=\"#000\"><span style=\"font-size: 16pt\">286期:</span></font><span style=\"font-size: 16pt\">爆庄九肖<font color=\"#000\">开:</font>￥00<font color=\"#000\">准</font><br></span>\n<font color=\"#0000FF\"><span style=\"font-size: 16pt\">【兔牛虎猪羊蛇鼠猴狗】</span></font></td>\n</tr>",
           "struck": false,
           "colors": [
             "#000",
@@ -2231,11 +2292,11 @@
           "title": "绝杀一段",
           "game": "te",
           "action": "exclude",
-          "predictionText": "买【更新】本期100%.",
+          "predictionText": "买【双数】本期100%.",
           "numbers": [],
           "zodiacs": [],
-          "rawText": "286期:买【更新】本期100%.开:￥00",
-          "rawHtml": "<tr>\n<td><font color=\"#000000\"><span style=\"font-size: 16pt\">\n286期:</span></font><span style=\"font-size: 16pt\">买【更新】<font color=\"#008000\">本期100%.</font><font color=\"#000000\">开:</font>￥00</span></td>\n</tr>",
+          "rawText": "286期:买【双数】本期100%.开:￥00",
+          "rawHtml": "<tr>\n<td><font color=\"#000000\"><span style=\"font-size: 16pt\">\n286期:</span></font><span style=\"font-size: 16pt\">买【双数】<font color=\"#008000\">本期100%.</font><font color=\"#000000\">开:</font>￥00</span></td>\n</tr>",
           "struck": false,
           "colors": [
             "#000000",
@@ -2283,11 +2344,24 @@
           "title": "澳门六尾12码 开¥00准",
           "game": "te",
           "action": "track",
-          "predictionText": "澳门六尾12码 x尾(xx.xx)x尾(xx.xx)x尾(xx.xx) x尾(xx.xx)x尾(xx.xx)x尾(xx.xx)",
-          "numbers": [],
+          "predictionText": "澳门六尾12码 5尾(15.35)8尾(38.48)1尾(31.41) 6尾(26.36)7尾(27.37)3尾(03.13)",
+          "numbers": [
+            15,
+            35,
+            38,
+            48,
+            31,
+            41,
+            26,
+            36,
+            27,
+            37,
+            3,
+            13
+          ],
           "zodiacs": [],
-          "rawText": "286期：澳门六尾12码 开￥00准\n\nx尾(xx.xx)x尾(xx.xx)x尾(xx.xx)\n\nx尾(xx.xx)x尾(xx.xx)x尾(xx.xx)",
-          "rawHtml": "<tr>\n<td><font color=\"#000000\"><span style=\"font-size: 16pt\">286期：澳门六尾12码 开</span></font><span style=\"font-size: 16pt\"><font color=\"#008000\">￥00</font><font color=\"#000000\">准<br></font>\n<font color=\"#0000FF\">x尾</font>(xx.xx)<font color=\"#0000FF\">x尾</font>(xx.xx)<font color=\"#0000FF\">x尾</font>(xx.xx)<br>\n<font color=\"#0000FF\">x尾</font>(xx.xx)<font color=\"#0000FF\">x尾</font>(xx.xx)<font color=\"#0000FF\">x尾</font>(xx.xx)</span></td>\n</tr>",
+          "rawText": "286期：澳门六尾12码 开￥00准\n\n5尾(15.35)8尾(38.48)1尾(31.41)\n\n6尾(26.36)7尾(27.37)3尾(03.13)",
+          "rawHtml": "<tr>\n<td><font color=\"#000000\"><span style=\"font-size: 16pt\">286期：澳门六尾12码 开</span></font><span style=\"font-size: 16pt\"><font color=\"#008000\">￥00</font><font color=\"#000000\">准<br></font>\n<font color=\"#0000FF\">5尾</font>(15.35)<font color=\"#0000FF\">8尾</font>(38.48)<font color=\"#0000FF\">1尾</font>(31.41)<br>\n<font color=\"#0000FF\">6尾</font>(26.36)<font color=\"#0000FF\">7尾</font>(27.37)<font color=\"#0000FF\">3尾</font>(03.13)</span></td>\n</tr>",
           "struck": false,
           "colors": [
             "#000000",
@@ -2303,18 +2377,18 @@
           "title": "六尾12码",
           "game": "te",
           "action": "track",
-          "predictionText": "琴棋书画→更新中",
+          "predictionText": "琴棋书画→琴棋画",
           "numbers": [],
           "zodiacs": [],
-          "rawText": "286期:琴棋书画→更新中 开:￥00",
-          "rawHtml": "<tr>\n<td><font color='#000000'><span style=\"font-size: 16pt\">\n286期:</span></font><font color='#0000FF'><span style=\"font-size: 16pt\">琴棋书画→更新中</span></font><span style=\"font-size: 16pt\"> 开:￥00</span></td>\n</tr>",
+          "rawText": "286期:琴棋书画→琴棋画 开:￥00",
+          "rawHtml": "<tr>\n<td><font color='#000000'><span style=\"font-size: 16pt\">\n286期:</span></font><font color='#0000FF'><span style=\"font-size: 16pt\">琴棋书画→琴棋画</span></font><span style=\"font-size: 16pt\"> 开:￥00</span></td>\n</tr>",
           "struck": false,
           "colors": [
             "#000000",
             "#0000FF"
           ],
           "url": "https://bdw-1.baddw.com:2028/yjjy/default.html",
-          "status": "pending"
+          "status": "needs_review"
         },
         {
           "lot": "xa",
@@ -2322,11 +2396,11 @@
           "title": "六尾12码",
           "game": "te",
           "action": "track",
-          "predictionText": "春夏秋冬【更新中】",
+          "predictionText": "春夏秋冬【春夏冬】",
           "numbers": [],
           "zodiacs": [],
-          "rawText": "286期:春夏秋冬【更新中】\n开￥00准",
-          "rawHtml": "<tr>\n<td><font color=\"#000\"><span style=\"font-size: 16pt\">\n286期:</span></font><span style=\"font-size: 16pt\"><font color=\"#800080\">春夏秋冬</font>【更新中】\n<font color=\"#000\">开</font><font color=\"#808000\">￥00</font></span><font color=\"#000000\"><span style=\"font-size: 16pt\">准</span></td>\n</tr>",
+          "rawText": "286期:春夏秋冬【春夏冬】\n开￥00准",
+          "rawHtml": "<tr>\n<td><font color=\"#000\"><span style=\"font-size: 16pt\">\n286期:</span></font><span style=\"font-size: 16pt\"><font color=\"#800080\">春夏秋冬</font>【春夏冬】\n<font color=\"#000\">开</font><font color=\"#808000\">￥00</font></span><font color=\"#000000\"><span style=\"font-size: 16pt\">准</span></td>\n</tr>",
           "struck": false,
           "colors": [
             "#000",
@@ -2335,38 +2409,40 @@
             "#000000"
           ],
           "url": "https://bdw-1.baddw.com:2028/yjjy/default.html",
-          "status": "pending"
+          "status": "needs_review"
         },
         {
           "lot": "xa",
           "period": 286,
-          "title": "四尾中特",
+          "title": "龙肖",
           "game": "te",
           "action": "track",
-          "predictionText": "更新 x尾 发财 x头 ¥00",
+          "predictionText": "龙肖 4尾 蓝单 3头 ¥00",
           "numbers": [],
-          "zodiacs": [],
-          "rawText": "286期\n更新\nx尾\n发财\nx头\n￥00",
-          "rawHtml": "<tr>\n<td width=\"17%\" height=\"25\"><font color=\"#000000\">286期</font></td>\n<td width=\"16%\" height=\"25\">更新</td>\n<td width=\"16%\" height=\"25\">x尾</td>\n<td width=\"16%\" height=\"25\">发财</td>\n<td width=\"16%\" height=\"25\">x头</td>\n<td height=\"25\">￥00</td>\n</tr>",
+          "zodiacs": [
+            "龙"
+          ],
+          "rawText": "286期\n龙肖\n4尾\n蓝单\n3头\n￥00",
+          "rawHtml": "<tr>\n<td width=\"17%\" height=\"25\"><font color=\"#000000\">286期</font></td>\n<td width=\"16%\" height=\"25\">龙肖</td>\n<td width=\"16%\" height=\"25\">4尾</td>\n<td width=\"16%\" height=\"25\">蓝单</td>\n<td width=\"16%\" height=\"25\">3头</td>\n<td height=\"25\">￥00</td>\n</tr>",
           "struck": false,
           "colors": [
             "#000000"
           ],
           "url": "https://bdw-1.baddw.com:2028/yjjy/default.html",
-          "status": "pending"
+          "status": "needs_review"
         }
       ],
       "errors": [],
       "pageCount": 1,
       "status": "read",
-      "hash": "b1224f732ec20d179546c3352ac13491a39493c534a31b3628def3360769d8f6"
+      "hash": "466cbabf3e0cf4e9bf9fc65e5d172fcec6eb527c823b09934a0cd1550828f0ae"
     },
     {
       "name": "八仙新澳",
       "lot": "xa",
       "url": "https://x3gqqfku.fbaxianguohailmn123.com:3106/1489zhuye/",
       "period": 286,
-      "capturedAt": "2026-10-13T04:56:10.838876+00:00",
+      "capturedAt": "2026-10-13T07:46:31.764975+00:00",
       "entries": [
         {
           "lot": "xa",
@@ -4908,6 +4984,24 @@
         {
           "lot": "xa",
           "period": 286,
+          "title": "单双笔画",
+          "game": "te",
+          "action": "track",
+          "predictionText": "单双笔画【单单单】",
+          "numbers": [],
+          "zodiacs": [],
+          "rawText": "286期:单双笔画【单单单】开？00准",
+          "rawHtml": "<li>286期:单双笔画<i><font color=\"#FF0000\" style=\"font-size: 17pt;\">【单单单】</font></i><u>开？00准</u></li>",
+          "struck": false,
+          "colors": [
+            "#FF0000"
+          ],
+          "url": "https://x3gqqfku.fbaxianguohailmn123.com:3106/1489zhuye/bbs567//48.html",
+          "status": "needs_review"
+        },
+        {
+          "lot": "xa",
+          "period": 286,
           "title": "红波",
           "game": "te",
           "action": "track",
@@ -5197,6 +5291,26 @@
             "#FF0000"
           ],
           "url": "https://x3gqqfku.fbaxianguohailmn123.com:3106/1489zhuye/bbs567//26.html",
+          "status": "needs_review"
+        },
+        {
+          "lot": "xa",
+          "period": 286,
+          "title": "▲友谊平特▲",
+          "game": "pt",
+          "action": "track",
+          "predictionText": "▲友谊平特▲【鸡鸡鸡】",
+          "numbers": [],
+          "zodiacs": [
+            "鸡"
+          ],
+          "rawText": "286期:▲友谊平特▲【鸡鸡鸡】开？00准",
+          "rawHtml": "<li>286期:▲友谊平特▲<i><font color=\"#FF0000\" style=\"font-size: 17pt;\">【鸡鸡鸡】</font></i><u>开？00准</u></li>",
+          "struck": false,
+          "colors": [
+            "#FF0000"
+          ],
+          "url": "https://x3gqqfku.fbaxianguohailmn123.com:3106/1489zhuye/bbs567//30.html",
           "status": "needs_review"
         },
         {
@@ -5571,22 +5685,17 @@
           "status": "needs_review"
         }
       ],
-      "errors": [
-        {
-          "url": "https://x3gqqfku.fbaxianguohailmn123.com:3106/1489zhuye/bbs567//30.html",
-          "error": "<urlopen error [WinError 10054] 远程主机强迫关闭了一个现有的连接。>"
-        }
-      ],
-      "pageCount": 34,
+      "errors": [],
+      "pageCount": 36,
       "status": "read",
-      "hash": "a0063ec7986d08138059937b9f701669773ee932eed39d53c005d9a3ec5a3857"
+      "hash": "03c88ebaf1dd77f34f9de2863beadbb44135cffdd508771656f77179f0175933"
     },
     {
       "name": "韩湘子老澳",
       "lot": "la",
       "url": "https://icvhnp93.vhanxiangzipqr234.com:3605/97877zhuyea/",
       "period": 286,
-      "capturedAt": "2026-10-13T04:57:32.297177+00:00",
+      "capturedAt": "2026-10-13T07:46:48.196206+00:00",
       "entries": [
         {
           "lot": "la",
@@ -8348,7 +8457,7 @@
       "lot": "la",
       "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/",
       "period": 286,
-      "capturedAt": "2026-10-13T04:58:28.790608+00:00",
+      "capturedAt": "2026-10-13T07:46:59.838458+00:00",
       "entries": [
         {
           "lot": "la",
@@ -8372,14 +8481,42 @@
           "title": "六肖18码",
           "game": "te",
           "action": "track",
-          "predictionText": "【六肖18码】",
-          "numbers": [],
-          "zodiacs": [],
-          "rawText": "286期【六肖18码】开？00准",
-          "rawHtml": "<tr><td><font color=\"#009900\">286期</font>【六肖18码】<font color=\"#009900\">开？00准</font></td>\n  </tr>",
+          "predictionText": "【六肖18码】 兔[04,28,16]虎[41,05,17]牛[30,18,42]\n\n 龙[39,15,27]蛇[26,38,14]鼠[31,43,07]",
+          "numbers": [
+            4,
+            28,
+            16,
+            41,
+            5,
+            17,
+            30,
+            18,
+            42,
+            39,
+            15,
+            27,
+            26,
+            38,
+            14,
+            31,
+            43,
+            7
+          ],
+          "zodiacs": [
+            "兔",
+            "虎",
+            "牛",
+            "龙",
+            "蛇",
+            "鼠"
+          ],
+          "rawText": "286期【六肖18码】开？00准\n \n\n\n 兔[04,28,16]虎[41,05,17]牛[30,18,42]\n\n 龙[39,15,27]蛇[26,38,14]鼠[31,43,07]",
+          "rawHtml": "<tr><td><font color=\"#009900\">286期</font>【六肖18码】<font color=\"#009900\">开？00准</font></td>\n  </tr>\n<tr><td>\n    <p><font color=\"#0000FF\">兔</font><font color=\"#000000\">[04,28,16]</font><font color=\"#0000FF\">虎</font><font color=\"#000000\">[41,05,17]</font><font color=\"#0000FF\">牛</font><font color=\"#000000\">[30,18,42]</font></p>\n    <p><font color=\"#0000FF\">龙</font><font color=\"#000000\">[39,15,27]</font><font color=\"#0000FF\">蛇</font><font color=\"#000000\">[26,38,14]</font><font color=\"#0000FF\">鼠</font><font color=\"#000000\">[31,43,07]</font></p>\n    </td>\n  </tr>",
           "struck": false,
           "colors": [
-            "#009900"
+            "#009900",
+            "#0000FF",
+            "#000000"
           ],
           "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/",
           "status": "needs_review"
@@ -8571,7 +8708,7 @@
           "title": "平特三中三",
           "game": "z3",
           "action": "track",
-          "predictionText": "内幕16码 43,47,29,36,28,41,20,37",
+          "predictionText": "内幕16码 43,47,29,36,28,41,20,37 42,24,30,49,38,34,44,35",
           "numbers": [
             43,
             47,
@@ -8580,11 +8717,19 @@
             28,
             41,
             20,
-            37
+            37,
+            42,
+            24,
+            30,
+            49,
+            38,
+            34,
+            44,
+            35
           ],
           "zodiacs": [],
-          "rawText": "286期:内幕16码\n \n43,47,29,36,28,41,20,37",
-          "rawHtml": "<tr><td align=\"left\" bgcolor=\"#FFFFFF\" rowspan=\"2\" width=\"36%\" style=\"border-left-style: none; border-left-width: medium; border-top-style: none; border-top-width: medium; border-bottom-style: none; border-bottom-width: medium\"><font face=\"宋体\" style=\"font-size: 13pt; font-weight: 700\" color=\"#000000\">\n286期:内幕16码</font></td>\n <td align=\"left\" bgcolor=\"#FFFFFF\" width=\"64%\" style=\"border-right-style: none; border-right-width: medium; border-top-style: none; border-top-width: medium\">\n<font color=\"#800000\" style=\"font-size:13pt\">43,47,29,36,28,41,20,37</font></td></tr>",
+          "rawText": "286期:内幕16码\n \n43,47,29,36,28,41,20,37\n\n\n42,24,30,49,38,34,44,35",
+          "rawHtml": "<tr><td align=\"left\" bgcolor=\"#FFFFFF\" rowspan=\"2\" width=\"36%\" style=\"border-left-style: none; border-left-width: medium; border-top-style: none; border-top-width: medium; border-bottom-style: none; border-bottom-width: medium\"><font face=\"宋体\" style=\"font-size: 13pt; font-weight: 700\" color=\"#000000\">\n286期:内幕16码</font></td>\n <td align=\"left\" bgcolor=\"#FFFFFF\" width=\"64%\" style=\"border-right-style: none; border-right-width: medium; border-top-style: none; border-top-width: medium\">\n<font color=\"#800000\" style=\"font-size:13pt\">43,47,29,36,28,41,20,37</font></td></tr>\n<tr><td align=\"left\" bgcolor=\"#FFFFFF\" width=\"64%\" style=\"border-left-style: none; border-left-width: medium; border-right-style: none; border-right-width: medium; border-bottom-style: none; border-bottom-width: medium\">\n<font color=\"#800000\" style=\"font-size:13pt\">42,24,30,49,38,34,44,35</font></td></tr>",
           "struck": false,
           "colors": [
             "#FFFFFF",
@@ -11103,6 +11248,24 @@
         {
           "lot": "la",
           "period": 286,
+          "title": "单双笔画",
+          "game": "te",
+          "action": "track",
+          "predictionText": "单双笔画【单单单】",
+          "numbers": [],
+          "zodiacs": [],
+          "rawText": "286期:单双笔画【单单单】开？00准",
+          "rawHtml": "<li>286期:单双笔画<i><font color=\"#FF0000\" style=\"font-size: 17pt;\">【单单单】</font></i><u>开？00准</u></li>",
+          "struck": false,
+          "colors": [
+            "#FF0000"
+          ],
+          "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/bbs901/48.html",
+          "status": "needs_review"
+        },
+        {
+          "lot": "la",
+          "period": 286,
           "title": "◎杀一肖◎",
           "game": "te",
           "action": "exclude",
@@ -11118,6 +11281,30 @@
             "#FF0000"
           ],
           "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/bbs901/06.html",
+          "status": "needs_review"
+        },
+        {
+          "lot": "la",
+          "period": 286,
+          "title": "六尾中特",
+          "game": "te",
+          "action": "track",
+          "predictionText": "六尾中特【1,3,4,9,0,8】",
+          "numbers": [
+            1,
+            3,
+            4,
+            9,
+            8
+          ],
+          "zodiacs": [],
+          "rawText": "286期:六尾中特【1,3,4,9,0,8】开？00准",
+          "rawHtml": "<li>286期:六尾中特<i><font color=\"#FF0000\" style=\"font-size: 17pt;\">【1,3,4,9,0,8】</font></i><u>开？00准</u></li>",
+          "struck": false,
+          "colors": [
+            "#FF0000"
+          ],
+          "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/bbs901/47.html",
           "status": "needs_review"
         },
         {
@@ -11159,6 +11346,26 @@
         {
           "lot": "la",
           "period": 286,
+          "title": "3个半单双",
+          "game": "te",
+          "action": "track",
+          "predictionText": "【3个半单双】 【大单,小单,小双】",
+          "numbers": [
+            3
+          ],
+          "zodiacs": [],
+          "rawText": "286期【③个半单双】开？00准\n\n【大单,小单,小双】",
+          "rawHtml": "<li>286期【③个半单双】<u>开？00准</u><i><br>\n<font color=\"#FF0000\" style=\"font-size: 17pt;\">【大单,小单,小双】</font></i></li>",
+          "struck": false,
+          "colors": [
+            "#FF0000"
+          ],
+          "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/bbs901/21.html",
+          "status": "needs_review"
+        },
+        {
+          "lot": "la",
+          "period": 286,
           "title": "天肖",
           "game": "te",
           "action": "track",
@@ -11175,26 +11382,17 @@
           "status": "needs_review"
         }
       ],
-      "errors": [
-        {
-          "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/bbs901/51.html",
-          "error": "<urlopen error [WinError 10054] 远程主机强迫关闭了一个现有的连接。>"
-        },
-        {
-          "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/bbs901/47.html",
-          "error": "<urlopen error [WinError 10054] 远程主机强迫关闭了一个现有的连接。>"
-        }
-      ],
-      "pageCount": 25,
+      "errors": [],
+      "pageCount": 29,
       "status": "read",
-      "hash": "393e3a6c097225606b90c75decc6bae5897c3b65de3cef740bbdb44f7ff56eab"
+      "hash": "544d1edca4b69a4a5d9e04ad529eca5839d5150a13ef4a6056636b5d4d217524"
     },
     {
       "name": "鬼谷子澳门资料",
       "lot": "la",
       "url": "https://yyzy823.tebjz25.com:7749/ggz/wz/ggz-wz.html",
       "period": 286,
-      "capturedAt": "2026-10-13T05:07:02.390441+00:00",
+      "capturedAt": "2026-10-13T07:47:13.481203+00:00",
       "entries": [
         {
           "lot": "la",
