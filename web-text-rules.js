@@ -1,6 +1,6 @@
 (function(root){'use strict';
 const uniq=a=>[...new Set(a)],keywords=/三中三|三中二|二中二|复式|复试|连码|平码|连肖|平特|肖|码|尾|头|波|五行|大小|单双|合数|家野|家禽|野兽|杀/;
-function normalize(s){return String(s).normalize('NFKC').replace(/[龍雞豬馬殺碼綠藍門頭數復]/g,c=>({'龍':'龙','雞':'鸡','豬':'猪','馬':'马','殺':'杀','碼':'码','綠':'绿','藍':'蓝','門':'门','頭':'头','數':'数','復':'复'}[c])).replace(/\(([一二三四五六七八九十]+)\)(?=肖)/g,'$1');}
+function normalize(s){return String(s).normalize('NFKC').replace(/[龍雞豬馬殺碼綠藍門頭數復開]/g,c=>({'龍':'龙','雞':'鸡','豬':'猪','馬':'马','殺':'杀','碼':'码','綠':'绿','藍':'蓝','門':'门','頭':'头','數':'数','復':'复','開':'开'}[c])).replace(/\(([一二三四五六七八九十]+)\)(?=肖)/g,'$1');}
 function parse(text,period){text=normalize(text);const out=[],matches=[...text.matchAll(/(?:20\d{2}[-年]?)?(\d{1,3})\s*期/g)];
 for(let i=0;i<matches.length;i++){const m=matches[i];if(+m[1]!==+period)continue;const block=text.slice(m.index+m[0].length,matches[i+1]?.index||text.length).trim().replace(/^[：:，,]+/,'');const first=block.split('\n').find(x=>x.trim())?.trim()||'';let label=first;if(!keywords.test(label)){label=text.slice(Math.max(0,m.index-100),m.index).split('\n').filter(x=>x.trim()).at(-1)||'';}if(!keywords.test(label))continue;
 let body=block.split('\n').map(line=>line.replace(/(?:特开|开奖|开)\s*[:：]?\s*[（(]?[^\n]*$/,'')).join('\n');

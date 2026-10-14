@@ -9,7 +9,7 @@ window.getTransitionAudit=get;
 // Older in-sample attribution must not masquerade as independently verified scoring.
 const old42=window.calc42AttrHealth;window.calc42AttrHealth=function(){const h=old42();return Object.fromEntries(Object.entries(h).map(([k,o])=>[k,{...o,te:{...o.te,kind:'off',status:'独立验证未通过·评分停用'},zm:{...o.zm,kind:'off',status:'独立验证未通过·评分停用'}}]));};
 window.score42Attrs=function(){return {delta:0,notes:['42码属性尚待独立及前瞻验证，评分增量为0']};};
-window.mathEvidenceZod=function(){return {score:0,notes:['生肖连续/断开及边际频率尚待独立及前瞻验证，评分增量为0']};};
+window.mathEvidenceZod=function(z){return ScoreProjects.zodiac({rows:DR,z:z,size:(ZM[z]||[]).length,zod:gz,attribute:0,points:()=>0,tests:[]});};
 window.render42RuleHealth=function(){return '<div class="card"><b>42码旧版全历史择优评分已停用</b><p>请查看上方“42码与生肖连续/断开 · 独立验证”。高排除率须同时超过对应集合的随机基准，不能把本来就少见的属性当作可靠杀项。</p></div>';};
 const base=window.render;window.render=function(){const v=base.apply(this,arguments);try{show();}catch(e){console.error('[transition-audit]',e);}return v;};show();
 })();

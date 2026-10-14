@@ -1,9 +1,13 @@
 """Public HTML only; exact requested period, no scripts, no TLS bypass."""
 import unicodedata
+import concurrent.futures
+import subprocess
+from collections import Counter
 import argparse,datetime,hashlib,html,json,re,urllib.request,urllib.parse
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-SOURCES=[('宝典新澳','xa','https://bdw-1.baddw.com:2028/yjjy/default.html'),('八仙新澳','xa','https://x3gqqfku.fbaxianguohailmn123.com:3106/1489zhuye/'),('韩湘子老澳','la','https://icvhnp93.vhanxiangzipqr234.com:3605/97877zhuyea/'),('吕洞宾老澳','la','https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/'),('鬼谷子澳门资料','la','https://yyzy823.tebjz25.com:7749/ggz/wz/ggz-wz.html')]
+SOURCES=[(r['name'],r['lot'],r['url']) for r in json.loads(re.search(r'const sources=(\[.*?\]);', (ROOT/'source-slots.js').read_text('utf-8'),re.S)[1])]
+
 def read(url):
  with urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'}),timeout=25) as r:b=r.read(4000000)
  s=min((b.decode(e,'replace') for e in ('utf-8','gb18030')),key=lambda t:t.count('\ufffd'))
@@ -16,10 +20,13 @@ def plain(s):
  return re.sub(r'[ \t]+',' ',html.unescape(re.sub('<[^>]*>','',s)))
 def parse(s,url,lot,period):
  result=[];seen=set();kw=r'复式|复试|三中|二中|3中|平码|中特|杀|肖|特|尾|头|波|五行|单双|大小|家禽|野兽'
- normalize=lambda v:unicodedata.normalize('NFKC',v).translate(str.maketrans('龍雞豬馬殺碼綠藍門頭數復','龙鸡猪马杀码绿蓝门头数复'))
+ normalize=lambda v:unicodedata.normalize('NFKC',v).translate(str.maketrans('龍雞豬馬殺碼綠藍門頭數復開','龙鸡猪马杀码绿蓝门头数复开'))
  blocks=list(re.finditer(r'<tr\b.*?</tr>|<li\b.*?</li>',s,re.S|re.I))
  for bi,block in enumerate(blocks):
-  raw=block[0];original=plain(raw).strip();t=normalize(original);m=re.match(r'(\d{2,4})期\s*[:：]?\s*(.*)',t,re.S)
+  raw=block[0];original=plain(raw).strip();
+  if lot=='la' and re.search('新澳|新奥|新澳门',original):continue
+  if lot=='xa' and re.search('老澳|老奥',original):continue
+  t=normalize(original);m=re.match(r'(\d{2,4})期\s*[:：]?\s*(.*)',t,re.S)
   if not m or int(m[1])!=period or len(re.findall(r'\d{2,4}期',t))!=1:continue
   lines=[v.strip() for v in m[2].splitlines() if v.strip()]
   if not lines:continue
@@ -56,19 +63,31 @@ def parse(s,url,lot,period):
  return result
 
 def main():
- a=argparse.ArgumentParser();g=a.add_mutually_exclusive_group(required=True);g.add_argument('--period',type=int);g.add_argument('--today',action='store_true');args=a.parse_args();out=[]
+ a=argparse.ArgumentParser();g=a.add_mutually_exclusive_group(required=True);g.add_argument('--period',type=int);g.add_argument('--today',action='store_true');a.add_argument('--gc-period',type=int);args=a.parse_args();out=[]
  if args.today:args.period=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).timetuple().tm_yday
  for name,lot,url in SOURCES:
   row={'name':name,'lot':lot,'url':url,'period':args.period,'capturedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'entries':[],'errors':[]}
   try:
    s=read(url);pages={url:s}
+   target=args.period
+   if lot=='gc':
+    counts=Counter(int(v) for v in re.findall(r'(\d{1,3})期',plain(s)) if 1<=int(v)<=366)
+    target=args.gc_period or (counts.most_common(1)[0][0] if counts else None)
+    if target is None:raise ValueError('No explicit HK period found')
+   row['period']=target
+   links=[];prefix={'xa':'ambbs','la':'lambbs','gc':'xgbbs'}[lot]
    for href,label in re.findall(r'<a\b[^>]*href=["\x27]([^"\x27]+)["\x27][^>]*>(.*?)</a>',s,re.S|re.I):
     u=urllib.parse.urljoin(url,html.unescape(href));label=plain(label)
-    if urllib.parse.urlparse(u).netloc!=urllib.parse.urlparse(url).netloc or not re.search(r'\bbbs',u) or not re.search('复式|复试|中|特|肖|杀|尾|头|波|五行|单双|大小|家禽|野兽',label) or str(args.period)+'期' not in label:continue
-    if u in pages:continue
-    try:pages[u]=read(u)
-    except Exception as e:row['errors'].append({'url':u,'error':str(e)})
-   for u,body in pages.items():row['entries'].extend(parse(body,u,lot,args.period))
+    if urllib.parse.urlparse(u).netloc!=urllib.parse.urlparse(url).netloc or not re.search('/'+prefix+'/',u) or not re.search('复式|复试|中|特|肖|杀|尾|头|波|五行|单双|大小|家禽|野兽',label) or str(target)+'期' not in label:continue
+    if u not in links:links.append(u)
+   def fetch_page(u):
+    try:return u,read(u),None
+    except Exception as e:return u,None,str(e)
+   with concurrent.futures.ThreadPoolExecutor(3) as executor:
+    for u,body,err in executor.map(fetch_page,links):
+     if err:row['errors'].append({'url':u,'error':err})
+     else:pages[u]=body
+   for u,body in pages.items():row['entries'].extend(parse(body,u,lot,target))
    row['pageCount']=len(pages);row['status']='read';row['hash']=hashlib.sha256(json.dumps(row['entries'],ensure_ascii=False,sort_keys=True).encode()).hexdigest()
   except Exception as e:row['status']='failed';row['errors'].append({'url':url,'error':str(e)})
   out.append(row);print(name,row['status'],len(row['entries']),'entries',len(row['errors']),'errors',flush=True)
@@ -76,12 +95,13 @@ def main():
  old=json.loads(dest.read_text('utf-8')) if dest.exists() else {'sources':[]}
  by={r['url']:r for r in old['sources']}
  for row in out:
-  prior=by.get(row['url'])
-  if row['status']=='read' and (not prior or prior.get('hash')!=row.get('hash') or prior.get('period')!=row['period']):
+  prior=by.get(row['url']);row['rawHash']=row.get('hash')
+  if row['status']=='read' and (not prior or prior.get('rawHash',prior.get('hash'))!=row.get('rawHash',row.get('hash')) or prior.get('period')!=row['period']):
    with history.open('a',encoding='utf-8') as f:f.write(json.dumps(row,ensure_ascii=False)+'\n')
   if row['status']=='failed' and prior:
    if prior.get('period')==row['period'] and prior.get('entries'):
     row.update(status='stale',entries=prior['entries'],lastAttemptAt=row['capturedAt'],capturedAt=prior['capturedAt'],hash=prior.get('hash'))
    else:row['previousSnapshot']={k:prior.get(k) for k in ('period','capturedAt','status')} # Never apply a different period.
  dest.write_text(json.dumps({'sources':out},ensure_ascii=False,indent=2),encoding='utf-8')
+ subprocess.run(['node',str(ROOT/'tools/filter-prediction-cache.js')],cwd=ROOT,check=True,timeout=90)
 if __name__=='__main__':main()

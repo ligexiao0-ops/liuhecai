@@ -1,8 +1,2 @@
-(function(root){'use strict';const sources=[
-{id:'A',name:'宝典新澳',lot:'xa',url:'https://bdw-1.baddw.com:2028/yjjy/default.html'},
-{id:'B',name:'八仙新澳',lot:'xa',url:'https://x3gqqfku.fbaxianguohailmn123.com:3106/1489zhuye/'},
-{id:'C',name:'韩湘子老澳',lot:'la',url:'https://icvhnp93.vhanxiangzipqr234.com:3605/97877zhuyea/'},
-{id:'D',name:'吕洞宾老澳',lot:'la',url:'https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/'},
-{id:'E',name:'鬼谷子澳门资料',lot:'la',url:'https://yyzy823.tebjz25.com:7749/ggz/wz/ggz-wz.html'}
-];root.SourceSlots={sources,forLot:lot=>sources.filter(s=>s.lot===lot)};if(typeof module!=='undefined')module.exports=root.SourceSlots;
+(function(root){'use strict';const sources=[{"id": "A", "name": "833033资料新澳", "lot": "xa", "url": "https://qwea2a.88869.shop/index.htm"}, {"id": "B", "name": "00279资料新澳", "lot": "xa", "url": "https://brhgbur.00279.shop/index.htm"}, {"id": "C", "name": "833033资料老澳", "lot": "la", "url": "https://qwea2a.88869.shop/lam.htm"}, {"id": "D", "name": "00279资料老澳", "lot": "la", "url": "https://brhgbur.00279.shop/lam.htm"}, {"id": "E", "name": "鬼谷子新澳资料", "lot": "xa", "url": "https://yyzy823.tebjz25.com:7749/ggz/wz/ggz-wz.html"}, {"id": "H1", "name": "833033资料港彩", "lot": "gc", "url": "https://qwea2a.88869.shop/xg.htm"}, {"id": "H2", "name": "00279资料港彩", "lot": "gc", "url": "https://brhgbur.00279.shop/xg.htm"}];root.SourceSlots={sources,isCompatible:r=>!sources.some(s=>s.url===r.url&&s.lot!==r.lot),forLot:lot=>sources.filter(s=>s.lot===lot)};if(typeof module!=='undefined')module.exports=root.SourceSlots;
 })(typeof window==='undefined'?globalThis:window);
