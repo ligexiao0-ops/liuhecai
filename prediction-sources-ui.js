@@ -8,6 +8,7 @@ function show(){
  document.getElementById('prediction-sources')?.remove();
  const sets=[],sources=cache.sources.filter(s=>s.lot===CUR_LOT&&SourceSlots.sources.some(x=>x.url===s.url&&x.lot===s.lot));
  let h='<section id="prediction-sources" class="card"><h3>🌐 外部资料 · 当前预测第'+NEXT+'期</h3><button id="refresh-prediction-sources">↻ 刷新已采集资料</button><small> 读取已发布快照；期号一致才可应用。缺失不等于预测错误。</small>'+esc(error);
+ if(cache.verification)h+='<details><summary>新网址实测报告（4个）</summary>'+cache.verification.map(v=>'<p><b>'+esc(v.name)+' · '+esc(v.lotLabel)+'</b><br>'+esc(v.note)+'<br><small>'+esc(v.capturedAt)+'</small> <a href="'+esc(v.bodyUrl||v.url)+'" target="_blank" rel="noopener">查看来源</a></p>').join('')+'</details>';
  sources.forEach(s=>{
   const matches=+s.period===+NEXT,entries=SourceGroups.compact(s.entries.map(e=>({...e,claim:candidates(e)}))),groups=new Map();
   entries.forEach(e=>{const label=e.claim?SourceGroups.group(e.claim):'待更新／待核对';if(!groups.has(label))groups.set(label,[]);groups.get(label).push(e);});

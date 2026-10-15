@@ -7241,5 +7241,39 @@
       "rawHash": "6b04237a5302241aa7435e63fa7b119e1f5d9003cb1d7091accc611f42b65786",
       "filteredCount": 15
     }
+  ],
+  "verification": [
+    {
+      "name": "韩湘子",
+      "lotLabel": "老澳（按澳门／新澳切换入口及你的命名约定）",
+      "note": "已读iframe正文；第289期九肖：兔狗马羊鸡龙猴鼠猪。",
+      "bodyUrl": "https://icvhnp93.vhanxiangzipqr234.com:3605/97877zhuyea/",
+      "url": "https://icvhnp93.vhanxiangzipqr234.com:3605/am.html",
+      "capturedAt": "2026-10-15T16:02:20Z"
+    },
+    {
+      "name": "财神网",
+      "lotLabel": "澳门；新老澳待核对开奖栏",
+      "note": "已读嵌入正文；未确认彩种前不加入选号。",
+      "bodyUrl": "https://mmzy7182.daniumao.com:7749/csw/wz/csw-wz.html",
+      "url": "https://mmzy7182.daniumao.com:7749/csw/888.html#galt-hz",
+      "capturedAt": "2026-10-15T16:02:29Z"
+    },
+    {
+      "name": "六合宝典",
+      "lotLabel": "当前新澳；页面提供其他彩种切换",
+      "note": "HTTP直读403，但正常云端浏览器可读iframe；部分289期栏目待更新。",
+      "bodyUrl": "https://lhbd-zn1.7349n.app:2028/yjjy/index.html",
+      "url": "https://lhbd-zn1.7349n.app:2028/",
+      "capturedAt": "2026-10-15T16:02:38Z"
+    },
+    {
+      "name": "49018899",
+      "lotLabel": "未确认",
+      "note": "返回Security校验页，未读取预测正文；未绕过校验。",
+      "bodyUrl": "",
+      "url": "https://yyaaff018899.49018899gg.app:8450/ok.html?_refluxos=a10#yyt",
+      "capturedAt": "2026-10-15T16:02:46Z"
+    }
   ]
 }
