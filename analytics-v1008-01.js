@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v10.1010.35';
+  var VERSION = 'v10.1010.36';
   var PAGE = 0;
   var CURRENT = {};
   var CACHE = {};
@@ -25,8 +25,8 @@
   }
   function targetMeta(rows) { var s = rows[rows.length - 1]; return { sourcePeriod:s.p, targetPeriod:s.p + 1, estimatedDate:nextRecordedDate(rows) }; }
   function rejectedRecord(lot,r){if(!r)return false;var ns=(r.n||[]).slice().sort(function(a,b){return a-b;}).join(',');return lot==='la'&&r.p===280&&ns==='3,21,26,33,42,45'&&Number(r.t)===22;}
-  if(typeof authoritativeRows==='function')window.mergeAuthoritativeSnapshot=function(lot,rows){var seed=authoritativeRows(lot).map(function(r){return {p:r.p,d:r.d,n:r.n.slice(),t:r.t};}),map={},max=0;seed.forEach(function(r){map[r.p]=r;max=Math.max(max,r.p);});(rows||[]).forEach(function(r){if(r&&r.p>max&&validCloudRecord(lot,r)&&!rejectedRecord(lot,r))map[r.p]=r;});return Object.keys(map).map(function(k){return map[k];}).sort(function(a,b){return a.p-b.p;});};
-  function purgeRejected(){if(!Array.isArray(DR))return;var before=DR.length;DR=DR.filter(function(r){return !rejectedRecord(CUR_LOT,r);});if(before!==DR.length){UP.v1008_forecasts=(UP.v1008_forecasts||[]).filter(function(r){return !(r.lot==='la'&&r.targetPeriod>280);});try{saveData();}catch(e){}}}
+  // 由主程序合并本机、云端与待上传记录；分析模块不覆盖或删除开奖记录。
+  function purgeRejected(){}
 
   function rank01(obj) {
     var a = A49.slice().sort(function (x, y) { return obj[x] - obj[y] || x - y; }), out = {};
