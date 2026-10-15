@@ -21,3 +21,4 @@ jobs:
           path: |
             prediction-source-cache.json
             tools/local-collector/data/source-history.jsonl
+            tools/cloud-probe/pages/*.json

@@ -70,7 +70,7 @@ def parse(s,url,lot,period):
 def main():
  a=argparse.ArgumentParser();g=a.add_mutually_exclusive_group(required=True);g.add_argument('--period',type=int);g.add_argument('--today',action='store_true');a.add_argument('--gc-period',type=int);args=a.parse_args();out=[]
  if args.today:args.period=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).timetuple().tm_yday
- for name,lot,url in SOURCES[:4]:
+ for name,lot,url in SOURCES:
   row={'name':name,'lot':lot,'url':url,'period':args.period,'capturedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'entries':[],'errors':[]}
   try:
    s=read(url);pages={url:s}
@@ -94,7 +94,11 @@ def main():
     for u,body,err in executor.map(fetch_page,links):
      if err:row['errors'].append({'url':u,'error':err})
      else:pages[u]=body
-   for u,body in pages.items():row['entries'].extend(parse(body,u,lot,target))
+   debug=ROOT/'tools/cloud-probe/pages';debug.mkdir(parents=True,exist_ok=True)
+   for u,body in pages.items():
+    key=hashlib.sha256(u.encode()).hexdigest()[:16]
+    (debug/(key+'.json')).write_text(json.dumps({'url':u,'lot':lot,'html':body},ensure_ascii=False),encoding='utf-8')
+    row['entries'].extend(parse(body,u,lot,target))
    row['pageCount']=len(pages);row['status']='read';row['hash']=hashlib.sha256(json.dumps(row['entries'],ensure_ascii=False,sort_keys=True).encode()).hexdigest()
   except Exception as e:row['status']='failed';row['errors'].append({'url':url,'error':str(e)})
   out.append(row);print(name,row['status'],len(row['entries']),'entries',len(row['errors']),'errors',flush=True)
