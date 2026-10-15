@@ -1,5 +1,6 @@
 """Public HTML only; exact requested period, no scripts, no TLS bypass."""
 import unicodedata
+import requests
 import concurrent.futures
 import subprocess
 from collections import Counter
@@ -9,10 +10,12 @@ ROOT=Path(__file__).resolve().parents[1]
 SOURCES=[(r['name'],r['lot'],r['url']) for r in json.loads(re.search(r'const sources=(\[.*?\]);', (ROOT/'source-slots.js').read_text('utf-8'),re.S)[1])]
 
 def read(url):
- with urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'}),timeout=25) as r:b=r.read(4000000)
- s=min((b.decode(e,'replace') for e in ('utf-8','gb18030')),key=lambda t:t.count('\ufffd'))
- if re.search(r'<title>\s*Security|安全验证|Access Denied',s,re.I):raise ValueError('Access check; not prediction content')
+ r=requests.get(url,headers={'User-Agent':'Mozilla/5.0'},timeout=20)
+ r.raise_for_status();r.encoding=r.apparent_encoding
+ s=r.text
+ if re.search(r'<title>\s*Security|安全验证|Access Denied',s,re.I):raise ValueError('Access check; no bypass')
  return s
+
 def plain(s):
  s=re.sub(r'<!--.*?-->','',s,flags=re.S)
  s=re.sub(r'<(script|style)\b.*?</\1>','',s,flags=re.S|re.I)
@@ -65,11 +68,13 @@ def parse(s,url,lot,period):
 def main():
  a=argparse.ArgumentParser();g=a.add_mutually_exclusive_group(required=True);g.add_argument('--period',type=int);g.add_argument('--today',action='store_true');a.add_argument('--gc-period',type=int);args=a.parse_args();out=[]
  if args.today:args.period=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).timetuple().tm_yday
- for name,lot,url in SOURCES:
+ for name,lot,url in SOURCES[:4]:
   row={'name':name,'lot':lot,'url':url,'period':args.period,'capturedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'entries':[],'errors':[]}
   try:
    s=read(url);pages={url:s}
    target=args.period
+   counts=Counter(int(v) for v in re.findall(r'(\d{1,3})期',plain(s)) if 1<=int(v)<=366)
+   if counts:target=counts.most_common(1)[0][0]
    if lot=='gc':
     counts=Counter(int(v) for v in re.findall(r'(\d{1,3})期',plain(s)) if 1<=int(v)<=366)
     target=args.gc_period or (counts.most_common(1)[0][0] if counts else None)
@@ -102,6 +107,7 @@ def main():
    if prior.get('period')==row['period'] and prior.get('entries'):
     row.update(status='stale',entries=prior['entries'],lastAttemptAt=row['capturedAt'],capturedAt=prior['capturedAt'],hash=prior.get('hash'))
    else:row['previousSnapshot']={k:prior.get(k) for k in ('period','capturedAt','status')} # Never apply a different period.
+ out.extend(r for r in old['sources'] if r['url'] not in {x['url'] for x in out})
  dest.write_text(json.dumps({'sources':out},ensure_ascii=False,indent=2),encoding='utf-8')
  subprocess.run(['node',str(ROOT/'tools/filter-prediction-cache.js')],cwd=ROOT,check=True,timeout=90)
 if __name__=='__main__':main()

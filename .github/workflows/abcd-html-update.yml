@@ -1,0 +1,23 @@
+name: ABCD HTML collection update
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests beautifulsoup4
+      - run: python tools/collect_prediction_bodies.py --today
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: abcd-html-results
+          path: |
+            prediction-source-cache.json
+            tools/local-collector/data/source-history.jsonl
