@@ -26,7 +26,9 @@ def parse(s,url,lot,period):
  normalize=lambda v:unicodedata.normalize('NFKC',v).translate(str.maketrans('龍雞豬馬殺碼綠藍門頭數復開','龙鸡猪马杀码绿蓝门头数复开'))
  blocks=list(re.finditer(r'<tr\b.*?</tr>|<li\b.*?</li>',s,re.S|re.I))
  for bi,block in enumerate(blocks):
-  raw=block[0];original=plain(raw).strip();
+  raw=block[0];
+  if re.search(r'<a\b',raw,re.I):continue # 栏目导航不是预测正文
+  original=plain(raw).strip();
   if lot=='la' and re.search('新澳|新奥|新澳门',original):continue
   if lot=='xa' and re.search('老澳|老奥',original):continue
   t=normalize(original);m=re.match(r'(\d{2,4})期\s*[:：]?\s*(.*)',t,re.S)
@@ -82,7 +84,7 @@ def main():
    row['period']=target
    links=[];prefix={'xa':'ambbs','la':'lambbs','gc':'xgbbs'}[lot]
    for href,label in re.findall(r'<a\b[^>]*href=["\x27]([^"\x27]+)["\x27][^>]*>(.*?)</a>',s,re.S|re.I):
-    u=urllib.parse.urljoin(url,html.unescape(href));label=plain(label)
+    u=urllib.parse.urljoin(url,html.unescape(href).strip());label=plain(label)
     if urllib.parse.urlparse(u).netloc!=urllib.parse.urlparse(url).netloc or not re.search('/'+prefix+'/',u) or not re.search('复式|复试|中|特|肖|杀|尾|头|波|五行|单双|大小|家禽|野兽',label) or str(target)+'期' not in label:continue
     if u not in links:links.append(u)
    def fetch_page(u):
