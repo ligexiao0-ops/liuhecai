@@ -66,7 +66,14 @@ def parse(s,url,lot,period):
   zs=list(dict.fromkeys(re.findall('[鼠牛虎兔龙蛇马羊猴鸡狗猪]',prediction)))
   pending=bool(re.search(r'待.?更新|更新中|更.新.中',prediction)) or bool(re.search(r'00',value_text) and not nums and not zs)
   result.append({'lot':lot,'period':period,'title':title,'game':game,'action':'exclude' if '杀' in title else 'track','predictionText':prediction,'numbers':nums,'zodiacs':zs,'rawText':original,'rawHtml':raw,'struck':bool(re.search(r'<(?:strike|del|s)\b',raw,re.I)),'colors':list(dict.fromkeys(re.findall(r'color=["\x27]([^"\x27]+)',raw,re.I))),'url':url,'status':'pending' if pending else 'needs_review'})
- return parse_structured(s,url,lot,period)+result
+ structured=parse_structured(s,url,lot,period)
+ # A strict DOM adapter supersedes the generic interpretation of the same values.
+ # In particular bare 复试 is a linked-zodiac group, not a special-number kill.
+ result=[e for e in result if not any(
+  e['url']==v['url'] and ((e['numbers'] and e['numbers']==v['numbers']) or
+  (re.search(r'复[式试]',e['title']) and e['zodiacs']==v['zodiacs'] and v['game']=='lx'))
+  for v in structured)]
+ return structured+result
 
 def main():
  a=argparse.ArgumentParser();g=a.add_mutually_exclusive_group(required=True);g.add_argument('--period',type=int);g.add_argument('--today',action='store_true');a.add_argument('--gc-period',type=int);args=a.parse_args();out=[]
