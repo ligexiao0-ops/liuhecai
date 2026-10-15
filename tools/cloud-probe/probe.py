@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 from playwright.sync_api import sync_playwright
 URLS=['https://bdw-r8f.mk3lo7g-lamt.app:2028/#tb','https://bdw-1.baddw.com:2028/#888','https://y1q4s2-zd.fe1ps4my-lamb.app:2028/#tb']
 root=Path(__file__).resolve().parents[2];out=root/'cloud-probe-output';out.mkdir(exist_ok=True)
-report={'version':'cloud-probe-1','environment':'GitHub Actions ubuntu-latest','started':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'sources':[]}
+report={'version':'cloud-probe-2','environment':'GitHub Actions ubuntu-latest','started':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'sources':[]}
 with sync_playwright() as pw:
  browser=pw.chromium.launch(headless=True)
  for i,url in enumerate(URLS):
@@ -31,6 +31,21 @@ with sync_playwright() as pw:
    for j,f in enumerate(page.frames):
     try:
      text=f.locator('body').inner_text(timeout=5000);(out/f'{i}-frame-{j}.txt').write_text(text,encoding='utf-8')
+     if i==2 and '/yjjy/indexkl8.html' in f.url:
+      # Only the explicitly titled twelve-number column; never infer from ads.
+      blocks=list(re.finditer(r'(\d{1,3})期[:：]【六尾12码】([^\n]*)([\s\S]*?)(?=\d{1,3}期|$)',text))
+      if blocks:
+       hit=max(blocks,key=lambda m:int(m[1]));pairs=re.findall(r'【[0-9]尾(\d{2})[.．](\d{2})】',hit[3]);nums=[int(n) for pair in pairs for n in pair]
+       result={'period':int(hit[1]),'title':'六尾12码','numbers':nums,'raw':hit[0],'source':f.url,'lot':'la','valid':len(nums)==12 and len(set(nums))==12 and all(1<=n<=49 for n in nums),'status':'page-latest; not yet compared with application prediction period','readAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}
+       (out/'verified-column.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
+      try:
+       with urllib.request.urlopen(f.url,timeout=20) as response:
+        rawinner=response.read(2000000);(out/'inner-direct.html').write_bytes(rawinner)
+        decoded=rawinner.decode('utf-8',errors='replace')
+        if '六尾' not in decoded:decoded=rawinner.decode('gb18030',errors='replace')
+        (out/'inner-html-check.json').write_text(json.dumps({'url':f.url,'status':response.status,'titlePresentInHTML':'六尾12码' in decoded,'bytes':len(rawinner)},ensure_ascii=False),encoding='utf-8')
+      except Exception as e:(out/'inner-html-check.json').write_text(json.dumps({'error':str(e)}),encoding='utf-8')
+
      for name in ['web-text-rules.js','content.js','columns.js']:f.add_script_tag(content=(root/'edge-collector-stage1'/name).read_text(encoding='utf-8'))
      result=f.evaluate('SancaiDOMCollector.read(null)');frames.append({'url':f.url,'length':len(text),'result':result})
     except Exception as e:frames.append({'url':f.url,'error':str(e)})
