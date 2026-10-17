@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v10.1010.41';
+  var VERSION = 'v10.1010.44';
   var PAGE = 0;
   var CURRENT = {};
   var CACHE = {};
@@ -113,7 +113,7 @@
     function practicalAllowed(n){if(!allowedNumber(n))return false;var checks=[['zm3_z100_hot',hot,true],['zm3_z100_cold',cold,true],['zm3_z100_hot7',hot.slice(0,7),true],['zm3_z100_cold7',cold.slice(0,7),true],['zm3_zm2_om10',omRank.slice(0,20),true],['zm3_excl_z100_hot',hot,false],['zm3_excl_z100_cold',cold,false],['zm3_excl_z100_hot7',hot.slice(0,7),false],['zm3_excl_z100_cold7',cold.slice(0,7),false],['zm3_excl_zm2_om10',omRank.slice(0,20),false],['zm3_excl_om7',omRank.slice(0,7),false],['zm3_excl_om7_cold',omCold.slice(0,7),false]];return !checks.some(function(c){return UP[c[0]]&&(c[1].includes(n)!==c[2]);});}
     function pairsValid(ns){if(UP.zm3_base_9x&&(UP.lx9_seq1||[]).length===9&&ns.filter(function(n){return !UP.lx9_seq1.includes(gz(n));}).length>(typeof UP.zm3_base_9x_out==='number'?UP.zm3_base_9x_out:2))return false;return !(UP.zm3_no_together||[]).some(function(pair){return pair.length>=2&&pair.slice(0,2).every(function(v){return ns.some(function(n){return typeof v==='number'?n===v:gz(n)===v;});});});}
     function trioValid(ns){if(!ComboLimits.allowed(ns,UP.zm3_group_limits))return false;if(!pairsValid(ns))return false;var counts={};ns.forEach(function(n){var z=gz(n);counts[z]=(counts[z]||0)+1;});var doubled=Object.keys(counts).filter(function(z){return counts[z]>=2;}).length,last=rows[rows.length-1].n.concat(rows[rows.length-1].t);return !(UP.zm3_one_zod_2&&doubled!==1||UP.zm3_two_zod_2&&doubled!==2||UP.zm3_same_tail&&!ns.some(function(n){return last.some(function(q){return q%10===n%10;});})||UP.zm3_same_zod&&!ns.every(function(n){return last.some(function(q){return gz(q)===gz(n);});}));}
-    ['balance','continuity','complement'].forEach(function(m){normal[m]=numberRank(rows,m,'n').list.filter(practicalAllowed);});
+    ['balance','continuity','complement'].forEach(function(m){normal[m]=ScoreProjects.prioritize(numberRank(rows,m,'n').list.filter(practicalAllowed),rows.at(-1));});
     ['balance','frequency','rebound'].forEach(function(m){special[m]=numberRank(rows,m,'t').list.filter(function(n){return typeof planTeAllowed!=='function'||planTeAllowed(n);});});
     var lx=typeof planReasonLx==='function'?planReasonLx(rows,5,{window:60}):null;
     return {lot:CUR_LOT,meta:targetMeta(rows),rows:rows.map(function(r){return {p:r.p,d:r.d,n:r.n.slice(),t:r.t};}),normal:normal,special:special,lx:lx?[lx.best].concat(lx.alts||[]).filter(Boolean).map(function(x){return x.zs;}):[],

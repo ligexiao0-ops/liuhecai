@@ -82,6 +82,12 @@ def main():
   row={'name':name,'lot':lot,'url':url,'period':args.period,'capturedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'entries':[],'errors':[]}
   try:
    s=read(url);pages={url:s}
+   # Same-origin DOM frames contain actual forecast tables on several sources.
+   for src in re.findall(r'<iframe\b[^>]*src=[\"\x27]([^\"\x27]+)',s,re.I)[:8]:
+    u=urllib.parse.urljoin(url,html.unescape(src))
+    if urllib.parse.urlparse(u).netloc==urllib.parse.urlparse(url).netloc:
+     try:pages[u]=read(u)
+     except Exception as e:row['errors'].append({'url':u,'error':str(e)})
    target=args.period
    counts=Counter(int(v) for v in re.findall(r'(\d{1,3})期',plain(s)) if 1<=int(v)<=366)
    if counts:target=counts.most_common(1)[0][0]
@@ -107,6 +113,7 @@ def main():
     key=hashlib.sha256(u.encode()).hexdigest()[:16]
     (debug/(key+'.json')).write_text(json.dumps({'url':u,'lot':lot,'html':body},ensure_ascii=False),encoding='utf-8')
     row['entries'].extend(parse(body,u,lot,target))
+   if not row['entries']:raise ValueError('页面可访问，但未提取到目标期预测；保留旧快照，不用空结果覆盖')
    row['pageCount']=len(pages);row['status']='read';row['hash']=hashlib.sha256(json.dumps(row['entries'],ensure_ascii=False,sort_keys=True).encode()).hexdigest()
   except Exception as e:row['status']='failed';row['errors'].append({'url':url,'error':str(e)})
   out.append(row);print(name,row['status'],len(row['entries']),'entries',len(row['errors']),'errors',flush=True)
@@ -118,7 +125,8 @@ def main():
   if row['status']=='read' and (not prior or prior.get('rawHash',prior.get('hash'))!=row.get('rawHash',row.get('hash')) or prior.get('period')!=row['period']):
    with history.open('a',encoding='utf-8') as f:f.write(json.dumps(row,ensure_ascii=False)+'\n')
   if row['status']=='failed' and prior:
-   if prior.get('period')==row['period'] and prior.get('entries'):
+   if prior.get('entries'):
+    row['attemptedPeriod']=row['period'];row['period']=prior['period']
     row.update(status='stale',entries=prior['entries'],lastAttemptAt=row['capturedAt'],capturedAt=prior['capturedAt'],hash=prior.get('hash'))
    else:row['previousSnapshot']={k:prior.get(k) for k in ('period','capturedAt','status')} # Never apply a different period.
  out.extend(r for r in old['sources'] if r['url'] not in {x['url'] for x in out})

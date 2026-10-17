@@ -6,7 +6,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 function candidates(e){const claim=SourceQuality.extract(e);if(!claim)return null;const pool=WebTextRules.pool(claim,n=>({生肖:gz(n),单双:gpar(n),大小:gsz(n),家野:gfam(n),波色:gwv(n),五行:gwx(n),合数单双:ghe(n)}));return pool.length?{...claim,pool}:null;}
 function show(){
  if(!['img','external'].includes(activeTab)||!cache)return;
- const period=+(viewPeriod[CUR_LOT]||NEXT);chosen=new Set(UP.sourceSelections?.[context()]||[]);copyItems=[];
+ const available=cache.sources.filter(s=>s.lot===CUR_LOT&&s.entries?.length).map(s=>+s.period);if(!viewPeriod[CUR_LOT]&&!available.includes(+NEXT)&&available.length)viewPeriod[CUR_LOT]=Math.max(...available);const period=+(viewPeriod[CUR_LOT]||NEXT);chosen=new Set(UP.sourceSelections?.[context()]||[]);copyItems=[];
  const openSources=new Set(Array.from(document.querySelectorAll('#prediction-sources details[data-source-open][open]')).map(x=>x.dataset.sourceOpen));
  document.getElementById('prediction-sources')?.remove();
  const sets=[],sources=cache.sources.filter(s=>s.lot===CUR_LOT&&SourceSlots.sources.some(x=>x.url===s.url&&x.lot===s.lot));
@@ -14,6 +14,7 @@ function show(){
  const periods=[...new Set([+NEXT,...sources.map(s=>+s.period)])].sort((a,b)=>b-a);
  let h='<section id="prediction-sources" class="card"><h3>🌐 外部资料 · 当前预测第'+NEXT+'期</h3><button id="refresh-prediction-sources">↻ 刷新已采集资料</button><small> 读取已发布快照；期号一致才可应用。缺失不等于预测错误。</small>'+esc(error);
  h+='<p>资料期号 <select id="source-period">'+periods.map(p=>'<option value="'+p+'" '+(p===period?'selected':'')+'>'+p+'期'+(p===+NEXT?'（系统预测期）':'')+'</option>').join('')+'</select> · 自选任意数量的栏目求交集，不限三个网址。📋复制 · ✓选用 · 🚫排除</p>';
+ if(period!==+NEXT)h+='<p style="color:#a35a00">系统预测第'+NEXT+'期，已采集资料第'+period+'期。已显示可读快照，可复制和求交集；先核对开奖记录再选用。</p>';
  if(cache.verification)h+='<details><summary>新网址实测报告（4个）</summary>'+cache.verification.map(v=>'<p><b>'+esc(v.name)+' · '+esc(v.lotLabel)+'</b><br>'+esc(v.note)+'<br><small>'+esc(v.capturedAt)+'</small> <a href="'+esc(v.bodyUrl||v.url)+'" target="_blank" rel="noopener">查看来源</a></p>').join('')+'</details>';
  sources.forEach(s=>{
   if(+s.period!==period)return;
