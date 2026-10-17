@@ -7242,7 +7242,841 @@
       "filteredCount": 0
     },
     {
-      "name": "吕洞宾老澳（用户确认）",
+      "name": "不倒翁新澳",
+      "lot": "xa",
+      "url": "https://kbqrgzhbxp.19333hi.app:2768/index.html",
+      "period": 290,
+      "capturedAt": "2026-10-17T02:07:18Z",
+      "status": "read",
+      "entries": [
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "10码",
+          "predictionText": "15.39.17.29.33.45.28.31.47.22",
+          "numbers": [
+            15,
+            39,
+            17,
+            29,
+            33,
+            45,
+            28,
+            31,
+            47,
+            22
+          ],
+          "zodiacs": [],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "rawText": "290期:10码15.39.17.29.33.45.28.31.47.22开:?00",
+          "rawHtml": "<tr><td>290期:⑩码</td><td><u>15.39.17.29.33.45.28.31.47.22</u></td><td>开:？00</td></tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "号码",
+            "values": [
+              15,
+              39,
+              17,
+              29,
+              33,
+              45,
+              28,
+              31,
+              47,
+              22
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "10码"
+          },
+          "attribute": {
+            "kind": "号码",
+            "values": [
+              15,
+              39,
+              17,
+              29,
+              33,
+              45,
+              28,
+              31,
+              47,
+              22
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "7码",
+          "predictionText": "15.39.17.29.33.28.31",
+          "numbers": [
+            15,
+            39,
+            17,
+            29,
+            33,
+            28,
+            31
+          ],
+          "zodiacs": [],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "rawText": "290期:7码15.39.17.29.33.28.31开:?00",
+          "rawHtml": "<tr><td>290期:⑦码</td><td>15.39.17.29.33.28.31</td><td>开:？00</td></tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "号码",
+            "values": [
+              15,
+              39,
+              17,
+              29,
+              33,
+              28,
+              31
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "7码"
+          },
+          "attribute": {
+            "kind": "号码",
+            "values": [
+              15,
+              39,
+              17,
+              29,
+              33,
+              28,
+              31
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "4码",
+          "predictionText": "39.29.33.28",
+          "numbers": [
+            39,
+            29,
+            33,
+            28
+          ],
+          "zodiacs": [],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "rawText": "290期:4码39.29.33.28开:?00",
+          "rawHtml": "<tr><td>290期:④码</td><td>39.29.33.28</td><td>开:？00</td></tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "号码",
+            "values": [
+              39,
+              29,
+              33,
+              28
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "4码"
+          },
+          "attribute": {
+            "kind": "号码",
+            "values": [
+              39,
+              29,
+              33,
+              28
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "3肖",
+          "predictionText": "龙虎狗",
+          "numbers": [],
+          "zodiacs": [
+            "龙",
+            "虎",
+            "狗"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "rawText": "290期:3肖龙虎狗开:?00",
+          "rawHtml": "<tr><td>290期:③肖</td><td>龙虎狗</td><td>开:？00</td></tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "虎",
+              "狗"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "3肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "虎",
+              "狗"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "5肖",
+          "predictionText": "龙虎狗兔鼠",
+          "numbers": [],
+          "zodiacs": [
+            "龙",
+            "虎",
+            "狗",
+            "兔",
+            "鼠"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "rawText": "290期:5肖龙虎狗兔鼠开:?00",
+          "rawHtml": "<tr><td>290期:⑤肖</td><td>龙虎狗兔鼠</td><td>开:？00</td></tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "虎",
+              "狗",
+              "兔",
+              "鼠"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "5肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "虎",
+              "狗",
+              "兔",
+              "鼠"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "7肖",
+          "predictionText": "龙虎狗兔鼠猴鸡",
+          "numbers": [],
+          "zodiacs": [
+            "龙",
+            "虎",
+            "狗",
+            "兔",
+            "鼠",
+            "猴",
+            "鸡"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "rawText": "290期:7肖龙虎狗兔鼠猴鸡开:?00",
+          "rawHtml": "<tr><td>290期:⑦肖</td><td>龙虎狗兔鼠猴鸡</td><td>开:？00</td></tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "虎",
+              "狗",
+              "兔",
+              "鼠",
+              "猴",
+              "鸡"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "7肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "虎",
+              "狗",
+              "兔",
+              "鼠",
+              "猴",
+              "鸡"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "9肖",
+          "predictionText": "龙虎狗兔鼠猴鸡猪牛",
+          "numbers": [],
+          "zodiacs": [
+            "龙",
+            "虎",
+            "狗",
+            "兔",
+            "鼠",
+            "猴",
+            "鸡",
+            "猪",
+            "牛"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "rawText": "290期:9肖龙虎狗兔鼠猴鸡猪牛开:?00",
+          "rawHtml": "<tr><td>290期:⑨肖</td><td>龙虎狗兔鼠猴鸡猪牛</td><td>开:？00</td></tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "虎",
+              "狗",
+              "兔",
+              "鼠",
+              "猴",
+              "鸡",
+              "猪",
+              "牛"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "9肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "虎",
+              "狗",
+              "兔",
+              "鼠",
+              "猴",
+              "鸡",
+              "猪",
+              "牛"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "绿波",
+          "game": "te",
+          "action": "track",
+          "predictionText": "一波中特【绿波】",
+          "numbers": [],
+          "zodiacs": [],
+          "rawText": "290期:一波中特【绿波】开:？00准",
+          "rawHtml": "<li>290期:一波中特<i>【绿波】</i>开:<u>？00</u>准</li>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "波色",
+            "values": [
+              "绿"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "三中二/21.9倍",
+          "game": "z3in2",
+          "action": "track",
+          "predictionText": "【三中二/21.9倍】 【21 37 48】【42 35 29】【19 24 18】 【36 44 25】【39 43 41】【09 22 40】  长期心水19333.com免费跟踪",
+          "numbers": [
+            21,
+            37,
+            48,
+            42,
+            35,
+            29,
+            19,
+            24,
+            18,
+            36,
+            44,
+            25,
+            39,
+            43,
+            41,
+            9,
+            22,
+            40
+          ],
+          "zodiacs": [],
+          "rawText": "290期:【三中二/21.9倍】\n \n 【21 37 48】【42 35 29】【19 24 18】\n【36 44 25】【39 43 41】【09 22 40】\n\n 开：00-00-00-00-00-00-特00\n长期心水19333.com免费跟踪",
+          "rawHtml": "<li>290期:【<font color=\"#008000\">三中二/21.9倍</font>】<br>\t\t\n\t\t<i>【21 37 48】</i><i>【42 35 29】</i><i>【19 24 18】</i><br><i>【36 44 25】</i><i>【39 43 41】</i><i>【09 22 40】</i><br>\n\t\t<i><font color=\"#000000\">开：00-00-00-00-00-00-特00</font></i><br><u>长期心水<span style=\"color: red;\">19333.com</span>免费跟踪</u></li>",
+          "struck": false,
+          "colors": [
+            "#008000",
+            "#000000"
+          ],
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "号码",
+            "values": [
+              21,
+              37,
+              48,
+              42,
+              35,
+              29,
+              19,
+              24,
+              18,
+              36,
+              44,
+              25,
+              39,
+              43,
+              41,
+              9,
+              22,
+              40
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "灭庄六肖",
+          "game": "te",
+          "action": "track",
+          "predictionText": "灭庄六肖【牛兔虎狗龙鼠】",
+          "numbers": [],
+          "zodiacs": [
+            "牛",
+            "兔",
+            "虎",
+            "狗",
+            "龙",
+            "鼠"
+          ],
+          "rawText": "290期:灭庄六肖【牛兔虎狗龙鼠】开:？00准",
+          "rawHtml": "<li>290期:灭庄六肖<i>【牛兔虎狗龙鼠】</i>开:<u>？00</u>准</li>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "兔",
+              "虎",
+              "狗",
+              "龙",
+              "鼠"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "1.3.5.7.9尾",
+          "game": "te",
+          "action": "track",
+          "predictionText": "平特三连尾【1.3.5.7.9尾】准",
+          "numbers": [],
+          "zodiacs": [],
+          "rawText": "290期：平特三连尾【1.3.5.7.9尾】准",
+          "rawHtml": "<li>290期：平特三连尾<i>【1.3.5.7.9尾】</i>准</li>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "尾数",
+            "values": [
+              1,
+              3,
+              5,
+              7
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "超准九肖",
+          "game": "te",
+          "action": "track",
+          "predictionText": "鸡猪牛兔猴虎鼠狗龙",
+          "numbers": [],
+          "zodiacs": [
+            "鸡",
+            "猪",
+            "牛",
+            "兔",
+            "猴",
+            "虎",
+            "鼠",
+            "狗",
+            "龙"
+          ],
+          "rawText": "290期:鸡猪牛兔猴虎鼠狗龙开:？00中",
+          "rawHtml": "<tr><th width=\"22%\"><u>290期:</u></th><td>鸡猪牛兔猴虎鼠狗龙</td><th width=\"22%\"><u>开:</u>？00中</th></tr>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "鸡",
+              "猪",
+              "牛",
+              "兔",
+              "猴",
+              "虎",
+              "鼠",
+              "狗",
+              "龙"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "野兽",
+          "game": "te",
+          "action": "track",
+          "predictionText": "家野中特【野兽】",
+          "numbers": [],
+          "zodiacs": [],
+          "rawText": "290期:家野中特【野兽】开:？00准",
+          "rawHtml": "<li>290期:家野中特<i>【野兽】</i>开:<u>？00</u>准</li>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "家野",
+            "values": [
+              "野兽"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "三连肖/11.12倍",
+          "game": "lx",
+          "action": "track",
+          "predictionText": "【三连肖/11.12倍】 【猪鸡狗】【猴羊鼠】【马虎兔】 【蛇牛龙】【虎蛇狗】【鼠龙兔】  100元/组-中?组赚000理性投注,永不翻车!",
+          "numbers": [
+            11,
+            12
+          ],
+          "zodiacs": [
+            "猪",
+            "鸡",
+            "狗",
+            "猴",
+            "羊",
+            "鼠",
+            "马",
+            "虎",
+            "兔",
+            "蛇",
+            "牛",
+            "龙"
+          ],
+          "rawText": "290期:【三连肖/11.12倍】\n\n 【猪鸡狗】【猴羊鼠】【马虎兔】\n【蛇牛龙】【虎蛇狗】【鼠龙兔】\n开：？-？-？-？-？-？-特？\n100元/组-中?组赚000理性投注,永不翻车!",
+          "rawHtml": "<li>290期:【<font color=\"#008000\">三连肖/11.12倍</font>】<br>\n\t\t<i>【猪鸡狗】</i><i>【猴羊鼠】</i><i>【马虎兔】</i><br><i>【蛇牛龙】</i><i>【虎蛇狗】</i><i>【鼠龙兔】</i><br><i><font color=\"#000000\">开：？-？-？-？-？-？-特？</font></i><br><u>100元/组-中?组赚000理性投注,永不翻车!</u></li>",
+          "struck": false,
+          "colors": [
+            "#008000",
+            "#000000"
+          ],
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "猪",
+              "鸡",
+              "狗",
+              "猴",
+              "羊",
+              "鼠",
+              "马",
+              "虎",
+              "兔",
+              "蛇",
+              "牛",
+              "龙"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "(杀二肖)〖马蛇〗",
+          "game": "te",
+          "action": "exclude",
+          "predictionText": "(杀二肖)〖马蛇〗",
+          "numbers": [],
+          "zodiacs": [
+            "马",
+            "蛇"
+          ],
+          "rawText": "290期:（杀二肖）〖马蛇〗特开:？00准",
+          "rawHtml": "<li>290期:（杀二肖）<i>〖马蛇〗</i>特开:<u>？00</u>准</li>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "马",
+              "蛇"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "1肖敢搏-龙-39-送老婆",
+          "game": "te",
+          "action": "track",
+          "predictionText": "1肖敢搏-龙-39-送老婆",
+          "numbers": [
+            39
+          ],
+          "zodiacs": [
+            "龙"
+          ],
+          "rawText": "290期:①肖敢搏-龙-39-送老婆开:？00",
+          "rawHtml": "<tr><td>290期:①肖</td><td><u>敢搏-</u><i>龙-39<u>-送老婆</u></i></td><td>开:？00</td></tr>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "龙"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "3肖龙虎狗",
+          "game": "te",
+          "action": "track",
+          "predictionText": "3肖龙虎狗",
+          "numbers": [],
+          "zodiacs": [
+            "龙",
+            "虎",
+            "狗"
+          ],
+          "rawText": "290期:③肖龙虎狗开:？00",
+          "rawHtml": "<tr><td>290期:③肖</td><td>龙虎狗</td><td>开:？00</td></tr>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "虎",
+              "狗"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "5肖龙虎狗兔鼠",
+          "game": "te",
+          "action": "track",
+          "predictionText": "5肖龙虎狗兔鼠",
+          "numbers": [],
+          "zodiacs": [
+            "龙",
+            "虎",
+            "狗",
+            "兔",
+            "鼠"
+          ],
+          "rawText": "290期:⑤肖龙虎狗兔鼠开:？00",
+          "rawHtml": "<tr><td>290期:⑤肖</td><td>龙虎狗兔鼠</td><td>开:？00</td></tr>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "虎",
+              "狗",
+              "兔",
+              "鼠"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "7肖龙虎狗兔鼠猴鸡",
+          "game": "te",
+          "action": "track",
+          "predictionText": "7肖龙虎狗兔鼠猴鸡",
+          "numbers": [],
+          "zodiacs": [
+            "龙",
+            "虎",
+            "狗",
+            "兔",
+            "鼠",
+            "猴",
+            "鸡"
+          ],
+          "rawText": "290期:⑦肖龙虎狗兔鼠猴鸡开:？00",
+          "rawHtml": "<tr><td>290期:⑦肖</td><td>龙虎狗兔鼠猴鸡</td><td>开:？00</td></tr>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "虎",
+              "狗",
+              "兔",
+              "鼠",
+              "猴",
+              "鸡"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "9肖龙虎狗兔鼠猴鸡猪牛",
+          "game": "te",
+          "action": "track",
+          "predictionText": "9肖龙虎狗兔鼠猴鸡猪牛",
+          "numbers": [],
+          "zodiacs": [
+            "龙",
+            "虎",
+            "狗",
+            "兔",
+            "鼠",
+            "猴",
+            "鸡",
+            "猪",
+            "牛"
+          ],
+          "rawText": "290期:⑨肖龙虎狗兔鼠猴鸡猪牛开:？00",
+          "rawHtml": "<tr><td>290期:⑨肖</td><td>龙虎狗兔鼠猴鸡猪牛</td><td>开:？00</td></tr>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "虎",
+              "狗",
+              "兔",
+              "鼠",
+              "猴",
+              "鸡",
+              "猪",
+              "牛"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "马01合红双0尾",
+          "game": "te",
+          "action": "track",
+          "predictionText": "马01合红双0尾",
+          "numbers": [],
+          "zodiacs": [
+            "马"
+          ],
+          "rawText": "290期马01合红双0尾开:？00",
+          "rawHtml": "<tr><td>290期</td><td>马</td><td>01合</td><td>红双</td><td>0尾</td><td>开:？00</td></tr>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kbqrgzhbxp.19333hi.app:2768/htm/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "尾数",
+            "values": [
+              0,
+              1
+            ]
+          }
+        }
+      ],
+      "errors": [],
+      "filteredCount": 4,
+      "hash": "d23015f631e7c704e69c8751b5061458543bb034e00f8732855dd748e38942bb"
+    },
+    {
+      "name": "吕洞宾老澳",
       "lot": "la",
       "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/am.html",
       "period": 290,
@@ -7523,6 +8357,1986 @@
       "errors": [],
       "filteredCount": 8,
       "hash": "8755986b57c68785a89884070e970d955fa107d6eb10a12c34fa5502e546e91b"
+    },
+    {
+      "name": "八仙论坛澳门彩（老澳）",
+      "lot": "la",
+      "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/am.html",
+      "period": 290,
+      "capturedAt": "2026-10-17T02:07:40Z",
+      "status": "read",
+      "entries": [
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "1码",
+          "predictionText": "42 ",
+          "numbers": [
+            42
+          ],
+          "zodiacs": [],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "rawText": "290期:1码\n42\n?00\n",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:①码</font></td>\n<td align=\"center\" width=\"57%\">42</td>\n<td style=\"font-size: 10pt\" width=\"19%\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "号码",
+            "values": [
+              42
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "1码"
+          },
+          "attribute": {
+            "kind": "号码",
+            "values": [
+              42
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "3码",
+          "predictionText": "42,30,22 ",
+          "numbers": [
+            42,
+            30,
+            22
+          ],
+          "zodiacs": [],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "rawText": "290期:3码\n42,30,22\n?00\n",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:③码</font></td>\n<td align=\"center\" width=\"57%\">42,30,22</td>\n<td style=\"font-size: 10pt\" width=\"19%\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "号码",
+            "values": [
+              42,
+              30,
+              22
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "3码"
+          },
+          "attribute": {
+            "kind": "号码",
+            "values": [
+              42,
+              30,
+              22
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "10码",
+          "predictionText": "42,30,22,20,31,21,41,27,01,11 ",
+          "numbers": [
+            42,
+            30,
+            22,
+            20,
+            31,
+            21,
+            41,
+            27,
+            1,
+            11
+          ],
+          "zodiacs": [],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "rawText": "290期:10码\n42,30,22,20,31,21,41,27,01,11\n?00\n",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:⑩码</font></td>\n<td align=\"center\" style=\"font-size: 9pt\" width=\"57%\">42,30,22,20,31,21,41,27,01,11</td>\n<td style=\"font-size: 10pt\" width=\"19%\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "号码",
+            "values": [
+              42,
+              30,
+              22,
+              20,
+              31,
+              21,
+              41,
+              27,
+              1,
+              11
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "10码"
+          },
+          "attribute": {
+            "kind": "号码",
+            "values": [
+              42,
+              30,
+              22,
+              20,
+              31,
+              21,
+              41,
+              27,
+              1,
+              11
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "1肖",
+          "predictionText": "牛 ",
+          "numbers": [],
+          "zodiacs": [
+            "牛"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "rawText": "290期:一肖\n牛\n?00\n",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:一肖</font></td>\n<td align=\"center\" width=\"57%\">牛</td>\n<td style=\"font-size: 10pt\" width=\"19%\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "牛"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "1肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "2肖",
+          "predictionText": "牛鸡 ",
+          "numbers": [],
+          "zodiacs": [
+            "牛",
+            "鸡"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "rawText": "290期:二肖\n牛鸡\n?00\n",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:二肖</font></td>\n<td align=\"center\" width=\"57%\">牛鸡</td>\n<td style=\"font-size: 10pt\" width=\"19%\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "2肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "3肖",
+          "predictionText": "牛鸡猪 ",
+          "numbers": [],
+          "zodiacs": [
+            "牛",
+            "鸡",
+            "猪"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "rawText": "290期:三肖\n牛鸡猪\n?00\n",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:三肖</font></td>\n<td align=\"center\" width=\"57%\">牛鸡猪</td>\n<td style=\"font-size: 10pt\" width=\"19%\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "3肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "4肖",
+          "predictionText": "牛鸡猪鼠 ",
+          "numbers": [],
+          "zodiacs": [
+            "牛",
+            "鸡",
+            "猪",
+            "鼠"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "rawText": "290期:四肖\n牛鸡猪鼠\n?00\n",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:四肖</font></td>\n<td align=\"center\" width=\"57%\">牛鸡猪鼠</td>\n<td style=\"font-size: 10pt\" width=\"19%\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪",
+              "鼠"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "4肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪",
+              "鼠"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "5肖",
+          "predictionText": "牛鸡猪鼠狗 ",
+          "numbers": [],
+          "zodiacs": [
+            "牛",
+            "鸡",
+            "猪",
+            "鼠",
+            "狗"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "rawText": "290期:五肖\n牛鸡猪鼠狗\n?00\n",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:五肖</font></td>\n<td align=\"center\" width=\"57%\">牛鸡猪鼠狗</td>\n<td style=\"font-size: 10pt\" width=\"19%\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪",
+              "鼠",
+              "狗"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "5肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪",
+              "鼠",
+              "狗"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "6肖",
+          "predictionText": "牛鸡猪鼠狗虎 ",
+          "numbers": [],
+          "zodiacs": [
+            "牛",
+            "鸡",
+            "猪",
+            "鼠",
+            "狗",
+            "虎"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "rawText": "290期:六肖\n牛鸡猪鼠狗虎\n?00\n",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:六肖</font></td>\n<td align=\"center\" width=\"57%\">牛鸡猪鼠狗虎</td>\n<td style=\"font-size: 10pt\" width=\"19%\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪",
+              "鼠",
+              "狗",
+              "虎"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "6肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪",
+              "鼠",
+              "狗",
+              "虎"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "7肖",
+          "predictionText": "牛鸡猪鼠狗虎龙 ",
+          "numbers": [],
+          "zodiacs": [
+            "牛",
+            "鸡",
+            "猪",
+            "鼠",
+            "狗",
+            "虎",
+            "龙"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "rawText": "290期:七肖\n牛鸡猪鼠狗虎龙\n?00\n",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:七肖</font></td>\n<td align=\"center\" width=\"57%\">牛鸡猪鼠狗虎龙</td>\n<td style=\"font-size: 10pt\" width=\"19%\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪",
+              "鼠",
+              "狗",
+              "虎",
+              "龙"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "7肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪",
+              "鼠",
+              "狗",
+              "虎",
+              "龙"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "9肖",
+          "predictionText": "牛鸡猪鼠狗虎龙马猴 ",
+          "numbers": [],
+          "zodiacs": [
+            "牛",
+            "鸡",
+            "猪",
+            "鼠",
+            "狗",
+            "虎",
+            "龙",
+            "马",
+            "猴"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "rawText": "290期:九肖\n牛鸡猪鼠狗虎龙马猴\n?00\n",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:九肖</font></td>\n<td align=\"center\" width=\"57%\">牛鸡猪鼠狗虎龙马猴</td>\n<td style=\"font-size: 10pt\" width=\"19%\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪",
+              "鼠",
+              "狗",
+              "虎",
+              "龙",
+              "马",
+              "猴"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "9肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪",
+              "鼠",
+              "狗",
+              "虎",
+              "龙",
+              "马",
+              "猴"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "家肖",
+          "game": "te",
+          "action": "track",
+          "predictionText": "家肖【狗,马,牛】 野肖【龙,猴,虎】",
+          "numbers": [],
+          "zodiacs": [
+            "狗",
+            "马",
+            "牛",
+            "龙",
+            "猴",
+            "虎"
+          ],
+          "rawText": "290期:家肖【狗,马,牛】 野肖【龙,猴,虎】",
+          "rawHtml": "<li>290期:<font color=\"#0000FF\">家肖</font><i><font size=\"5\">【</font><font size=\"4\">狗,马,牛</font><font size=\"5\">】</font></i> <font color=\"#0000FF\">野肖</font><i><font size=\"5\">【</font><font size=\"4\">龙,猴,虎</font><font size=\"5\">】</font></i></li>",
+          "struck": false,
+          "colors": [
+            "#0000FF"
+          ],
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "狗",
+              "马",
+              "牛",
+              "龙",
+              "猴",
+              "虎"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "三头中特〖3头,1头,0头〗",
+          "game": "te",
+          "action": "track",
+          "predictionText": "三头中特〖3头,1头,0头〗→",
+          "numbers": [],
+          "zodiacs": [],
+          "rawText": "290期:三头中特〖3头,1头,0头〗→开？00准",
+          "rawHtml": "<li><font size=\"4\">290期:三头中特<i>〖3头,1头,0头〗</i>→开？00准</font></li>",
+          "struck": false,
+          "colors": [],
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "头数",
+            "values": [
+              3,
+              1,
+              0
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "规律四尾",
+          "game": "te",
+          "action": "track",
+          "predictionText": "规律四尾【2,7,5,8】→",
+          "numbers": [],
+          "zodiacs": [],
+          "rawText": "290期:规律四尾【2,7,5,8】→开？00准",
+          "rawHtml": "<li><font size=\"4\">290期:规律四尾<i>【2,7,5,8】</i>→开？00准</font></li>",
+          "struck": false,
+          "colors": [],
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "尾数",
+            "values": [
+              2,
+              7,
+              5,
+              8
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "平特一肖",
+          "game": "pt",
+          "action": "track",
+          "predictionText": "平特一肖【猴猴猴】→",
+          "numbers": [],
+          "zodiacs": [
+            "猴"
+          ],
+          "rawText": "290期:平特一肖【猴猴猴】→开？00准",
+          "rawHtml": "<li><b><font size=\"4\" face=\"微软雅黑\">290期:平特一肖【<u>猴猴猴</u>】→开？00准</font></b></li>",
+          "struck": false,
+          "colors": [],
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "猴"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "四肖八码",
+          "game": "te",
+          "action": "track",
+          "predictionText": "【四肖八码】 兔【16,04】 牛【42,30】\n狗【45,21】猪【44,08】",
+          "numbers": [
+            16,
+            4,
+            42,
+            30,
+            45,
+            21,
+            44,
+            8
+          ],
+          "zodiacs": [
+            "兔",
+            "牛",
+            "狗",
+            "猪"
+          ],
+          "rawText": "290期:【四肖八码】开？00准\n兔【16,04】 牛【42,30】\n狗【45,21】猪【44,08】",
+          "rawHtml": "<li><font size=\"4\">290期:<u>【四肖八码】</u>开？00准</font></li>\n<li><font size=\"5\" color=\"#ff0000\"><i>兔【16,04】  牛【42,30】<br>狗【45,21】猪【44,08】</i></font></li>",
+          "struck": false,
+          "colors": [
+            "#ff0000"
+          ],
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "号码",
+            "values": [
+              16,
+              4,
+              42,
+              30,
+              45,
+              21,
+              44,
+              8
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "一肖",
+          "game": "te",
+          "action": "track",
+          "predictionText": "一肖 牛 ?00",
+          "numbers": [],
+          "zodiacs": [
+            "牛"
+          ],
+          "rawText": "290期:一肖\n牛\n？00",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:一肖</font></td>\n<td width=\"57%\" align=\"center\">牛</td>\n<td width=\"19%\" style=\"font-size: 10pt\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [
+            "#005566"
+          ],
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "二肖",
+          "game": "te",
+          "action": "track",
+          "predictionText": "二肖 牛鸡 ?00",
+          "numbers": [],
+          "zodiacs": [
+            "牛",
+            "鸡"
+          ],
+          "rawText": "290期:二肖\n牛鸡\n？00",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:二肖</font></td>\n<td width=\"57%\" align=\"center\">牛鸡</td>\n<td width=\"19%\" style=\"font-size: 10pt\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [
+            "#005566"
+          ],
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "三肖",
+          "game": "te",
+          "action": "track",
+          "predictionText": "三肖 牛鸡猪 ?00",
+          "numbers": [],
+          "zodiacs": [
+            "牛",
+            "鸡",
+            "猪"
+          ],
+          "rawText": "290期:三肖\n牛鸡猪\n？00",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:三肖</font></td>\n<td width=\"57%\" align=\"center\">牛鸡猪</td>\n<td width=\"19%\" style=\"font-size: 10pt\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [
+            "#005566"
+          ],
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "四肖",
+          "game": "te",
+          "action": "track",
+          "predictionText": "四肖 牛鸡猪鼠 ?00",
+          "numbers": [],
+          "zodiacs": [
+            "牛",
+            "鸡",
+            "猪",
+            "鼠"
+          ],
+          "rawText": "290期:四肖\n牛鸡猪鼠\n？00",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:四肖</font></td>\n<td width=\"57%\" align=\"center\">牛鸡猪鼠</td>\n<td width=\"19%\" style=\"font-size: 10pt\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [
+            "#005566"
+          ],
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪",
+              "鼠"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "五肖",
+          "game": "te",
+          "action": "track",
+          "predictionText": "五肖 牛鸡猪鼠狗 ?00",
+          "numbers": [],
+          "zodiacs": [
+            "牛",
+            "鸡",
+            "猪",
+            "鼠",
+            "狗"
+          ],
+          "rawText": "290期:五肖\n牛鸡猪鼠狗\n？00",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:五肖</font></td>\n<td width=\"57%\" align=\"center\">牛鸡猪鼠狗</td>\n<td width=\"19%\" style=\"font-size: 10pt\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [
+            "#005566"
+          ],
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪",
+              "鼠",
+              "狗"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "六肖",
+          "game": "te",
+          "action": "track",
+          "predictionText": "六肖 牛鸡猪鼠狗虎 ?00",
+          "numbers": [],
+          "zodiacs": [
+            "牛",
+            "鸡",
+            "猪",
+            "鼠",
+            "狗",
+            "虎"
+          ],
+          "rawText": "290期:六肖\n牛鸡猪鼠狗虎\n？00",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:六肖</font></td>\n<td width=\"57%\" align=\"center\">牛鸡猪鼠狗虎</td>\n<td width=\"19%\" style=\"font-size: 10pt\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [
+            "#005566"
+          ],
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪",
+              "鼠",
+              "狗",
+              "虎"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "七肖",
+          "game": "te",
+          "action": "track",
+          "predictionText": "七肖 牛鸡猪鼠狗虎龙 ?00",
+          "numbers": [],
+          "zodiacs": [
+            "牛",
+            "鸡",
+            "猪",
+            "鼠",
+            "狗",
+            "虎",
+            "龙"
+          ],
+          "rawText": "290期:七肖\n牛鸡猪鼠狗虎龙\n？00",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:七肖</font></td>\n<td width=\"57%\" align=\"center\">牛鸡猪鼠狗虎龙</td>\n<td width=\"19%\" style=\"font-size: 10pt\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [
+            "#005566"
+          ],
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪",
+              "鼠",
+              "狗",
+              "虎",
+              "龙"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "九肖",
+          "game": "te",
+          "action": "track",
+          "predictionText": "九肖 牛鸡猪鼠狗虎龙马猴 ?00",
+          "numbers": [],
+          "zodiacs": [
+            "牛",
+            "鸡",
+            "猪",
+            "鼠",
+            "狗",
+            "虎",
+            "龙",
+            "马",
+            "猴"
+          ],
+          "rawText": "290期:九肖\n牛鸡猪鼠狗虎龙马猴\n？00",
+          "rawHtml": "<tr><td width=\"24%\"><font color=\"#005566\" size=\"2\">290期:九肖</font></td>\n<td width=\"57%\" align=\"center\">牛鸡猪鼠狗虎龙马猴</td>\n<td width=\"19%\" style=\"font-size: 10pt\"><font color=\"#005566\">？00</font></td>\n</tr>",
+          "struck": false,
+          "colors": [
+            "#005566"
+          ],
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "牛",
+              "鸡",
+              "猪",
+              "鼠",
+              "狗",
+              "虎",
+              "龙",
+              "马",
+              "猴"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "六组三连肖",
+          "game": "lx",
+          "action": "track",
+          "predictionText": "【六组三连肖】 【猴.虎.猪】 【猪.蛇.鸡】 【猪.羊.兔】 \n【狗.猪.猪】 【狗.狗.猪】 【牛.虎.蛇】",
+          "numbers": [],
+          "zodiacs": [
+            "猴",
+            "虎",
+            "猪",
+            "蛇",
+            "鸡",
+            "羊",
+            "兔",
+            "狗",
+            "牛"
+          ],
+          "rawText": "290期:【六组三连肖】\n【猴.虎.猪】 【猪.蛇.鸡】 【猪.羊.兔】 \n【狗.猪.猪】 【狗.狗.猪】 【牛.虎.蛇】",
+          "rawHtml": "<li><font size=\"4\">290期:<u>【六组三连肖】</u></font></li>\n<li><font size=\"4\" color=\"#0000ff\">【猴.虎.猪】 【猪.蛇.鸡】 【猪.羊.兔】 <br>【狗.猪.猪】 【狗.狗.猪】 【牛.虎.蛇】</font></li>",
+          "struck": false,
+          "colors": [
+            "#0000ff"
+          ],
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "猴",
+              "虎",
+              "猪",
+              "蛇",
+              "鸡",
+              "羊",
+              "兔",
+              "狗",
+              "牛"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "绝杀三肖",
+          "game": "te",
+          "action": "exclude",
+          "predictionText": "绝杀三肖【鼠羊猪】→",
+          "numbers": [],
+          "zodiacs": [
+            "鼠",
+            "羊",
+            "猪"
+          ],
+          "rawText": "290期:绝杀三肖【鼠羊猪】→开？00准",
+          "rawHtml": "<li><font size=\"4\">290期:绝杀三肖<i>【鼠羊猪】</i>→开？00准</font></li>",
+          "struck": false,
+          "colors": [],
+          "url": "https://8my571ef.rbaxianluntanxyz890.com:9133/1479zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "鼠",
+              "羊",
+              "猪"
+            ]
+          }
+        }
+      ],
+      "errors": [],
+      "filteredCount": 5,
+      "hash": "95d018d144ac4def2d85243d9e23fd79961d8ec0a40e4f3d884fd9c94cce6af7"
+    },
+    {
+      "name": "金钥匙新澳",
+      "lot": "xa",
+      "url": "https://bhgbg.00269.shop/index.html",
+      "period": 290,
+      "capturedAt": "2026-10-17T02:07:48Z",
+      "status": "read",
+      "entries": [
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "9肖",
+          "predictionText": "狗虎鸡兔猴鼠牛龙马",
+          "numbers": [],
+          "zodiacs": [
+            "狗",
+            "虎",
+            "鸡",
+            "兔",
+            "猴",
+            "鼠",
+            "牛",
+            "龙",
+            "马"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/ziliao/jingxuan9xiao.htm",
+          "rawText": "\n\n290期:九肖:狗虎鸡兔猴鼠牛龙马\n290期:七肖:狗虎鸡兔猴鼠牛\n290期:五肖:狗虎鸡兔猴\n290期:三肖:狗虎鸡→开?00准\n\n\nwww.211567.com\n",
+          "rawHtml": "<tr>\n<td style=\"width:100.0%;background:#FFFFFF;padding:1.5pt;\n  height:21.0pt\" width=\"100%\">\n<b><span style=\"font-family:华文中宋\"><font size=\"4\"><span lang=\"en-us\">290期</span><span lang=\"EN-US\">:</span>九肖</font></span><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\">:</span></font><style=\"text-align: left\"=\"\"><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">狗虎鸡</font></span></font><style=\"text-align: left\"=\"\"><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">兔猴鼠牛龙马</font><br/>\n</span></font><span style=\"font-family:华文中宋\"><font size=\"4\"><span lang=\"en-us\">290期</span></font></span><font size=\"4\"><span style=\"font-family:华文中宋\"><span style=\"background-color: #FFFFFF\"><span lang=\"EN-US\">:</span>七肖</span><span lang=\"EN-US\" style=\"background-color: #FFFFFF\">:</span></span></font><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">狗虎鸡</font></span></font><style=\"text-align: left\"=\"\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\"><font size=\"4\">兔猴鼠牛</font></font></span><style=\"text-align: left\"=\"\"><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><br/>\n</span></font><span style=\"font-family:华文中宋\"><font size=\"4\"><span lang=\"en-us\">290期</span></font></span><font size=\"4\"><span style=\"background-color: #FFFFFF; font-family:华文中宋\"><span lang=\"EN-US\">:</span>五肖</span><span lang=\"EN-US\" style=\"background-color: #FFFFFF; font-family:华文中宋\">:</span></font><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">狗虎鸡</font></span></font><style=\"text-align: left\"=\"\"><font color=\"#FF0000\" size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\">兔猴</span></font><style=\"text-align: left\"=\"\"><font size=\"4\"><span lang=\"EN-US\" style=\"background-color: #FFFFFF; font-family:华文中宋\"><br/>\n</span></font><span style=\"font-family:华文中宋\"><font size=\"4\"><span lang=\"en-us\">290期</span></font></span><font size=\"4\"><span style=\"font-family:华文中宋; background-color:#FFFFFF\"><span lang=\"EN-US\">:</span>三肖</span></font><span style=\"font-family:华文中宋; background-color:#FFFFFF\"><font size=\"4\"><span lang=\"EN-US\">:</span></font></span><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">狗虎鸡</font></span></font><style=\"text-align: left\"=\"\"><font size=\"4\"><span style=\"color:blue; font-family:华文中宋\">→开？00准</span></font></style=\"text-align:></style=\"text-align:></style=\"text-align:></style=\"text-align:></style=\"text-align:></style=\"text-align:></style=\"text-align:></b><p>\n<b>\n<span style=\"background-color: #FFFF00\">\n<font color=\"#FF0000\" face=\"华文宋体\" style=\"font-size: 17pt\">www.</font></span><font face=\"华文宋体\" style=\"font-size: 17pt; background-color: #FFFF00\"><font color=\"#0000FF\">211</font><font color=\"#008000\">567</font></font></b><span style=\"font-weight: 700; background-color: #FFFF00\"><font color=\"#FF0000\" face=\"华文宋体\" style=\"font-size: 17pt\">.com</font></span></p></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "狗",
+              "虎",
+              "鸡",
+              "兔",
+              "猴",
+              "鼠",
+              "牛",
+              "龙",
+              "马"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "9肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "狗",
+              "虎",
+              "鸡",
+              "兔",
+              "猴",
+              "鼠",
+              "牛",
+              "龙",
+              "马"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "7肖",
+          "predictionText": "狗虎鸡兔猴鼠牛",
+          "numbers": [],
+          "zodiacs": [
+            "狗",
+            "虎",
+            "鸡",
+            "兔",
+            "猴",
+            "鼠",
+            "牛"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/ziliao/jingxuan9xiao.htm",
+          "rawText": "\n\n290期:九肖:狗虎鸡兔猴鼠牛龙马\n290期:七肖:狗虎鸡兔猴鼠牛\n290期:五肖:狗虎鸡兔猴\n290期:三肖:狗虎鸡→开?00准\n\n\nwww.211567.com\n",
+          "rawHtml": "<tr>\n<td style=\"width:100.0%;background:#FFFFFF;padding:1.5pt;\n  height:21.0pt\" width=\"100%\">\n<b><span style=\"font-family:华文中宋\"><font size=\"4\"><span lang=\"en-us\">290期</span><span lang=\"EN-US\">:</span>九肖</font></span><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\">:</span></font><style=\"text-align: left\"=\"\"><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">狗虎鸡</font></span></font><style=\"text-align: left\"=\"\"><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">兔猴鼠牛龙马</font><br/>\n</span></font><span style=\"font-family:华文中宋\"><font size=\"4\"><span lang=\"en-us\">290期</span></font></span><font size=\"4\"><span style=\"font-family:华文中宋\"><span style=\"background-color: #FFFFFF\"><span lang=\"EN-US\">:</span>七肖</span><span lang=\"EN-US\" style=\"background-color: #FFFFFF\">:</span></span></font><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">狗虎鸡</font></span></font><style=\"text-align: left\"=\"\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\"><font size=\"4\">兔猴鼠牛</font></font></span><style=\"text-align: left\"=\"\"><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><br/>\n</span></font><span style=\"font-family:华文中宋\"><font size=\"4\"><span lang=\"en-us\">290期</span></font></span><font size=\"4\"><span style=\"background-color: #FFFFFF; font-family:华文中宋\"><span lang=\"EN-US\">:</span>五肖</span><span lang=\"EN-US\" style=\"background-color: #FFFFFF; font-family:华文中宋\">:</span></font><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">狗虎鸡</font></span></font><style=\"text-align: left\"=\"\"><font color=\"#FF0000\" size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\">兔猴</span></font><style=\"text-align: left\"=\"\"><font size=\"4\"><span lang=\"EN-US\" style=\"background-color: #FFFFFF; font-family:华文中宋\"><br/>\n</span></font><span style=\"font-family:华文中宋\"><font size=\"4\"><span lang=\"en-us\">290期</span></font></span><font size=\"4\"><span style=\"font-family:华文中宋; background-color:#FFFFFF\"><span lang=\"EN-US\">:</span>三肖</span></font><span style=\"font-family:华文中宋; background-color:#FFFFFF\"><font size=\"4\"><span lang=\"EN-US\">:</span></font></span><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">狗虎鸡</font></span></font><style=\"text-align: left\"=\"\"><font size=\"4\"><span style=\"color:blue; font-family:华文中宋\">→开？00准</span></font></style=\"text-align:></style=\"text-align:></style=\"text-align:></style=\"text-align:></style=\"text-align:></style=\"text-align:></style=\"text-align:></b><p>\n<b>\n<span style=\"background-color: #FFFF00\">\n<font color=\"#FF0000\" face=\"华文宋体\" style=\"font-size: 17pt\">www.</font></span><font face=\"华文宋体\" style=\"font-size: 17pt; background-color: #FFFF00\"><font color=\"#0000FF\">211</font><font color=\"#008000\">567</font></font></b><span style=\"font-weight: 700; background-color: #FFFF00\"><font color=\"#FF0000\" face=\"华文宋体\" style=\"font-size: 17pt\">.com</font></span></p></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "狗",
+              "虎",
+              "鸡",
+              "兔",
+              "猴",
+              "鼠",
+              "牛"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "7肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "狗",
+              "虎",
+              "鸡",
+              "兔",
+              "猴",
+              "鼠",
+              "牛"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "5肖",
+          "predictionText": "狗虎鸡兔猴",
+          "numbers": [],
+          "zodiacs": [
+            "狗",
+            "虎",
+            "鸡",
+            "兔",
+            "猴"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/ziliao/jingxuan9xiao.htm",
+          "rawText": "\n\n290期:九肖:狗虎鸡兔猴鼠牛龙马\n290期:七肖:狗虎鸡兔猴鼠牛\n290期:五肖:狗虎鸡兔猴\n290期:三肖:狗虎鸡→开?00准\n\n\nwww.211567.com\n",
+          "rawHtml": "<tr>\n<td style=\"width:100.0%;background:#FFFFFF;padding:1.5pt;\n  height:21.0pt\" width=\"100%\">\n<b><span style=\"font-family:华文中宋\"><font size=\"4\"><span lang=\"en-us\">290期</span><span lang=\"EN-US\">:</span>九肖</font></span><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\">:</span></font><style=\"text-align: left\"=\"\"><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">狗虎鸡</font></span></font><style=\"text-align: left\"=\"\"><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">兔猴鼠牛龙马</font><br/>\n</span></font><span style=\"font-family:华文中宋\"><font size=\"4\"><span lang=\"en-us\">290期</span></font></span><font size=\"4\"><span style=\"font-family:华文中宋\"><span style=\"background-color: #FFFFFF\"><span lang=\"EN-US\">:</span>七肖</span><span lang=\"EN-US\" style=\"background-color: #FFFFFF\">:</span></span></font><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">狗虎鸡</font></span></font><style=\"text-align: left\"=\"\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\"><font size=\"4\">兔猴鼠牛</font></font></span><style=\"text-align: left\"=\"\"><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><br/>\n</span></font><span style=\"font-family:华文中宋\"><font size=\"4\"><span lang=\"en-us\">290期</span></font></span><font size=\"4\"><span style=\"background-color: #FFFFFF; font-family:华文中宋\"><span lang=\"EN-US\">:</span>五肖</span><span lang=\"EN-US\" style=\"background-color: #FFFFFF; font-family:华文中宋\">:</span></font><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">狗虎鸡</font></span></font><style=\"text-align: left\"=\"\"><font color=\"#FF0000\" size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\">兔猴</span></font><style=\"text-align: left\"=\"\"><font size=\"4\"><span lang=\"EN-US\" style=\"background-color: #FFFFFF; font-family:华文中宋\"><br/>\n</span></font><span style=\"font-family:华文中宋\"><font size=\"4\"><span lang=\"en-us\">290期</span></font></span><font size=\"4\"><span style=\"font-family:华文中宋; background-color:#FFFFFF\"><span lang=\"EN-US\">:</span>三肖</span></font><span style=\"font-family:华文中宋; background-color:#FFFFFF\"><font size=\"4\"><span lang=\"EN-US\">:</span></font></span><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">狗虎鸡</font></span></font><style=\"text-align: left\"=\"\"><font size=\"4\"><span style=\"color:blue; font-family:华文中宋\">→开？00准</span></font></style=\"text-align:></style=\"text-align:></style=\"text-align:></style=\"text-align:></style=\"text-align:></style=\"text-align:></style=\"text-align:></b><p>\n<b>\n<span style=\"background-color: #FFFF00\">\n<font color=\"#FF0000\" face=\"华文宋体\" style=\"font-size: 17pt\">www.</font></span><font face=\"华文宋体\" style=\"font-size: 17pt; background-color: #FFFF00\"><font color=\"#0000FF\">211</font><font color=\"#008000\">567</font></font></b><span style=\"font-weight: 700; background-color: #FFFF00\"><font color=\"#FF0000\" face=\"华文宋体\" style=\"font-size: 17pt\">.com</font></span></p></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "狗",
+              "虎",
+              "鸡",
+              "兔",
+              "猴"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "5肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "狗",
+              "虎",
+              "鸡",
+              "兔",
+              "猴"
+            ]
+          }
+        },
+        {
+          "lot": "xa",
+          "period": 290,
+          "title": "3肖",
+          "predictionText": "狗虎鸡",
+          "numbers": [],
+          "zodiacs": [
+            "狗",
+            "虎",
+            "鸡"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/ziliao/jingxuan9xiao.htm",
+          "rawText": "\n\n290期:九肖:狗虎鸡兔猴鼠牛龙马\n290期:七肖:狗虎鸡兔猴鼠牛\n290期:五肖:狗虎鸡兔猴\n290期:三肖:狗虎鸡→开?00准\n\n\nwww.211567.com\n",
+          "rawHtml": "<tr>\n<td style=\"width:100.0%;background:#FFFFFF;padding:1.5pt;\n  height:21.0pt\" width=\"100%\">\n<b><span style=\"font-family:华文中宋\"><font size=\"4\"><span lang=\"en-us\">290期</span><span lang=\"EN-US\">:</span>九肖</font></span><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\">:</span></font><style=\"text-align: left\"=\"\"><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">狗虎鸡</font></span></font><style=\"text-align: left\"=\"\"><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">兔猴鼠牛龙马</font><br/>\n</span></font><span style=\"font-family:华文中宋\"><font size=\"4\"><span lang=\"en-us\">290期</span></font></span><font size=\"4\"><span style=\"font-family:华文中宋\"><span style=\"background-color: #FFFFFF\"><span lang=\"EN-US\">:</span>七肖</span><span lang=\"EN-US\" style=\"background-color: #FFFFFF\">:</span></span></font><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">狗虎鸡</font></span></font><style=\"text-align: left\"=\"\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\"><font size=\"4\">兔猴鼠牛</font></font></span><style=\"text-align: left\"=\"\"><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><br/>\n</span></font><span style=\"font-family:华文中宋\"><font size=\"4\"><span lang=\"en-us\">290期</span></font></span><font size=\"4\"><span style=\"background-color: #FFFFFF; font-family:华文中宋\"><span lang=\"EN-US\">:</span>五肖</span><span lang=\"EN-US\" style=\"background-color: #FFFFFF; font-family:华文中宋\">:</span></font><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">狗虎鸡</font></span></font><style=\"text-align: left\"=\"\"><font color=\"#FF0000\" size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\">兔猴</span></font><style=\"text-align: left\"=\"\"><font size=\"4\"><span lang=\"EN-US\" style=\"background-color: #FFFFFF; font-family:华文中宋\"><br/>\n</span></font><span style=\"font-family:华文中宋\"><font size=\"4\"><span lang=\"en-us\">290期</span></font></span><font size=\"4\"><span style=\"font-family:华文中宋; background-color:#FFFFFF\"><span lang=\"EN-US\">:</span>三肖</span></font><span style=\"font-family:华文中宋; background-color:#FFFFFF\"><font size=\"4\"><span lang=\"EN-US\">:</span></font></span><font size=\"4\"><span lang=\"EN-US\" style=\"font-family: 华文中宋; background-color:#FFFFFF\"><font color=\"#FF0000\">狗虎鸡</font></span></font><style=\"text-align: left\"=\"\"><font size=\"4\"><span style=\"color:blue; font-family:华文中宋\">→开？00准</span></font></style=\"text-align:></style=\"text-align:></style=\"text-align:></style=\"text-align:></style=\"text-align:></style=\"text-align:></style=\"text-align:></b><p>\n<b>\n<span style=\"background-color: #FFFF00\">\n<font color=\"#FF0000\" face=\"华文宋体\" style=\"font-size: 17pt\">www.</font></span><font face=\"华文宋体\" style=\"font-size: 17pt; background-color: #FFFF00\"><font color=\"#0000FF\">211</font><font color=\"#008000\">567</font></font></b><span style=\"font-weight: 700; background-color: #FFFF00\"><font color=\"#FF0000\" face=\"华文宋体\" style=\"font-size: 17pt\">.com</font></span></p></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "狗",
+              "虎",
+              "鸡"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 290,
+            "label": "3肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "狗",
+              "虎",
+              "鸡"
+            ]
+          }
+        }
+      ],
+      "errors": [],
+      "filteredCount": 0,
+      "hash": "40475ce29486cde2085d0337da9ce658604bd34281138b49c8cbb855db14120d"
+    },
+    {
+      "name": "金钥匙港彩",
+      "lot": "gc",
+      "url": "https://bhgbg.00269.shop/index777.html",
+      "period": 111,
+      "capturedAt": "2026-10-17T02:07:57Z",
+      "status": "read",
+      "entries": [
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "9肖",
+          "predictionText": "龙狗牛羊鸡猴马兔蛇",
+          "numbers": [],
+          "zodiacs": [
+            "龙",
+            "狗",
+            "牛",
+            "羊",
+            "鸡",
+            "猴",
+            "马",
+            "兔",
+            "蛇"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/xgziliao/jingxuan9xiao.htm",
+          "rawText": "\n\n\n111期:九肖:龙狗牛羊鸡猴马兔蛇\n111期:七肖:龙狗牛羊鸡猴马\n111期:五肖:龙狗牛羊鸡\n\n111期:三肖:龙狗牛开?00准\n\nwww.722567.com\n",
+          "rawHtml": "<tr>\n<td style=\"width:100.0%;background:#FFFFFF;padding:1.5pt;\n  height:21.0pt\" width=\"100%\">\n<span style=\"font-family:微软雅黑\"><font size=\"3\">\n<b>1</b></font></span><b><span style=\"font-family:微软雅黑\"><font size=\"3\">11期<span lang=\"EN-US\">:</span>九肖</font></span><font size=\"3\"><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\">:</span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">龙狗牛羊</font></span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">鸡猴马兔蛇</font><br/>\n</span></font><span style=\"font-family:微软雅黑\"><font size=\"3\">111期</font></span><font size=\"3\"><span style=\"font-family:微软雅黑\"><span style=\"background-color: #FFFFFF\"><span lang=\"EN-US\">:</span>七肖</span><span lang=\"EN-US\" style=\"background-color: #FFFFFF\">:</span></span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">龙狗牛羊</font></span><font color=\"#FF0000\"><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\">鸡猴马</span></font><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><br/>\n</span><span style=\"font-family:微软雅黑\">111</span><span style=\"background-color: #FFFFFF; font-family:微软雅黑\">期<span lang=\"EN-US\">:</span>五肖</span><span lang=\"EN-US\" style=\"background-color: #FFFFFF; font-family:微软雅黑\">:</span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">龙狗牛羊</font></span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">鸡</font></span></font></b><font size=\"3\"><b><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color: #FFFFFF\"><br/>\n</span></b></font><span style=\"font-family:微软雅黑\"><font size=\"3\">\n<b>111</b></font></span><b><font size=\"3\"><span style=\"background-color: #FFFFFF; font-family:微软雅黑\">期<span lang=\"EN-US\">:</span></span></font></b><font size=\"3\"><b><span style=\"font-family:微软雅黑; background-color:#FFFFFF\">三肖</span></b></font><b><font size=\"3\"><span lang=\"EN-US\" style=\"background-color: #FFFFFF; font-family:微软雅黑\">:</span><font color=\"#FF0000\"><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\">龙狗牛</span></font><span style=\"color:blue; font-family:微软雅黑\">开？00准</span></font></b><p>\n<font face=\"MingLiU\"><b><font color=\"#0000FF\" face=\"微软雅黑\">\n<span style=\"background-color: #FFFF00\">www.722567.com</span></font></b></font></p></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "狗",
+              "牛",
+              "羊",
+              "鸡",
+              "猴",
+              "马",
+              "兔",
+              "蛇"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 111,
+            "label": "9肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "狗",
+              "牛",
+              "羊",
+              "鸡",
+              "猴",
+              "马",
+              "兔",
+              "蛇"
+            ]
+          }
+        },
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "7肖",
+          "predictionText": "龙狗牛羊鸡猴马",
+          "numbers": [],
+          "zodiacs": [
+            "龙",
+            "狗",
+            "牛",
+            "羊",
+            "鸡",
+            "猴",
+            "马"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/xgziliao/jingxuan9xiao.htm",
+          "rawText": "\n\n\n111期:九肖:龙狗牛羊鸡猴马兔蛇\n111期:七肖:龙狗牛羊鸡猴马\n111期:五肖:龙狗牛羊鸡\n\n111期:三肖:龙狗牛开?00准\n\nwww.722567.com\n",
+          "rawHtml": "<tr>\n<td style=\"width:100.0%;background:#FFFFFF;padding:1.5pt;\n  height:21.0pt\" width=\"100%\">\n<span style=\"font-family:微软雅黑\"><font size=\"3\">\n<b>1</b></font></span><b><span style=\"font-family:微软雅黑\"><font size=\"3\">11期<span lang=\"EN-US\">:</span>九肖</font></span><font size=\"3\"><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\">:</span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">龙狗牛羊</font></span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">鸡猴马兔蛇</font><br/>\n</span></font><span style=\"font-family:微软雅黑\"><font size=\"3\">111期</font></span><font size=\"3\"><span style=\"font-family:微软雅黑\"><span style=\"background-color: #FFFFFF\"><span lang=\"EN-US\">:</span>七肖</span><span lang=\"EN-US\" style=\"background-color: #FFFFFF\">:</span></span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">龙狗牛羊</font></span><font color=\"#FF0000\"><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\">鸡猴马</span></font><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><br/>\n</span><span style=\"font-family:微软雅黑\">111</span><span style=\"background-color: #FFFFFF; font-family:微软雅黑\">期<span lang=\"EN-US\">:</span>五肖</span><span lang=\"EN-US\" style=\"background-color: #FFFFFF; font-family:微软雅黑\">:</span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">龙狗牛羊</font></span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">鸡</font></span></font></b><font size=\"3\"><b><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color: #FFFFFF\"><br/>\n</span></b></font><span style=\"font-family:微软雅黑\"><font size=\"3\">\n<b>111</b></font></span><b><font size=\"3\"><span style=\"background-color: #FFFFFF; font-family:微软雅黑\">期<span lang=\"EN-US\">:</span></span></font></b><font size=\"3\"><b><span style=\"font-family:微软雅黑; background-color:#FFFFFF\">三肖</span></b></font><b><font size=\"3\"><span lang=\"EN-US\" style=\"background-color: #FFFFFF; font-family:微软雅黑\">:</span><font color=\"#FF0000\"><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\">龙狗牛</span></font><span style=\"color:blue; font-family:微软雅黑\">开？00准</span></font></b><p>\n<font face=\"MingLiU\"><b><font color=\"#0000FF\" face=\"微软雅黑\">\n<span style=\"background-color: #FFFF00\">www.722567.com</span></font></b></font></p></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "狗",
+              "牛",
+              "羊",
+              "鸡",
+              "猴",
+              "马"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 111,
+            "label": "7肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "狗",
+              "牛",
+              "羊",
+              "鸡",
+              "猴",
+              "马"
+            ]
+          }
+        },
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "5肖",
+          "predictionText": "龙狗牛羊鸡",
+          "numbers": [],
+          "zodiacs": [
+            "龙",
+            "狗",
+            "牛",
+            "羊",
+            "鸡"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/xgziliao/jingxuan9xiao.htm",
+          "rawText": "\n\n\n111期:九肖:龙狗牛羊鸡猴马兔蛇\n111期:七肖:龙狗牛羊鸡猴马\n111期:五肖:龙狗牛羊鸡\n\n111期:三肖:龙狗牛开?00准\n\nwww.722567.com\n",
+          "rawHtml": "<tr>\n<td style=\"width:100.0%;background:#FFFFFF;padding:1.5pt;\n  height:21.0pt\" width=\"100%\">\n<span style=\"font-family:微软雅黑\"><font size=\"3\">\n<b>1</b></font></span><b><span style=\"font-family:微软雅黑\"><font size=\"3\">11期<span lang=\"EN-US\">:</span>九肖</font></span><font size=\"3\"><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\">:</span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">龙狗牛羊</font></span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">鸡猴马兔蛇</font><br/>\n</span></font><span style=\"font-family:微软雅黑\"><font size=\"3\">111期</font></span><font size=\"3\"><span style=\"font-family:微软雅黑\"><span style=\"background-color: #FFFFFF\"><span lang=\"EN-US\">:</span>七肖</span><span lang=\"EN-US\" style=\"background-color: #FFFFFF\">:</span></span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">龙狗牛羊</font></span><font color=\"#FF0000\"><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\">鸡猴马</span></font><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><br/>\n</span><span style=\"font-family:微软雅黑\">111</span><span style=\"background-color: #FFFFFF; font-family:微软雅黑\">期<span lang=\"EN-US\">:</span>五肖</span><span lang=\"EN-US\" style=\"background-color: #FFFFFF; font-family:微软雅黑\">:</span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">龙狗牛羊</font></span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">鸡</font></span></font></b><font size=\"3\"><b><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color: #FFFFFF\"><br/>\n</span></b></font><span style=\"font-family:微软雅黑\"><font size=\"3\">\n<b>111</b></font></span><b><font size=\"3\"><span style=\"background-color: #FFFFFF; font-family:微软雅黑\">期<span lang=\"EN-US\">:</span></span></font></b><font size=\"3\"><b><span style=\"font-family:微软雅黑; background-color:#FFFFFF\">三肖</span></b></font><b><font size=\"3\"><span lang=\"EN-US\" style=\"background-color: #FFFFFF; font-family:微软雅黑\">:</span><font color=\"#FF0000\"><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\">龙狗牛</span></font><span style=\"color:blue; font-family:微软雅黑\">开？00准</span></font></b><p>\n<font face=\"MingLiU\"><b><font color=\"#0000FF\" face=\"微软雅黑\">\n<span style=\"background-color: #FFFF00\">www.722567.com</span></font></b></font></p></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "狗",
+              "牛",
+              "羊",
+              "鸡"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 111,
+            "label": "5肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "狗",
+              "牛",
+              "羊",
+              "鸡"
+            ]
+          }
+        },
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "3肖",
+          "predictionText": "龙狗牛",
+          "numbers": [],
+          "zodiacs": [
+            "龙",
+            "狗",
+            "牛"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/xgziliao/jingxuan9xiao.htm",
+          "rawText": "\n\n\n111期:九肖:龙狗牛羊鸡猴马兔蛇\n111期:七肖:龙狗牛羊鸡猴马\n111期:五肖:龙狗牛羊鸡\n\n111期:三肖:龙狗牛开?00准\n\nwww.722567.com\n",
+          "rawHtml": "<tr>\n<td style=\"width:100.0%;background:#FFFFFF;padding:1.5pt;\n  height:21.0pt\" width=\"100%\">\n<span style=\"font-family:微软雅黑\"><font size=\"3\">\n<b>1</b></font></span><b><span style=\"font-family:微软雅黑\"><font size=\"3\">11期<span lang=\"EN-US\">:</span>九肖</font></span><font size=\"3\"><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\">:</span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">龙狗牛羊</font></span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">鸡猴马兔蛇</font><br/>\n</span></font><span style=\"font-family:微软雅黑\"><font size=\"3\">111期</font></span><font size=\"3\"><span style=\"font-family:微软雅黑\"><span style=\"background-color: #FFFFFF\"><span lang=\"EN-US\">:</span>七肖</span><span lang=\"EN-US\" style=\"background-color: #FFFFFF\">:</span></span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">龙狗牛羊</font></span><font color=\"#FF0000\"><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\">鸡猴马</span></font><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><br/>\n</span><span style=\"font-family:微软雅黑\">111</span><span style=\"background-color: #FFFFFF; font-family:微软雅黑\">期<span lang=\"EN-US\">:</span>五肖</span><span lang=\"EN-US\" style=\"background-color: #FFFFFF; font-family:微软雅黑\">:</span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">龙狗牛羊</font></span><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\"><font color=\"#FF0000\">鸡</font></span></font></b><font size=\"3\"><b><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color: #FFFFFF\"><br/>\n</span></b></font><span style=\"font-family:微软雅黑\"><font size=\"3\">\n<b>111</b></font></span><b><font size=\"3\"><span style=\"background-color: #FFFFFF; font-family:微软雅黑\">期<span lang=\"EN-US\">:</span></span></font></b><font size=\"3\"><b><span style=\"font-family:微软雅黑; background-color:#FFFFFF\">三肖</span></b></font><b><font size=\"3\"><span lang=\"EN-US\" style=\"background-color: #FFFFFF; font-family:微软雅黑\">:</span><font color=\"#FF0000\"><span lang=\"EN-US\" style=\"font-family: 微软雅黑; background-color:#FFFFFF\">龙狗牛</span></font><span style=\"color:blue; font-family:微软雅黑\">开？00准</span></font></b><p>\n<font face=\"MingLiU\"><b><font color=\"#0000FF\" face=\"微软雅黑\">\n<span style=\"background-color: #FFFF00\">www.722567.com</span></font></b></font></p></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "狗",
+              "牛"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 111,
+            "label": "3肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "龙",
+              "狗",
+              "牛"
+            ]
+          }
+        },
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "1码",
+          "predictionText": "22",
+          "numbers": [
+            22
+          ],
+          "zodiacs": [],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/xgziliao/ziliaofabuqu.htm",
+          "rawText": "\n\n111期1码\n\n22\n\n\n\n\t\t开:??中\n",
+          "rawHtml": "<tr style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<td bgcolor=\"#CCFFFF\" height=\"25\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\">111</font><font color=\"#0000FF\" face=\"微软雅黑\" style=\"margin:0; padding:0; box-sizing: border-box; word-wrap:break-word\">期</font><font color=\"#FF0000\" face=\"微软雅黑\" style=\"box-sizing: border-box; border: 0px none; margin: 0px; padding: 0px; word-wrap:break-word\">①码</font></td>\n<td bgcolor=\"#FFFFFF\" height=\"25\" style=\"background-position: 0% 0%; box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; font-family:微软雅黑; background-image:none; background-repeat:repeat; background-attachment:scroll; word-wrap:break-word\" width=\"60%\">\n<font color=\"#FF0000\">22</font></td>\n<td height=\"25\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background: #CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<font face=\"微软雅黑\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n\t\t开：？</font><font face=\"微软雅黑\" style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; word-wrap:break-word\">？中</font></font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "号码",
+            "values": [
+              22
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 111,
+            "label": "1码"
+          },
+          "attribute": {
+            "kind": "号码",
+            "values": [
+              22
+            ]
+          }
+        },
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "6码",
+          "predictionText": "22.46.11.35.27.39",
+          "numbers": [
+            22,
+            46,
+            11,
+            35,
+            27,
+            39
+          ],
+          "zodiacs": [],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/xgziliao/ziliaofabuqu.htm",
+          "rawText": "\n\n\n\t\t111期6码\n\n22.46.11.35.27.39\n\n\n\n\t\t开:??中\n",
+          "rawHtml": "<tr style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<td height=\"27\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background:#CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" face=\"微软雅黑\" style=\"margin:0; padding:0; box-sizing: border-box; word-wrap:break-word\">\n\t\t111期</font><font color=\"#FF0000\" face=\"微软雅黑\" style=\"margin:0; padding:0; box-sizing: border-box; word-wrap:break-word\">⑥</font><font color=\"#FF0000\" face=\"微软雅黑\" style=\"box-sizing: border-box; border: 0px none; margin: 0px; padding: 0px; word-wrap:break-word\">码</font></td>\n<td bgcolor=\"#FFFFFF\" height=\"27\" style=\"background-position: 0% 0%; box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; font-family:微软雅黑; background-image:none; background-repeat:repeat; background-attachment:scroll; word-wrap:break-word\" width=\"60%\">\n<font color=\"#FF0000\">22.46.11.35.27.39</font></td>\n<td height=\"27\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background: #CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<font face=\"微软雅黑\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n\t\t开：？</font><font face=\"微软雅黑\" style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; word-wrap:break-word\">？中</font></font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "号码",
+            "values": [
+              22,
+              46,
+              11,
+              35,
+              27,
+              39
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 111,
+            "label": "6码"
+          },
+          "attribute": {
+            "kind": "号码",
+            "values": [
+              22,
+              46,
+              11,
+              35,
+              27,
+              39
+            ]
+          }
+        },
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "10码",
+          "predictionText": "22.46.11.35.27.39.33.45.06.24",
+          "numbers": [
+            22,
+            46,
+            11,
+            35,
+            27,
+            39,
+            33,
+            45,
+            6,
+            24
+          ],
+          "zodiacs": [],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/xgziliao/ziliaofabuqu.htm",
+          "rawText": "\n\n\n\t\t111期10码\n\n22.46.11.35.27.39.33.45.06.24\n\n\n\n\t\t开:??中\n",
+          "rawHtml": "<tr style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<td height=\"25\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background:#CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" face=\"微软雅黑\" style=\"margin:0; padding:0; box-sizing: border-box; word-wrap:break-word\">\n\t\t111期</font><font color=\"#FF0000\" face=\"微软雅黑\" style=\"box-sizing: border-box; border: 0px none; margin: 0px; padding: 0px; word-wrap:break-word\">⑩码</font></td>\n<td bgcolor=\"#FFFFFF\" height=\"25\" style=\"background-position: 0% 0%; box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; font-family:微软雅黑; background-image:none; background-repeat:repeat; background-attachment:scroll; word-wrap:break-word\" width=\"60%\">\n<font color=\"#FF0000\">22.46.11.35.27.39.33.45.06.24</font></td>\n<td height=\"25\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background: #CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<font face=\"微软雅黑\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n\t\t开：？</font><font face=\"微软雅黑\" style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; word-wrap:break-word\">？中</font></font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "号码",
+            "values": [
+              22,
+              46,
+              11,
+              35,
+              27,
+              39,
+              33,
+              45,
+              6,
+              24
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 111,
+            "label": "10码"
+          },
+          "attribute": {
+            "kind": "号码",
+            "values": [
+              22,
+              46,
+              11,
+              35,
+              27,
+              39,
+              33,
+              45,
+              6,
+              24
+            ]
+          }
+        },
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "1肖",
+          "predictionText": "鸡",
+          "numbers": [],
+          "zodiacs": [
+            "鸡"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/xgziliao/ziliaofabuqu.htm",
+          "rawText": "\n\n\n\t\t111期1肖\n\n鸡\n\n\n\n\t\t开:??中\n",
+          "rawHtml": "<tr style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<td height=\"27\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background:#CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" face=\"微软雅黑\" style=\"margin:0; padding:0; box-sizing: border-box; word-wrap:break-word\">\n\t\t111期</font><font color=\"#FF0000\" face=\"微软雅黑\" style=\"box-sizing: border-box; border: 0px none; margin: 0px; padding: 0px; word-wrap:break-word\">①肖</font></td>\n<td bgcolor=\"#FFFFFF\" height=\"27\" style=\"background-position: 0% 0%; box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; font-family:微软雅黑; background-image:none; background-repeat:repeat; background-attachment:scroll; word-wrap:break-word\" width=\"60%\">\n<font color=\"#FF0000\">鸡</font></td>\n<td height=\"27\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background: #CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<font face=\"微软雅黑\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n\t\t开：？</font><font face=\"微软雅黑\" style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; word-wrap:break-word\">？中</font></font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "鸡"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 111,
+            "label": "1肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "鸡"
+            ]
+          },
+          "alternateUrls": []
+        },
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "2肖",
+          "predictionText": "鸡猴",
+          "numbers": [],
+          "zodiacs": [
+            "鸡",
+            "猴"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/xgziliao/ziliaofabuqu.htm",
+          "rawText": "\n\n\n\t\t111期2肖\n\n鸡猴\n\n\n\n\t\t开:??中\n",
+          "rawHtml": "<tr style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<td height=\"30\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background:#CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" face=\"微软雅黑\" style=\"margin:0; padding:0; box-sizing: border-box; word-wrap:break-word\">\n\t\t111期</font><font color=\"#FF0000\" face=\"微软雅黑\" style=\"box-sizing: border-box; border: 0px none; margin: 0px; padding: 0px; word-wrap:break-word\">②肖</font></td>\n<td bgcolor=\"#FFFFFF\" height=\"30\" style=\"background-position: 0% 0%; box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; font-family:微软雅黑; background-image:none; background-repeat:repeat; background-attachment:scroll; word-wrap:break-word\" width=\"60%\">\n<font color=\"#FF0000\">鸡猴</font></td>\n<td height=\"30\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background: #CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<font face=\"微软雅黑\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n\t\t开：？</font><font face=\"微软雅黑\" style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; word-wrap:break-word\">？中</font></font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "鸡",
+              "猴"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 111,
+            "label": "2肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "鸡",
+              "猴"
+            ]
+          },
+          "alternateUrls": []
+        },
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "3肖",
+          "predictionText": "鸡猴龙",
+          "numbers": [],
+          "zodiacs": [
+            "鸡",
+            "猴",
+            "龙"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/xgziliao/ziliaofabuqu.htm",
+          "rawText": "\n\n\n\t\t111期3肖\n\n鸡猴龙\n\n\n\n\t\t开:??中\n",
+          "rawHtml": "<tr style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; line-height: 25px; word-wrap:break-word\">\n<td height=\"28\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background:#CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" face=\"微软雅黑\" style=\"margin:0; padding:0; box-sizing: border-box; word-wrap:break-word\">\n\t\t111期</font><font color=\"#FF0000\" face=\"微软雅黑\" style=\"box-sizing: border-box; border: 0px none; margin: 0px; padding: 0px; word-wrap:break-word\">③肖</font></td>\n<td bgcolor=\"#FFFFFF\" height=\"28\" style=\"background-position: 0% 0%; box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; font-family:微软雅黑; background-image:none; background-repeat:repeat; background-attachment:scroll; word-wrap:break-word\" width=\"60%\">\n<font color=\"#FF0000\">鸡猴龙</font></td>\n<td height=\"28\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background: #CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<font face=\"微软雅黑\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n\t\t开：？</font><font face=\"微软雅黑\" style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; word-wrap:break-word\">？中</font></font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "鸡",
+              "猴",
+              "龙"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 111,
+            "label": "3肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "鸡",
+              "猴",
+              "龙"
+            ]
+          },
+          "alternateUrls": []
+        },
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "4肖",
+          "predictionText": "鸡猴龙狗",
+          "numbers": [],
+          "zodiacs": [
+            "鸡",
+            "猴",
+            "龙",
+            "狗"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/xgziliao/ziliaofabuqu.htm",
+          "rawText": "\n\n\n\t\t111期4肖\n\n鸡猴龙狗\n\n\n\n\t\t开:??中\n",
+          "rawHtml": "<tr style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; line-height: 25px; word-wrap:break-word\">\n<td height=\"27\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background:#CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" face=\"微软雅黑\" style=\"margin:0; padding:0; box-sizing: border-box; word-wrap:break-word\">\n\t\t111期</font><font color=\"#FF0000\" face=\"微软雅黑\" style=\"box-sizing: border-box; border: 0px none; margin: 0px; padding: 0px; word-wrap:break-word\">④肖</font></td>\n<td bgcolor=\"#FFFFFF\" height=\"27\" style=\"background-position: 0% 0%; box-sizing: border-box; font-size: 10pt;border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; font-family:微软雅黑; background-image:none; background-repeat:repeat; background-attachment:scroll; word-wrap:break-word\" width=\"60%\">\n<font color=\"#FF0000\">鸡猴龙狗</font></td>\n<td height=\"27\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background: #CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<font face=\"微软雅黑\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n\t\t开：？</font><font face=\"微软雅黑\" style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; word-wrap:break-word\">？中</font></font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "鸡",
+              "猴",
+              "龙",
+              "狗"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 111,
+            "label": "4肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "鸡",
+              "猴",
+              "龙",
+              "狗"
+            ]
+          },
+          "alternateUrls": []
+        },
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "5肖",
+          "predictionText": "鸡猴龙狗牛",
+          "numbers": [],
+          "zodiacs": [
+            "鸡",
+            "猴",
+            "龙",
+            "狗",
+            "牛"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/xgziliao/ziliaofabuqu.htm",
+          "rawText": "\n\n\n\t\t111期5肖\n\n鸡猴龙狗牛\n\n\n\n\t\t开:??中\n",
+          "rawHtml": "<tr style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; line-height: 25px; word-wrap:break-word\">\n<td height=\"27\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background:#CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" face=\"微软雅黑\" style=\"margin:0; padding:0; box-sizing: border-box; word-wrap:break-word\">\n\t\t111期</font><font color=\"#FF0000\" face=\"微软雅黑\" style=\"box-sizing: border-box; border: 0px none; margin: 0px; padding: 0px; word-wrap:break-word\">⑤肖</font></td>\n<td bgcolor=\"#FFFFFF\" height=\"27\" style=\"background-position: 0% 0%; box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; font-family:微软雅黑; background-image:none; background-repeat:repeat; background-attachment:scroll; word-wrap:break-word\" width=\"60%\">\n<font color=\"#FF0000\">鸡猴龙狗牛</font></td>\n<td height=\"27\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background: #CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<font face=\"微软雅黑\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n\t\t开：？</font><font face=\"微软雅黑\" style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; word-wrap:break-word\">？中</font></font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "鸡",
+              "猴",
+              "龙",
+              "狗",
+              "牛"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 111,
+            "label": "5肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "鸡",
+              "猴",
+              "龙",
+              "狗",
+              "牛"
+            ]
+          },
+          "alternateUrls": []
+        },
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "6肖",
+          "predictionText": "鸡猴龙狗牛羊",
+          "numbers": [],
+          "zodiacs": [
+            "鸡",
+            "猴",
+            "龙",
+            "狗",
+            "牛",
+            "羊"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/xgziliao/ziliaofabuqu.htm",
+          "rawText": "\n\n\n\t\t111期6肖\n\n鸡猴龙狗牛羊\n\n\n\n\t\t开:??中\n",
+          "rawHtml": "<tr style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; line-height: 25px; word-wrap:break-word\">\n<td height=\"27\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background:#CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" face=\"微软雅黑\" style=\"margin:0; padding:0; box-sizing: border-box; word-wrap:break-word\">\n\t\t111期</font><font color=\"#FF0000\" face=\"微软雅黑\" style=\"box-sizing: border-box; border: 0px none; margin: 0px; padding: 0px; word-wrap:break-word\">⑥肖</font></td>\n<td bgcolor=\"#FFFFFF\" height=\"27\" style=\"background-position: 0% 0%; box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; font-family:微软雅黑; background-image:none; background-repeat:repeat; background-attachment:scroll; word-wrap:break-word\" width=\"60%\">\n<font color=\"#FF0000\">鸡猴龙狗牛羊</font></td>\n<td height=\"27\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background: #CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<font face=\"微软雅黑\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n\t\t开：？</font><font face=\"微软雅黑\" style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; word-wrap:break-word\">？中</font></font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "鸡",
+              "猴",
+              "龙",
+              "狗",
+              "牛",
+              "羊"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 111,
+            "label": "6肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "鸡",
+              "猴",
+              "龙",
+              "狗",
+              "牛",
+              "羊"
+            ]
+          },
+          "alternateUrls": []
+        },
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "7肖",
+          "predictionText": "鸡猴龙狗牛羊马",
+          "numbers": [],
+          "zodiacs": [
+            "鸡",
+            "猴",
+            "龙",
+            "狗",
+            "牛",
+            "羊",
+            "马"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/xgziliao/ziliaofabuqu.htm",
+          "rawText": "\n\n\n\t\t111期7肖\n\n鸡猴龙狗牛羊马\n\n\n\n\t\t开:??中\n",
+          "rawHtml": "<tr style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<td height=\"24\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background:#CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" face=\"微软雅黑\" style=\"margin:0; padding:0; box-sizing: border-box; word-wrap:break-word\">\n\t\t111期</font><font color=\"#FF0000\" face=\"微软雅黑\" style=\"box-sizing: border-box; border: 0px none; margin: 0px; padding: 0px; word-wrap:break-word\">⑦肖</font></td>\n<td bgcolor=\"#FFFFFF\" height=\"24\" style=\"background-position: 0% 0%; box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; font-family:微软雅黑; background-image:none; background-repeat:repeat; background-attachment:scroll; word-wrap:break-word\" width=\"60%\">\n<font color=\"#FF0000\">鸡猴龙狗牛羊马</font></td>\n<td height=\"24\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background: #CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<font face=\"微软雅黑\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n\t\t开：？</font><font face=\"微软雅黑\" style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; word-wrap:break-word\">？中</font></font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "鸡",
+              "猴",
+              "龙",
+              "狗",
+              "牛",
+              "羊",
+              "马"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 111,
+            "label": "7肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "鸡",
+              "猴",
+              "龙",
+              "狗",
+              "牛",
+              "羊",
+              "马"
+            ]
+          },
+          "alternateUrls": []
+        },
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "9肖",
+          "predictionText": "鸡猴龙狗牛羊马兔蛇",
+          "numbers": [],
+          "zodiacs": [
+            "鸡",
+            "猴",
+            "龙",
+            "狗",
+            "牛",
+            "羊",
+            "马",
+            "兔",
+            "蛇"
+          ],
+          "game": "te",
+          "action": "track",
+          "status": "needs_review",
+          "url": "https://bhgbg.00269.shop/xgziliao/ziliaofabuqu.htm",
+          "rawText": "\n\n\n\t\t111期9肖\n\n鸡猴龙狗牛羊马兔蛇\n\n\n\n\t\t开:??中\n",
+          "rawHtml": "<tr style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<td height=\"24\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background:#CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" face=\"微软雅黑\" style=\"margin:0; padding:0; box-sizing: border-box; word-wrap:break-word\">\n\t\t111期</font><font color=\"#FF0000\" face=\"微软雅黑\" style=\"box-sizing: border-box; border: 0px none; margin: 0px; padding: 0px; word-wrap:break-word\">⑨肖</font></td>\n<td bgcolor=\"#FFFFFF\" height=\"24\" style=\"background-position: 0% 0%; box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; font-family:微软雅黑; background-image:none; background-repeat:repeat; background-attachment:scroll; word-wrap:break-word\" width=\"60%\">\n<font color=\"#FF0000\">鸡猴龙狗牛羊马兔蛇</font></td>\n<td height=\"24\" style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background: #CCFFFF; font-family:微软雅黑; word-wrap:break-word\" width=\"20%\">\n<font color=\"#0000FF\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n<font face=\"微软雅黑\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n\t\t开：？</font><font face=\"微软雅黑\" style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; word-wrap:break-word\">？中</font></font></td>\n</tr>",
+          "struck": false,
+          "colors": [],
+          "structuredClaim": {
+            "kind": "生肖",
+            "values": [
+              "鸡",
+              "猴",
+              "龙",
+              "狗",
+              "牛",
+              "羊",
+              "马",
+              "兔",
+              "蛇"
+            ],
+            "game": "te",
+            "action": "track",
+            "period": 111,
+            "label": "9肖"
+          },
+          "attribute": {
+            "kind": "生肖",
+            "values": [
+              "鸡",
+              "猴",
+              "龙",
+              "狗",
+              "牛",
+              "羊",
+              "马",
+              "兔",
+              "蛇"
+            ]
+          },
+          "alternateUrls": []
+        },
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "单双",
+          "game": "te",
+          "action": "track",
+          "predictionText": "单双 双数",
+          "numbers": [],
+          "zodiacs": [],
+          "rawText": "111期单双\n \n 双数\n \n \n \n 开：？？中",
+          "rawHtml": "<tr style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; line-height: 25px; word-wrap:break-word\">\n        <td style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background:#CCFFFF; font-family:微软雅黑; word-wrap:break-word\" height=\"28\" width=\"20%\">\n\t\t<font face=\"微软雅黑\" style=\"margin:0; padding:0; box-sizing: border-box; word-wrap:break-word\" color=\"#0000FF\">\n\t\t111期</font><font color=\"#FF0000\" face=\"微软雅黑\" style=\"margin:0; padding:0; box-sizing: border-box; word-wrap:break-word\">单双</font></td>\n        <td style=\"background-position: 0% 0%; box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; font-family:微软雅黑; background-image:none; background-repeat:repeat; background-attachment:scroll; word-wrap:break-word\" height=\"28\" width=\"60%\" bgcolor=\"#FFFFFF\">\n\t\t<font color=\"#FF0000\">双数</font></td>\n        <td style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background: #CCFFFF; font-family:微软雅黑; word-wrap:break-word\" height=\"28\" width=\"20%\">\n\t\t<font color=\"#0000FF\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n\t\t<font face=\"微软雅黑\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n\t\t开：？</font><font face=\"微软雅黑\" style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; word-wrap:break-word\">？中</font></font></td>\n      </tr>",
+          "struck": false,
+          "colors": [
+            "#0000FF",
+            "#FF0000",
+            "#FFFFFF"
+          ],
+          "url": "https://bhgbg.00269.shop/xgziliao/ziliaofabuqu.htm",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "单双",
+            "values": [
+              "单",
+              "双"
+            ]
+          }
+        },
+        {
+          "lot": "gc",
+          "period": 111,
+          "title": "波色",
+          "game": "te",
+          "action": "track",
+          "predictionText": "波色 绿波+红波",
+          "numbers": [],
+          "zodiacs": [],
+          "rawText": "111期波色\n \n 绿波+红波\n \n \n \n 开：？？中",
+          "rawHtml": "<tr style=\"word-wrap: break-word; margin: 0; padding: 0\">\n        <td style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background:#CCFFFF; font-family:微软雅黑; word-wrap:break-word\" height=\"28\" width=\"20%\">\n\t\t<font face=\"微软雅黑\" style=\"margin:0; padding:0; box-sizing: border-box; word-wrap:break-word\" color=\"#0000FF\">\n\t\t111期</font><font color=\"#FF0000\" face=\"微软雅黑\" style=\"box-sizing: border-box; border: 0px none; margin: 0px; padding: 0px; word-wrap:break-word\">波色</font></td>\n        <td style=\"background-position: 0% 0%; box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; font-family:微软雅黑; background-image:none; background-repeat:repeat; background-attachment:scroll; word-wrap:break-word\" height=\"28\" width=\"60%\" bgcolor=\"#FFFFFF\">\n\t\t\t<font color=\"#FF0000\">绿波+红波</font></td>\n        <td style=\"box-sizing: border-box; font-size: 10pt; border: 1px solid rgb(181, 179, 179); margin: 0px; padding: 0px; background: #CCFFFF; font-family:微软雅黑; word-wrap:break-word\" height=\"28\" width=\"20%\">\n\t\t<font color=\"#0000FF\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n\t\t<font face=\"微软雅黑\" style=\"word-wrap: break-word; margin: 0; padding: 0\">\n\t\t开：？</font><font face=\"微软雅黑\" style=\"padding: 0px; margin: 0px; border: 0px none; box-sizing: border-box; word-wrap:break-word\">？中</font></font></td>\n      </tr>",
+          "struck": false,
+          "colors": [
+            "#0000FF",
+            "#FF0000",
+            "#FFFFFF"
+          ],
+          "url": "https://bhgbg.00269.shop/xgziliao/ziliaofabuqu.htm",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "波色",
+            "values": [
+              "绿",
+              "红"
+            ]
+          }
+        }
+      ],
+      "errors": [],
+      "filteredCount": 9,
+      "hash": "2926b63d2e41fcf40204b78d7f6e8af0ee34c68fd209e9c3e44e06b1f6a942ca"
     }
   ],
   "verification": [
