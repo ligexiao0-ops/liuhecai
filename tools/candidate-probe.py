@@ -3,7 +3,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 import requests
 from playwright.sync_api import sync_playwright
-urls=['https://icvhnp93.vhanxiangzipqr234.com:3605/am.html','https://mmzy7182.daniumao.com:7749/csw/888.html#galt-hz','https://lhbd-zn1.7349n.app:2028/','https://yyaaff018899.49018899gg.app:8450/ok.html?_refluxos=a10#yyt']
+urls=['https://kbqrgzhbxp.19333hi.app:2768/index.html','https://juyhgt28888.28888b.app:8445/ok.html#ai60','https://kat3g3wc.zlvdongbinxyz456.com:3513/am.html','https://8my571ef.rbaxianluntanxyz890.com:9133/am.html','https://bhgbg.00269.shop/index.html','https://bhgbg.00269.shop/index777.html','https://ssxzcc19016.490161gg.app:8450/ok.html#vl']
 out=Path('candidate-source-report');out.mkdir(exist_ok=True);report=[]
 with sync_playwright() as pw:
  browser=pw.chromium.launch()
