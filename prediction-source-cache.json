@@ -1048,7 +1048,7 @@
       "status": "read",
       "hash": "6cd040ade2a794ae20a9e52bfe9e7221d6ba3f5005bcc1a35ccde721d0dd885a",
       "rawHash": "c2f4896cd11cdc5bea03ccf7c6f18b8cc540536d1f015db6db280120f97f20ff",
-      "filteredCount": 19
+      "filteredCount": 0
     },
     {
       "name": "00279资料新澳",
@@ -2342,9 +2342,9 @@
       "errors": [],
       "pageCount": 59,
       "status": "read",
-      "hash": "765618b66d4fb0039a4f3dac86ec94bac14c37800b3a48c6ef66f22217bcff8b",
+      "hash": "ce1c209e0d1ab97751498b4bf4636150f4ed9647f5fffbd63bb5743f94aea074",
       "rawHash": "aa34486cbe5ecbba104497f2f97c29dba235c182e21f857e016476b02dad8b9b",
-      "filteredCount": 15
+      "filteredCount": 0
     },
     {
       "name": "833033资料老澳",
@@ -2771,7 +2771,7 @@
       "status": "read",
       "hash": "dc6224d2ce235a26f56cbd57cd04be510fe075214ddcbd91211ca6e3639cc8f5",
       "rawHash": "468edc67f8d518ca1edc848a47fa7a064538219b7d2fbbcfe2df12087f72463d",
-      "filteredCount": 3
+      "filteredCount": 0
     },
     {
       "name": "00279资料老澳",
@@ -4064,9 +4064,9 @@
       "errors": [],
       "pageCount": 56,
       "status": "read",
-      "hash": "f4e0960459cc4b3d15551fe6878dc12bcad976908a2e2412fdac04f21f44768f",
+      "hash": "9b675591e3ee7194894eeb377503bcc8aad579d514870e12b32569b18fd6c7cd",
       "rawHash": "49c376c5d9c181ecf556842146234e6b400ee0b2751cd846f2f554a8d5d558c4",
-      "filteredCount": 14
+      "filteredCount": 0
     },
     {
       "name": "鬼谷子新澳资料",
@@ -4855,9 +4855,9 @@
       "errors": [],
       "pageCount": 1,
       "status": "read",
-      "hash": "1b81a40c6f2a65edeaf8da5e2cb7bfdcb8b27cf7d5201d23446c7a606c6e1162",
+      "hash": "4b808406e92dd8cf44398aa5763ffdc31eb5e700f9160cb5a1fdfab2a7082b79",
       "rawHash": "b79435456448065e882c15e0775e918988d3bcd753764a8de53dd766406a02a3",
-      "filteredCount": 9
+      "filteredCount": 0
     },
     {
       "name": "833033资料港彩",
@@ -5943,7 +5943,7 @@
       "status": "read",
       "hash": "3a3f2c4240202ad2c8165bb0806be0d9a0bd7e9aba23c91f9a3f17ab23dc2241",
       "rawHash": "873b17d8d089a1f782d588aba66c514622eccd4ce6bbc0c6178daf75da3378da",
-      "filteredCount": 18
+      "filteredCount": 0
     },
     {
       "name": "00279资料港彩",
@@ -7237,9 +7237,292 @@
       "errors": [],
       "pageCount": 58,
       "status": "read",
-      "hash": "e3150c5232dbd832b3c40129f7343fee1913a55d8a19adae82b22936b0b945e0",
+      "hash": "cb451b38aacef90cf9fdc4ecb54db976f2a212f741db74ddea982d70f19d1fc6",
       "rawHash": "6b04237a5302241aa7435e63fa7b119e1f5d9003cb1d7091accc611f42b65786",
-      "filteredCount": 15
+      "filteredCount": 0
+    },
+    {
+      "name": "吕洞宾老澳（用户确认）",
+      "lot": "la",
+      "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/am.html",
+      "period": 290,
+      "capturedAt": "2026-10-17T02:07:32Z",
+      "status": "read",
+      "entries": [
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "六肖18码",
+          "game": "te",
+          "action": "track",
+          "predictionText": "【六肖18码】 龙[39,03,27]猴[11,23,35]鼠[31,43,07]\n\n 蛇[38,26,14]猪[44,32,08]牛[06,18,30]",
+          "numbers": [
+            39,
+            3,
+            27,
+            11,
+            23,
+            35,
+            31,
+            43,
+            7,
+            38,
+            26,
+            14,
+            44,
+            32,
+            8,
+            6,
+            18,
+            30
+          ],
+          "zodiacs": [
+            "龙",
+            "猴",
+            "鼠",
+            "蛇",
+            "猪",
+            "牛"
+          ],
+          "rawText": "290期【六肖18码】开？00准\n \n\n\n 龙[39,03,27]猴[11,23,35]鼠[31,43,07]\n\n 蛇[38,26,14]猪[44,32,08]牛[06,18,30]",
+          "rawHtml": "<tr><td><font color=\"#009900\">290期</font>【六肖18码】<font color=\"#009900\">开？00准</font></td>\n  </tr>\n<tr><td>\n    <p><font color=\"#0000FF\">龙</font><font color=\"#000000\">[39,03,27]</font><font color=\"#0000FF\">猴</font><font color=\"#000000\">[11,23,35]</font><font color=\"#0000FF\">鼠</font><font color=\"#000000\">[31,43,07]</font></p>\n    <p><font color=\"#0000FF\">蛇</font><font color=\"#000000\">[38,26,14]</font><font color=\"#0000FF\">猪</font><font color=\"#000000\">[44,32,08]</font><font color=\"#0000FF\">牛</font><font color=\"#000000\">[06,18,30]</font></p>\n    </td>\n  </tr>",
+          "struck": false,
+          "colors": [
+            "#009900",
+            "#0000FF",
+            "#000000"
+          ],
+          "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "号码",
+            "values": [
+              39,
+              3,
+              27,
+              11,
+              23,
+              35,
+              31,
+              43,
+              7,
+              38,
+              26,
+              14,
+              44,
+              32,
+              8,
+              6,
+              18,
+              30
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "单双两肖",
+          "game": "te",
+          "action": "track",
+          "predictionText": "单双两肖【双+虎狗】→",
+          "numbers": [],
+          "zodiacs": [
+            "虎",
+            "狗"
+          ],
+          "rawText": "290期:单双两肖【双+虎狗】→开？00准",
+          "rawHtml": "<li>290期:单双两肖<u>【双+虎狗】</u>→开？00准</li>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "单双",
+            "values": [
+              "双"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "平特三中三",
+          "game": "z3",
+          "action": "exclude",
+          "predictionText": "内幕16码 07,27,20,44,35,19,24,06 09,11,16,12,13,05,15,30",
+          "numbers": [
+            7,
+            27,
+            20,
+            44,
+            35,
+            19,
+            24,
+            6,
+            9,
+            11,
+            16,
+            12,
+            13,
+            5,
+            15,
+            30
+          ],
+          "zodiacs": [],
+          "rawText": "290期:内幕16码\n \n07,27,20,44,35,19,24,06\n\n\n09,11,16,12,13,05,15,30",
+          "rawHtml": "<tr><td align=\"left\" bgcolor=\"#FFFFFF\" rowspan=\"2\" width=\"36%\" style=\"border-left-style: none; border-left-width: medium; border-top-style: none; border-top-width: medium; border-bottom-style: none; border-bottom-width: medium\"><font face=\"宋体\" style=\"font-size: 13pt; font-weight: 700\" color=\"#000000\">\n290期:内幕16码</font></td>\n <td align=\"left\" bgcolor=\"#FFFFFF\" width=\"64%\" style=\"border-right-style: none; border-right-width: medium; border-top-style: none; border-top-width: medium\">\n<font color=\"#800000\" style=\"font-size:13pt\">07,27,20,44,35,19,24,06</font></td></tr>\n<tr><td align=\"left\" bgcolor=\"#FFFFFF\" width=\"64%\" style=\"border-left-style: none; border-left-width: medium; border-right-style: none; border-right-width: medium; border-bottom-style: none; border-bottom-width: medium\">\n<font color=\"#800000\" style=\"font-size:13pt\">09,11,16,12,13,05,15,30</font></td></tr>",
+          "struck": false,
+          "colors": [
+            "#FFFFFF",
+            "#000000",
+            "#800000"
+          ],
+          "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "号码",
+            "values": [
+              7,
+              27,
+              20,
+              44,
+              35,
+              19,
+              24,
+              6,
+              9,
+              11,
+              16,
+              12,
+              13,
+              5,
+              15,
+              30
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "红波",
+          "game": "te",
+          "action": "track",
+          "predictionText": "一波中特【红波】→",
+          "numbers": [],
+          "zodiacs": [],
+          "rawText": "290期:一波中特【红波】→开？00准",
+          "rawHtml": "<li>290期:一波中特<u>【红波】</u>→开？00准</li>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "波色",
+            "values": [
+              "红"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "经典&三头〖2头,0头,1头〗",
+          "game": "te",
+          "action": "track",
+          "predictionText": "经典&三头〖2头,0头,1头〗→",
+          "numbers": [],
+          "zodiacs": [],
+          "rawText": "290期:经典＆三头〖2头,0头,1头〗→开？00准",
+          "rawHtml": "<li>290期:经典＆三头<i>〖2头,0头,1头〗</i>→开？00准</li>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "头数",
+            "values": [
+              2,
+              0,
+              1
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "推荐大小",
+          "game": "te",
+          "action": "track",
+          "predictionText": "推荐大小【小数】→",
+          "numbers": [],
+          "zodiacs": [],
+          "rawText": "290期:推荐大小【小数】→开？00准",
+          "rawHtml": "<li>290期:推荐大小<u>【小数】</u>→开？00准</li>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "大小",
+            "values": [
+              "小"
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "必中平尾",
+          "game": "te",
+          "action": "track",
+          "predictionText": "必中平尾→【9,2,6】←",
+          "numbers": [],
+          "zodiacs": [],
+          "rawText": "290期:必中平尾→【9,2,6】←开？00准",
+          "rawHtml": "<li>290期:必中平尾→<i>【9,2,6】</i>←开？00准</li>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "尾数",
+            "values": [
+              9,
+              2,
+              6
+            ]
+          }
+        },
+        {
+          "lot": "la",
+          "period": 290,
+          "title": "极品五尾",
+          "game": "te",
+          "action": "track",
+          "predictionText": "极品五尾【4,3,7,6,1】",
+          "numbers": [],
+          "zodiacs": [],
+          "rawText": "290期:极品五尾【4,3,7,6,1】开？00准",
+          "rawHtml": "<li>290期:极品五尾<i>【4,3,7,6,1】</i>开？00准</li>",
+          "struck": false,
+          "colors": [],
+          "url": "https://kat3g3wc.zlvdongbinxyz456.com:3513/zhuyea/",
+          "status": "needs_review",
+          "attribute": {
+            "kind": "尾数",
+            "values": [
+              4,
+              3,
+              7,
+              6,
+              1
+            ]
+          }
+        }
+      ],
+      "errors": [],
+      "filteredCount": 8,
+      "hash": "8755986b57c68785a89884070e970d955fa107d6eb10a12c34fa5502e546e91b"
     }
   ],
   "verification": [

@@ -7,6 +7,7 @@ function show(){
  const openSources=new Set(Array.from(document.querySelectorAll('#prediction-sources details[data-source-open][open]')).map(x=>x.dataset.sourceOpen));
  document.getElementById('prediction-sources')?.remove();
  const sets=[],sources=cache.sources.filter(s=>s.lot===CUR_LOT&&SourceSlots.sources.some(x=>x.url===s.url&&x.lot===s.lot));
+ const previous=(UP.sourceForecasts||[]).length;UP.sourceForecasts=SourceJournal.collect(UP.sourceForecasts,sources,CUR_LOT,NEXT,candidates);if(UP.sourceForecasts.length!==previous)saveData();
  let h='<section id="prediction-sources" class="card"><h3>🌐 外部资料 · 当前预测第'+NEXT+'期</h3><button id="refresh-prediction-sources">↻ 刷新已采集资料</button><small> 读取已发布快照；期号一致才可应用。缺失不等于预测错误。</small>'+esc(error);
  if(cache.verification)h+='<details><summary>新网址实测报告（4个）</summary>'+cache.verification.map(v=>'<p><b>'+esc(v.name)+' · '+esc(v.lotLabel)+'</b><br>'+esc(v.note)+'<br><small>'+esc(v.capturedAt)+'</small> <a href="'+esc(v.bodyUrl||v.url)+'" target="_blank" rel="noopener">查看来源</a></p>').join('')+'</details>';
  sources.forEach(s=>{
@@ -21,6 +22,7 @@ function show(){
     const c=e.claim,id=s.url+'|'+s.period+'|'+e.url+'|'+e.title+'|'+i;
     h+='<article style="border-top:1px solid #ddd;padding:5px;font-size:13px"><b>'+esc(e.title)+'</b> ';
     if(c){
+     const stat=SourceJournal.summarize(UP.sourceForecasts,{...e,game:c.game},s.url,DR,gz);h+='<small> 快照核对 '+stat.h+'/'+stat.n+' '+(stat.n?(100*stat.h/stat.n).toFixed(1)+'%':'待开奖')+'（非前瞻成绩）</small>';
      const value=c.kind==='生肖'?esc(c.values.join('、')):c.kind==='号码'?CandidateDisplay.summary(c.pool):esc(c.values.join('、')+(c.kind==='头数'?'头':c.kind==='尾数'?'尾':''));
      h+='<span style="color:'+(c.action==='exclude'?'#b42318':'#087f5b')+'">'+(c.action==='exclude'?'🚫 ':'')+value+'</span>';
      if(matches){h+=PracticalActions.buttons(c.pool,c.game,'网址 '+s.name+' 第'+s.period+'期 '+e.title,c.action);
@@ -42,7 +44,7 @@ function show(){
  if(selected.length>=2){const pool=selected.reduce((a,s)=>a.filter(n=>s.pool.includes(n)),selected[0].pool);h+='<p>'+selected.length+'项 → '+CandidateDisplay.summary(pool)+PracticalActions.buttons(pool,'te','外部资料交集 第'+NEXT+'期')+'</p>';
   if(selected.every(s=>s.zs)){const zs=selected.reduce((a,s)=>a.filter(z=>s.zs.includes(z)),selected[0].zs);h+='<p style="color:#087f5b">生肖交集：'+esc(zs.join('、')||'空集')+'</p>';}
  }else h+='<p>已选择'+selected.length+'项，请至少选2项。</p>';
- h+='</div></section>';document.getElementById('tabContent')?.insertAdjacentHTML('afterbegin',h);
+ const position=SourceJournal.position((UP.sourceForecasts||[]).filter(r=>r.lot===CUR_LOT),DR,gz);h+='<details><summary>九肖同位置排除检验</summary><p>同来源连续两期才纳入；上期特肖位置映射到本期九肖。'+(position.length?'未开出 '+position.filter(r=>r.success).length+'/'+position.length:'暂无成对已保存样本，不能证明有效。')+'</p></details>';h+='</div></section>';document.getElementById('tabContent')?.insertAdjacentHTML('afterbegin',h);
 }
 async function load(){try{const r=await fetch('prediction-source-cache.json?ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);cache=await r.json();error='';show();}catch(e){error='资料读取失败 '+e.message;}}
 document.addEventListener('click',e=>{if(e.target.id==='refresh-prediction-sources')load();});
