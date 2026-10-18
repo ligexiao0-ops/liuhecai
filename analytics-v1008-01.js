@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v10.1010.44';
+  var VERSION = 'v10.1010.46';
   var PAGE = 0;
   var CURRENT = {};
   var CACHE = {};
@@ -125,6 +125,7 @@
   window.getPracticeContext=function(independent){if(!independent)return preferenceContext();var savedPrefs=UP;try{UP={};var c=preferenceContext();if(c){c.teAllowed=function(){return true;};c.z3Allowed=function(){return true;};c.poolValid=function(){return true;};c.tripleValid=function(){return true;};c.noTogether=[];c.blockedTe=[];c.blockedZ3=[];c.blockedLx=[];}return c;}finally{UP=savedPrefs;}};
   function dayPillar(d) { var base=new Date(2026,9,8), delta=Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-base)/86400000), gan=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'], zhi=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']; return gan[(1+delta%10+10)%10]+zhi[(3+delta%12+12)%12]; }
   function luckyZods(dayZ) { var six={鼠:'牛',牛:'鼠',虎:'猪',猪:'虎',兔:'狗',狗:'兔',龙:'鸡',鸡:'龙',蛇:'猴',猴:'蛇',马:'羊',羊:'马'}, tri=[['猴','鼠','龙'],['虎','马','狗'],['猪','兔','羊'],['蛇','鸡','牛']], out=[six[dayZ]];tri.forEach(function(g){if(g.indexOf(dayZ)>=0)out=out.concat(g.filter(function(z){return z!==dayZ;}));});return uniq(out); }
+  window.LuckyCalendar={nextDate:nextRecordedDate,lucky:luckyZods};
   function calendarCard(rows) { var meta=targetMeta(rows),md=meta.estimatedDate, d=parseMD(md)||new Date(), dz=typeof getDayZod==='function'?getDayZod(md):'', ch=typeof getDayChong==='function'?getDayChong(md):'', lucky=luckyZods(dz); return '<div class="v10-card v10-cal"><b>目标期万年历参考｜'+md+' '+dayPillar(d)+'日</b><div class="v10-big">日肖 '+dz+'　冲煞 '+(ch?'冲'+ch:'--')+'　幸运生肖 '+lucky.join('、')+'</div><small>冲煞按目标开奖日期的万年历固定规则显示；幸运生肖只作为平特肖辅助参考，不作为硬排除条件。</small></div>'; }
 
   function z3Theory(n){var den=choose(49,6),s=0;for(var k=3;k<=Math.min(6,n);k++)s+=choose(n,k)*choose(49-n,6-k);return s/den;}
