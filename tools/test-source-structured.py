@@ -18,3 +18,6 @@ assert next(x for x in e if x['title']=='双数10码')['numbers']==[2,14,12,24,6
 assert next(x for x in e if x['title']=='复式连肖')['game']=='lx'
 assert not records('c069c3b36834b1bb',300)
 print('PASS real HTML: B 5码/9肖/杀10码, E odd/even 10码/复式连肖, period isolation')
+
+assert parse_structured('<table><tr><td>290期:【砖石5码中】01.12.23.34.45</td></tr></table>','https://example.com','xa',290)[0]['numbers']==[1,12,23,34,45]
+print('PASS X码中 suffix payload without label count')

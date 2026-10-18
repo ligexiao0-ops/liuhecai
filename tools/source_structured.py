@@ -32,7 +32,7 @@ def parse_structured(html,url,lot,period):
    if z:
     n=count(z[1]);add(str(n)+'肖',z[2],'生肖',re.findall('[鼠牛虎兔龙蛇马羊猴鸡狗猪]',z[2]),row,expected=n)
    # Preserve the number payload after the label, never the count in the label.
-   n=re.search(r'(稳杀|杀)?\s*([一二三四五六七八九十]+|\d+)码(?:中特|中平特)?[】\])]?\s*[:：]?\s*[【\[(]?\s*([0-9\s.,，、]+)',body)
+   n=re.search(r'(稳杀|杀)?\s*([一二三四五六七八九十]+|\d+)码(?:中特|中平特|中)?[】\])]?\s*[:：]?\s*[【\[(]?\s*([0-9\s.,，、]+)',body)
    if n:
     vals=[int(v) for v in re.findall(r'(?<!\d)\d{1,2}(?!\d)',n[3]) if 1<=int(v)<=49]
     add(('杀' if n[1] else '')+str(count(n[2]))+'码',n[3],'号码',vals,row,action='exclude' if n[1] else 'track',expected=count(n[2]))

@@ -23,7 +23,7 @@ def plain(s):
  s=re.sub(r'<br\s*/?>|</(?:p|div|tr|h[1-6])>','\n',s,flags=re.I)
  return re.sub(r'[ \t]+',' ',html.unescape(re.sub('<[^>]*>','',s)))
 def parse(s,url,lot,period):
- result=[];seen=set();kw=r'复式|复试|三中|二中|3中|平码|中特|杀|肖|特|尾|头|波|五行|单双|大小|家禽|野兽'
+ result=[];seen=set();kw=r'码|平特|复式|复试|三中|二中|3中|平码|中特|杀|肖|特|尾|头|波|五行|单双|大小|家禽|野兽'
  normalize=lambda v:unicodedata.normalize('NFKC',v).translate(str.maketrans('龍雞豬馬殺碼綠藍門頭數復開','龙鸡猪马杀码绿蓝门头数复开'))
  blocks=list(re.finditer(r'<tr\b.*?</tr>|<li\b.*?</li>',s,re.S|re.I))
  for bi,block in enumerate(blocks):
@@ -97,10 +97,14 @@ def main():
     if target is None:raise ValueError('No explicit HK period found')
    row['period']=target
    links=[];prefix={'xa':'ambbs','la':'lambbs','gc':'xgbbs'}[lot]
-   for href,label in re.findall(r'<a\b[^>]*href=["\x27]([^"\x27]+)["\x27][^>]*>(.*?)</a>',s,re.S|re.I):
-    u=urllib.parse.urljoin(url,html.unescape(href).strip());label=plain(label)
-    if urllib.parse.urlparse(u).netloc!=urllib.parse.urlparse(url).netloc or not re.search('/'+prefix+'/',u) or not re.search('复式|复试|中|特|肖|杀|尾|头|波|五行|单双|大小|家禽|野兽',label) or str(target)+'期' not in label:continue
-    if u not in links:links.append(u)
+   for page_url,page_body in list(pages.items()):
+    for href,label in re.findall(r'<a\b[^>]*href=["\x27]([^"\x27]+)["\x27][^>]*>(.*?)</a>',page_body,re.S|re.I):
+     u=urllib.parse.urljoin(page_url,html.unescape(href).strip());label=plain(label)
+     if urllib.parse.urlparse(u).netloc!=urllib.parse.urlparse(url).netloc or urllib.parse.urlparse(u).scheme not in ('http','https') or not re.search('码|平特|复式|复试|中|特|肖|杀|尾|头|波|五行|单双|大小|家禽|野兽',label) or str(target)+'期' not in label:continue
+     # Standard three-lottery paths must match the selected source. Other current-period columns are allowed.
+     if re.search('/(?:ambbs|lambbs|xgbbs)/',u) and '/'+prefix+'/' not in u:continue
+     if lot=='la' and re.search('新澳|新奥',label) or lot=='xa' and re.search('老澳|老奥',label):continue
+     if u not in links and len(links)<80:links.append(u)
    def fetch_page(u):
     try:return u,read(u),None
     except Exception as e:return u,None,str(e)

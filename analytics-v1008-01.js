@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var VERSION = 'v10.1010.47';
+  var VERSION = 'v10.1010.48';
   var PAGE = 0;
   var CURRENT = {};
   var CACHE = {};
@@ -29,8 +29,8 @@
   function purgeRejected(){}
 
   function rank01(obj) {
-    var a = A49.slice().sort(function (x, y) { return obj[x] - obj[y] || x - y; }), out = {};
-    a.forEach(function (n, i) { out[n] = i / 48; }); return out;
+    var a = A49.slice().sort(function (x, y) { return obj[x] - obj[y]; }), out = {};
+    a.forEach(function (n) { const lo=a.findIndex(x=>obj[x]===obj[n]),hi=a.findLastIndex(x=>obj[x]===obj[n]);out[n]=(lo+hi)/96; }); return out;
   }
   function numberFeatures(hist, field) {
     field = field || 'n';
@@ -56,13 +56,12 @@
   function numberRank(hist, model, field) {
     var p = numberFeatures(hist, field), w = NUM_MODELS[model], score = {};
     A49.forEach(function (n) { var v = 0; Object.keys(p.f[n]).forEach(function (k) { v += (w[k] || 0) * p.f[n][k]; }); score[n] = v; });
-    return { list:A49.slice().sort(function (a, b) { return score[b] - score[a] || a - b; }), score:score, pack:p };
+    return { list:A49.slice().sort(function (a, b) { return score[b] - score[a] || ScoreProjects.tie(a,hist.at(-1)?.p,CUR_LOT)-ScoreProjects.tie(b,hist.at(-1)?.p,CUR_LOT); }), score:score, pack:p };
   }
   function allowedNumber(n) { return typeof planZ3Allowed !== 'function' || planZ3Allowed(n); }
   function balancedPool(hist, model, size, usePrefs) {
     var rank = numberRank(hist, model, 'n').list, allowed = rank.filter(function (n) { return !usePrefs || allowedNumber(n); }), out = [], zc = {}, hc = {};
-    allowed.forEach(function (n) { if (out.length >= size) return; var z = zod(n), h = Math.floor(n / 10); if ((zc[z] || 0) >= 2 || (hc[h] || 0) >= 3) return; out.push(n); zc[z] = (zc[z] || 0) + 1; hc[h] = (hc[h] || 0) + 1; });
-    allowed.forEach(function (n) { if (out.length < size && out.indexOf(n) < 0) out.push(n); }); return out;
+    return ScoreProjects.selectNormal(allowed,size,ns=>ns.every(n=>ns.filter(x=>zod(x)===zod(n)).length<=2));
   }
   function auditZ3(rows, model, limit) {
     var start = Math.max(30, rows.length - (limit || 70)), d = [], full = 0, totalHits = 0;
