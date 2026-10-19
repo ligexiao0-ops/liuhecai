@@ -299,7 +299,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="combo-limits.js?v=10101051"></script><script src="score-projects.js?v=10101051"></script>
+<script src="combo-limits.js?v=10101052"></script><script src="score-projects.js?v=10101052"></script>
 <script>
 // ===== 域名锁：已关闭（CloudStudio部署） =====
 // 个人自用，无盗用风险，域名锁已移除
@@ -11993,7 +11993,7 @@ function renderTE(){
   }
 
   // ===== AI独立预测（不受你的设定影响，用于对比验证）=====
-  const rawAiPred=aiOwnPrediction(),aiPred=Object.assign({},rawAiPred,{sc:rawAiPred.sc.filter(x=>planTeAllowed(x.n)),top20:rawAiPred.top20.filter(x=>planTeAllowed(x.n)).sort((a,b)=>a.n-b.n),nonExcl:rawAiPred.nonExcl.filter(x=>planTeAllowed(x.n)),top3Zods:rawAiPred.top3Zods.filter(z=>ZM[z].some(planTeAllowed))});
+  const rawAiPred=aiOwnPrediction(),aiPred=Object.assign({},rawAiPred,{sc:rawAiPred.sc.filter(x=>planTeAllowed(x.n)),top20:rawAiPred.top20.filter(x=>planTeAllowed(x.n)).sort((a,b)=>b.s-a.s),nonExcl:rawAiPred.nonExcl.filter(x=>planTeAllowed(x.n)),top3Zods:rawAiPred.top3Zods.filter(z=>ZM[z].some(planTeAllowed))});
   h+='<div class="card" style="background:linear-gradient(135deg,#0f3460,#16213e);color:#fff;border:2px solid #00d9ff">'+
      '<div style="font-weight:bold;font-size:13px;color:#00d9ff;margin-bottom:6px">🤖 AI评分参考（已按你的限制过滤）</div>'+
      '<div style="font-size:9px;color:#aed6f1;margin-bottom:8px">此区块用于对比验证：你的自选与AI推荐若出现交集，可作为信心强化；若完全不同，也提供另一视角</div>';
@@ -12006,16 +12006,16 @@ function renderTE(){
   });
   h+='</div>';
   const aiCopyTxt=lotLabel()+'AI特码'+aiPred.top20.map(x=>String(x.n).padStart(2,'0')).join(',');
-  h+='<b style="font-size:11px;color:#ffd700">📋 AI候选号码（按大小显示，点击复制）：</b>'+
+  h+='<b style="font-size:11px;color:#ffd700">📋 AI候选号码（按评分主次显示，点击复制）：</b>'+
      '<div class="ai-copy-box" onclick="copyAiRec(this,\''+aiCopyTxt+'\')" title="点击复制全部">'+aiCopyTxt+'</div>'+
      '<div style="font-size:9px;color:#aed6f1;margin-top:4px">共'+aiPred.nonExcl.length+'个非排除候选号码（评分>-8）</div>'+
      '</div>';
 
   // ===== AI推荐10码（不受用户限制，用于对比复盘）=====
-  const ai10=aiPred.sc.filter(x=>x.s>-8&&planTeAllowed(x.n)).slice(0,10).sort((a,b)=>a.n-b.n);
+  const ai10=aiPred.sc.filter(x=>x.s>-8&&planTeAllowed(x.n)).slice(0,10);
   const ai10Txt=lotLabel()+'AI特码'+ai10.map(x=>String(x.n).padStart(2,'0')).join(',');
   h+='<div class="card" style="background:linear-gradient(135deg,#1a4a2a,#0d3a1a);color:#fff;border:2px solid #00ff88">'+
-     '<div style="font-weight:bold;font-size:12px;color:#00ff88;margin-bottom:6px">🎯 AI候选（遵守你的全部限制，按号码大小显示，不足10码不补号）</div>'+
+     '<div style="font-weight:bold;font-size:12px;color:#00ff88;margin-bottom:6px">🎯 AI候选（遵守你的全部限制，按评分主次显示，不足10码不补号）</div>'+
      '<div style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0">'+
      ai10.map((x,i)=>'<div class="ai-rec" style="background:rgba(0,255,136,.1);border:1px solid #00ff88;border-radius:6px;padding:4px 8px;text-align:center;display:inline-block" onclick="copyAiRec(this,\''+String(x.n).padStart(2,'0')+' '+gz(x.n)+' '+gwx(x.n)+' 分'+x.s+'\')" title="点击复制完整信息">'+
        '<div style="font-size:8px;color:#00ff88">#'+(i+1)+'</div>'+
@@ -12288,7 +12288,7 @@ function renderTE(){
 
   // TOP20 + 复制框
   h+='<div class="card"><b style="color:#1e8449;font-size:11px">✅ TOP20候选（含全部用户设定）</b><div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">';
-  top20.slice().sort((a,b)=>a.n-b.n).forEach((it,displayIndex)=>{const i=top20.findIndex(x=>x.n===it.n);
+  top20.forEach((it,i)=>{
     h+='<div style="background:'+(APP.includes(it.n)?'#f0fff4':'#f8f8f8')+';border-radius:6px;padding:4px;border:2px solid '+(i<3?'#c0392b':APP.includes(it.n)?'#1e8449':'#1a6baa')+';text-align:center;min-width:58px">'+
        (i<3?'<div style="font-size:7px;color:#c0392b;font-weight:bold">TOP'+(i+1)+'⭐</div>':'')+
        ball(it.n,22)+'<div style="font-weight:bold;font-size:9px">'+gz(it.n)+'</div>'+
@@ -12300,9 +12300,9 @@ function renderTE(){
   h+='</div>'+concl('TOP3：'+sc.filter(x=>x.s>-8&&planTeAllowed(x.n)).slice(0,3).map((it,i)=>'主'+(i+1)+' '+ball(it.n,18)+it.n+'('+gz(it.n)+') 分'+it.s).join('；'))+'</div>';
 
   // 复制框：所有非排除（s>-8的全部号码，从高到低），逗号分隔
-  const nonExcl=sc.filter(x=>x.s>-8&&planTeAllowed(x.n)).sort((a,b)=>a.n-b.n);
+  const nonExcl=sc.filter(x=>x.s>-8&&planTeAllowed(x.n)).sort((a,b)=>b.s-a.s);
   const copyTxt=lotLabel()+'特码'+nonExcl.map(x=>String(x.n).padStart(2,'0')).join(',');
-  h+=copyBox('copy-te',"特码候选号码（非排除，共"+nonExcl.length+"个，按号码从小到大，逗号分隔）",copyTxt,'特码');
+  h+=copyBox('copy-te',"特码候选号码（非排除，共"+nonExcl.length+"个，按评分从高到低，逗号分隔）",copyTxt,'特码');
 
   // 强排除
   h+='<div class="card" style="background:#fee2e2;border:2px solid #c0392b"><b style="color:#c0392b;font-size:10px">🚫 强排除（'+strong.length+'个）</b><div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:4px">';
@@ -19491,7 +19491,7 @@ function render(){
     document.getElementById('tabContent').innerHTML=contentHTML;
   }catch(e){
     console.error('Render error in tab '+activeTab+':',e);
-    window.__lastRenderError={version:'10101051',lot:CUR_LOT,tab:activeTab,target:NEXT,rows:DR.length,error:String(e.message),stack:String(e.stack||'')};
+    window.__lastRenderError={version:'10101052',lot:CUR_LOT,tab:activeTab,target:NEXT,rows:DR.length,error:String(e.message),stack:String(e.stack||'')};
     document.getElementById('tabContent').innerHTML='<div class="card" style="border:2px solid #c0392b;padding:20px;text-align:center">'+
       '<b style="color:#c0392b">⚠️ 页面渲染出错</b><br>'+
       '<span style="font-size:10px;color:#888">Tab: '+activeTab+'</span><br>'+
@@ -19897,56 +19897,56 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10101051"></script>
-<script src="discovery-ui.js?v=10101051"></script>
-<script src="reference-rules.js?v=10101051"></script>
-<script src="reference-system.js?v=10101051"></script>
-<script src="prediction-review.js?v=10101051"></script>
-<script src="candidate-display.js?v=10101051"></script>
-<script src="practical-actions.js?v=10101051"></script>
-<script src="practice-evidence.js?v=10101051"></script>
-<script src="practice-engine.js?v=10101051"></script>
-<script src="formula-audit.js?v=10101051"></script>
-<script src="formula-signals.js?v=10101051"></script>
-<script src="practice-ui.js?v=10101051"></script>
-<script src="discovery-engine.js?v=10101051"></script>
-<script src="transition-audit.js?v=10101051"></script>
-<script src="transition-audit-ui.js?v=10101051"></script>
-<script src="history-profile.js?v=10101051"></script>
-<script src="history-profile-ui.js?v=10101051"></script>
-<script src="file-rules.js?v=10101051"></script>
-<script src="file-rules-ui.js?v=10101051"></script>
-<script src="range-audit.js?v=10101051"></script>
-<script src="range-audit-ui.js?v=10101051"></script>
-<script src="image-formula-audit.js?v=10101051"></script>
-<script src="image-formula-audit-ui.js?v=10101051"></script>
-<script src="traditional-audit.js?v=10101051"></script>
-<script src="traditional-audit-ui.js?v=10101051"></script>
-<script src="heat-practice.js?v=10101051"></script>
-<script src="heat-practice-ui.js?v=10101051"></script>
-<script src="prediction-review-ui.js?v=10101051"></script>
-<script src="image-batch.js?v=10101051"></script>
-<script src="source-intersection.js?v=10101051"></script>
-<script src="source-slots.js?v=10101051"></script>
-<script src="pdf-import.js?v=10101051"></script><script src="image-batch-ui.js?v=10101051"></script>
-<script src="manual-entry-ui.js?v=10101051"></script>
-<script src="web-text-rules.js?v=10101051"></script>
-<script src="source-quality.js?v=10101051"></script>
-<script src="web-text-ui.js?v=10101051"></script>
-<script src="applied-audit.js?v=10101051"></script>
-<script src="applied-audit-ui.js?v=10101051"></script>
-<script src="recommendation-routing.js?v=10101051"></script>
-<script src="tail-rule-audit.js?v=10101051"></script><script src="live-insights.js?v=10101051"></script>
-<script src="copy-audit.js?v=10101051"></script>
-<script src="copy-audit-ui.js?v=10101051"></script>
-<script src="random-control.js?v=10101051"></script>
-<script src="external-material-ui.js?v=10101051"></script>
-<script src="actual-random-ui.js?v=10101051"></script>
-<script src="navigation-guard.js?v=10101051"></script>
-<script src="frequent-combos.js?v=10101051"></script><script src="frequent-combos-ui.js?v=10101051"></script><script src="simulation-draw-actions.js?v=10101051"></script><script src="random-journal-ui.js?v=10101051"></script><script src="source-groups.js?v=10101051"></script><script src="source-journal.js?v=10101051"></script><script src="prediction-sources-ui.js?v=10101051"></script><script src="manual-intersection-ui.js?v=10101051"></script><script src="evidence-overview.js?v=10101051"></script>
-<script src="nine-source-ui.js?v=10101051"></script>
-<script src="candidate-materials-ui.js?v=10101051"></script><script src="image-entry-ui.js?v=10101051"></script>
-<script src="practice-evidence-ui.js?v=10101051"></script>
+<script src="analytics-v1008-01.js?v=10101052"></script>
+<script src="discovery-ui.js?v=10101052"></script>
+<script src="reference-rules.js?v=10101052"></script>
+<script src="reference-system.js?v=10101052"></script>
+<script src="prediction-review.js?v=10101052"></script>
+<script src="candidate-display.js?v=10101052"></script>
+<script src="practical-actions.js?v=10101052"></script>
+<script src="practice-evidence.js?v=10101052"></script>
+<script src="practice-engine.js?v=10101052"></script>
+<script src="formula-audit.js?v=10101052"></script>
+<script src="formula-signals.js?v=10101052"></script>
+<script src="practice-ui.js?v=10101052"></script>
+<script src="discovery-engine.js?v=10101052"></script>
+<script src="transition-audit.js?v=10101052"></script>
+<script src="transition-audit-ui.js?v=10101052"></script>
+<script src="history-profile.js?v=10101052"></script>
+<script src="history-profile-ui.js?v=10101052"></script>
+<script src="file-rules.js?v=10101052"></script>
+<script src="file-rules-ui.js?v=10101052"></script>
+<script src="range-audit.js?v=10101052"></script>
+<script src="range-audit-ui.js?v=10101052"></script>
+<script src="image-formula-audit.js?v=10101052"></script>
+<script src="image-formula-audit-ui.js?v=10101052"></script>
+<script src="traditional-audit.js?v=10101052"></script>
+<script src="traditional-audit-ui.js?v=10101052"></script>
+<script src="heat-practice.js?v=10101052"></script>
+<script src="heat-practice-ui.js?v=10101052"></script>
+<script src="prediction-review-ui.js?v=10101052"></script>
+<script src="image-batch.js?v=10101052"></script>
+<script src="source-intersection.js?v=10101052"></script>
+<script src="source-slots.js?v=10101052"></script>
+<script src="pdf-import.js?v=10101052"></script><script src="image-batch-ui.js?v=10101052"></script>
+<script src="manual-entry-ui.js?v=10101052"></script>
+<script src="web-text-rules.js?v=10101052"></script>
+<script src="source-quality.js?v=10101052"></script>
+<script src="web-text-ui.js?v=10101052"></script>
+<script src="applied-audit.js?v=10101052"></script>
+<script src="applied-audit-ui.js?v=10101052"></script>
+<script src="recommendation-routing.js?v=10101052"></script>
+<script src="tail-rule-audit.js?v=10101052"></script><script src="live-insights.js?v=10101052"></script>
+<script src="copy-audit.js?v=10101052"></script>
+<script src="copy-audit-ui.js?v=10101052"></script>
+<script src="random-control.js?v=10101052"></script>
+<script src="external-material-ui.js?v=10101052"></script>
+<script src="actual-random-ui.js?v=10101052"></script>
+<script src="navigation-guard.js?v=10101052"></script>
+<script src="frequent-combos.js?v=10101052"></script><script src="frequent-combos-ui.js?v=10101052"></script><script src="simulation-draw-actions.js?v=10101052"></script><script src="random-journal-ui.js?v=10101052"></script><script src="source-groups.js?v=10101052"></script><script src="source-journal.js?v=10101052"></script><script src="prediction-sources-ui.js?v=10101052"></script><script src="manual-intersection-ui.js?v=10101052"></script><script src="evidence-overview.js?v=10101052"></script>
+<script src="nine-source-ui.js?v=10101052"></script>
+<script src="candidate-materials-ui.js?v=10101052"></script><script src="image-entry-ui.js?v=10101052"></script>
+<script src="practice-evidence-ui.js?v=10101052"></script>
 </body>
 </html>
 <!-- GitHub Pages deploy trigger: v10.1008.03 -->
