@@ -1,19 +1,15 @@
 {
-  "checkedAt": "2026-10-21T00:53:20.128655+08:00",
+  "checkedAt": "2026-10-21T01:28:46.129494+08:00",
   "lot": "gc",
   "source": "香港赛马会官方",
   "mode": "next-day",
   "enabled": true,
   "status": "success",
-  "added": [
-    112
-  ],
+  "added": [],
   "conflicts": [],
   "normalOrder": "官方公布列表顺序，不宣称为落球顺序",
   "otherLots": "新澳/老澳来源未接通，保留手工录入",
-  "pending": [
-    112
-  ],
+  "pending": [],
   "latestPeriod": 112,
   "sourceLatestPeriod": 112
 }
