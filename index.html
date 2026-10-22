@@ -299,7 +299,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="combo-limits.js?v=10101053"></script><script src="score-projects.js?v=10101053"></script>
+<script src="combo-limits.js?v=10101054"></script><script src="score-projects.js?v=10101054"></script>
 <script>
 // ===== 域名锁：已关闭（CloudStudio部署） =====
 // 个人自用，无盗用风险，域名锁已移除
@@ -5988,15 +5988,16 @@ function mkPoolBox(key,label,placeholder){
 }
 function mkGrpLimitBox(){
   const grps=UP.lx_grp_limits||[];
-  const txt=grps.map(g=>g.zods.join('')+(g.max!==2?' 最多'+g.max:'')).join(String.fromCharCode(10));
+  const txt=grps.map(g=>'【'+g.zods.join('')+'】最多'+g.max+'个').join(String.fromCharCode(10));
   return '<div style="background:#fdf0ff;border:2px dashed #8B008B;border-radius:8px;padding:10px;margin:8px 0">'+
     '<b style="font-size:11px;color:#8B008B">🔒 生肖分组限制（每组独立设置上限）：</b>'+
     '<div style="font-size:9px;color:#555;margin:3px 0;line-height:1.6">'+
     '每行或每个括号一组；三肖默认最多2个，5—6肖默认最多4个，可写“最多3个”覆盖。<br>'+
-    '支持同一行【鼠牛猪】[狗马蛇]，分别保存，不合并；例如【鼠牛虎兔龙蛇】最多4个<br>'+
+    '支持【鼠牛猪】[狗马蛇]、(鼠牛虎)(牛虎兔)、鼠牛虎/牛虎兔，分别保存，不合并；例如【鼠牛虎兔龙蛇】最多4个<br>'+
     '<b style="color:#8B008B">ABC/DFG 字母分组：</b>「A:鼠牛猪 B:龙蛇马 C:狗兔猴」或「A组鼠牛猪/B组龙蛇马」或「ABC:鼠牛猪,龙蛇马,狗兔猴」，可加「每组最多3个」指定上限(默认2)<br>'+
-    '<b>含义</b：不是必选也不是不选，而是所选五连肖中从每组最多包含2-3个</div>'+
+    '<b>含义</b：不是必选也不是不选，而是所选三连、四连、五连等逐组核对：三肖组最多2肖；五六肖组最多4肖。这是你设置的筛选假设，不是中奖保证</div>'+
     '<textarea id="lx-grp-input" rows="6" placeholder="鼠牛猪&#10;狗马蛇&#10;牛兔鼠&#10;龙猴马&#10;蛇鸡牛&#10;龙虎兔">'+txt+'</textarea>'+
+    '<div id="lx-group-preview" style="color:#753880;font-size:11px"></div>'+
     '<div style="display:flex;gap:8px;align-items:center;margin-top:4px">'+
     '<button class="btn btn-purple" data-action="saveGrpLimits">✅ 设置分组限制</button>'+
     '<button class="btn btn-gray" data-action="clearGrpLimits">🗑️ 清空限制</button>'+
@@ -6083,6 +6084,7 @@ document.addEventListener('click',function(e){
     const inputEl=document.getElementById('lx-grp-input');
     const raw=(inputEl?inputEl.value:'').trim();
     const grps=ComboLimits.parse(raw);
+    if(raw&&!grps.length){showClickFeedback('未识别到分组，原限制保留；请检查生肖名称');return;}
     UP.lx_grp_limits=grps;saveData();render();showClickFeedback('✅ 分组限制已设置('+grps.length+'组)');
   } else if(action==='quickExclAttr'){
     // 一键排除属性（生肖/合数/五行/波色/尾数）
@@ -6358,7 +6360,8 @@ function applyZm3NL(){
 }
 function applyLxNL(){
   const txt=document.getElementById('nl-lx').value;UP.lx_nl=txt;
-  if(/[【\[]/.test(txt)){UP.lx_grp_limits=ComboLimits.parse(txt);saveData();render();showClickFeedback('已识别'+UP.lx_grp_limits.length+'组独立限制');return;}
+  const parsedGroups=ComboLimits.parse(txt);
+  if(parsedGroups.length&&(/[【\[（(<《/]/.test(txt)||parsedGroups.length>1||/最多|上限|不超过/.test(txt))){UP.lx_grp_limits=parsedGroups;saveData();render();showClickFeedback('已识别'+UP.lx_grp_limits.length+'组独立限制');return;}
   const r=parseNL(txt);
   if(r.excl_zods.length)UP.lx_excl_zods=Array.from(new Set((UP.lx_excl_zods||[]).concat(r.excl_zods)));
   if(r.pick_zods.length)UP.lx_force_zods=Array.from(new Set((UP.lx_force_zods||[]).concat(r.pick_zods)));
@@ -19491,7 +19494,7 @@ function render(){
     document.getElementById('tabContent').innerHTML=contentHTML;
   }catch(e){
     console.error('Render error in tab '+activeTab+':',e);
-    window.__lastRenderError={version:'10101053',lot:CUR_LOT,tab:activeTab,target:NEXT,rows:DR.length,error:String(e.message),stack:String(e.stack||'')};
+    window.__lastRenderError={version:'10101054',lot:CUR_LOT,tab:activeTab,target:NEXT,rows:DR.length,error:String(e.message),stack:String(e.stack||'')};
     document.getElementById('tabContent').innerHTML='<div class="card" style="border:2px solid #c0392b;padding:20px;text-align:center">'+
       '<b style="color:#c0392b">⚠️ 页面渲染出错</b><br>'+
       '<span style="font-size:10px;color:#888">Tab: '+activeTab+'</span><br>'+
@@ -19897,57 +19900,57 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10101053"></script>
-<script src="discovery-ui.js?v=10101053"></script>
-<script src="reference-rules.js?v=10101053"></script>
-<script src="reference-system.js?v=10101053"></script>
-<script src="prediction-review.js?v=10101053"></script>
-<script src="candidate-display.js?v=10101053"></script>
-<script src="practical-actions.js?v=10101053"></script>
-<script src="practice-evidence.js?v=10101053"></script>
-<script src="practice-engine.js?v=10101053"></script>
-<script src="formula-audit.js?v=10101053"></script>
-<script src="formula-signals.js?v=10101053"></script>
-<script src="practice-ui.js?v=10101053"></script>
-<script src="discovery-engine.js?v=10101053"></script>
-<script src="transition-audit.js?v=10101053"></script>
-<script src="transition-audit-ui.js?v=10101053"></script>
-<script src="history-profile.js?v=10101053"></script>
-<script src="history-profile-ui.js?v=10101053"></script>
-<script src="file-rules.js?v=10101053"></script>
-<script src="file-rules-ui.js?v=10101053"></script>
-<script src="range-audit.js?v=10101053"></script>
-<script src="range-audit-ui.js?v=10101053"></script>
-<script src="image-formula-audit.js?v=10101053"></script>
-<script src="image-formula-audit-ui.js?v=10101053"></script>
-<script src="traditional-audit.js?v=10101053"></script>
-<script src="traditional-audit-ui.js?v=10101053"></script>
-<script src="heat-practice.js?v=10101053"></script>
-<script src="heat-practice-ui.js?v=10101053"></script>
-<script src="prediction-review-ui.js?v=10101053"></script>
-<script src="image-batch.js?v=10101053"></script>
-<script src="source-intersection.js?v=10101053"></script>
-<script src="source-slots.js?v=10101053"></script>
-<script src="pdf-import.js?v=10101053"></script><script src="image-batch-ui.js?v=10101053"></script>
-<script src="manual-entry-ui.js?v=10101053"></script>
-<script src="web-text-rules.js?v=10101053"></script>
-<script src="source-quality.js?v=10101053"></script>
-<script src="web-text-ui.js?v=10101053"></script>
-<script src="applied-audit.js?v=10101053"></script>
-<script src="applied-audit-ui.js?v=10101053"></script>
-<script src="recommendation-routing.js?v=10101053"></script>
-<script src="tail-rule-audit.js?v=10101053"></script><script src="live-insights.js?v=10101053"></script>
-<script src="copy-audit.js?v=10101053"></script>
-<script src="copy-audit-ui.js?v=10101053"></script>
-<script src="random-control.js?v=10101053"></script>
-<script src="external-material-ui.js?v=10101053"></script>
-<script src="actual-random-ui.js?v=10101053"></script>
-<script src="navigation-guard.js?v=10101053"></script>
-<script src="frequent-combos.js?v=10101053"></script><script src="frequent-combos-ui.js?v=10101053"></script><script src="simulation-draw-actions.js?v=10101053"></script><script src="random-journal-ui.js?v=10101053"></script><script src="source-groups.js?v=10101053"></script><script src="source-journal.js?v=10101053"></script><script src="prediction-sources-ui.js?v=10101053"></script><script src="manual-intersection-ui.js?v=10101053"></script><script src="evidence-overview.js?v=10101053"></script>
-<script src="nine-source-ui.js?v=10101053"></script>
-<script src="candidate-materials-ui.js?v=10101053"></script><script src="image-entry-ui.js?v=10101053"></script>
-<script src="practice-evidence-ui.js?v=10101053"></script>
-<script src="tail-practice-study.js?v=10101053"></script>
+<script src="analytics-v1008-01.js?v=10101054"></script>
+<script src="discovery-ui.js?v=10101054"></script>
+<script src="reference-rules.js?v=10101054"></script>
+<script src="reference-system.js?v=10101054"></script>
+<script src="prediction-review.js?v=10101054"></script>
+<script src="candidate-display.js?v=10101054"></script>
+<script src="practical-actions.js?v=10101054"></script>
+<script src="practice-evidence.js?v=10101054"></script>
+<script src="practice-engine.js?v=10101054"></script>
+<script src="formula-audit.js?v=10101054"></script>
+<script src="formula-signals.js?v=10101054"></script>
+<script src="practice-ui.js?v=10101054"></script>
+<script src="discovery-engine.js?v=10101054"></script>
+<script src="transition-audit.js?v=10101054"></script>
+<script src="transition-audit-ui.js?v=10101054"></script>
+<script src="history-profile.js?v=10101054"></script>
+<script src="history-profile-ui.js?v=10101054"></script>
+<script src="file-rules.js?v=10101054"></script>
+<script src="file-rules-ui.js?v=10101054"></script>
+<script src="range-audit.js?v=10101054"></script>
+<script src="range-audit-ui.js?v=10101054"></script>
+<script src="image-formula-audit.js?v=10101054"></script>
+<script src="image-formula-audit-ui.js?v=10101054"></script>
+<script src="traditional-audit.js?v=10101054"></script>
+<script src="traditional-audit-ui.js?v=10101054"></script>
+<script src="heat-practice.js?v=10101054"></script>
+<script src="heat-practice-ui.js?v=10101054"></script>
+<script src="prediction-review-ui.js?v=10101054"></script>
+<script src="image-batch.js?v=10101054"></script>
+<script src="source-intersection.js?v=10101054"></script>
+<script src="source-slots.js?v=10101054"></script>
+<script src="pdf-import.js?v=10101054"></script><script src="image-batch-ui.js?v=10101054"></script>
+<script src="manual-entry-ui.js?v=10101054"></script>
+<script src="web-text-rules.js?v=10101054"></script>
+<script src="source-quality.js?v=10101054"></script>
+<script src="web-text-ui.js?v=10101054"></script>
+<script src="applied-audit.js?v=10101054"></script>
+<script src="applied-audit-ui.js?v=10101054"></script>
+<script src="recommendation-routing.js?v=10101054"></script>
+<script src="tail-rule-audit.js?v=10101054"></script><script src="live-insights.js?v=10101054"></script>
+<script src="copy-audit.js?v=10101054"></script>
+<script src="copy-audit-ui.js?v=10101054"></script>
+<script src="random-control.js?v=10101054"></script>
+<script src="external-material-ui.js?v=10101054"></script>
+<script src="actual-random-ui.js?v=10101054"></script>
+<script src="navigation-guard.js?v=10101054"></script>
+<script src="frequent-combos.js?v=10101054"></script><script src="frequent-combos-ui.js?v=10101054"></script><script src="simulation-draw-actions.js?v=10101054"></script><script src="random-journal-ui.js?v=10101054"></script><script src="source-groups.js?v=10101054"></script><script src="source-journal.js?v=10101054"></script><script src="prediction-sources-ui.js?v=10101054"></script><script src="manual-intersection-ui.js?v=10101054"></script><script src="evidence-overview.js?v=10101054"></script>
+<script src="nine-source-ui.js?v=10101054"></script>
+<script src="candidate-materials-ui.js?v=10101054"></script><script src="image-entry-ui.js?v=10101054"></script>
+<script src="practice-evidence-ui.js?v=10101054"></script>
+<script src="tail-practice-study.js?v=10101054"></script>
 </body>
 </html>
 <!-- GitHub Pages deploy trigger: v10.1008.03 -->
