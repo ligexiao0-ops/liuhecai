@@ -299,8 +299,8 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="new-hk-data.js?v=10101057"></script>
-<script src="combo-limits.js?v=10101057"></script><script src="score-projects.js?v=10101057"></script>
+<script src="new-hk-data.js?v=10101058"></script>
+<script src="combo-limits.js?v=10101058"></script><script src="score-projects.js?v=10101058"></script>
 <script>
 // ===== 域名锁：已关闭（CloudStudio部署） =====
 // 个人自用，无盗用风险，域名锁已移除
@@ -15516,6 +15516,15 @@ function renderZ3(){
     // 严格模式：没有满足全部硬限制的组合就不推荐，禁止AI绕过用户条件。
     top3=[];
   }
+  // v58: the visible main triple uses the same whole-combination selector as the structured panel.
+  if(window.ExactCombos&&window.TailPracticeStudy&&typeof getPracticeContext==='function'){
+    var exactCtx=getPracticeContext();if(exactCtx){
+      var exactLayer=TailPracticeStudy.modes[UP.tailStudyMode]?UP.tailStudyMode:'all',exactPool=TailPracticeStudy.range(DR,exactLayer).filter(exactCtx.z3Allowed);
+      var exactPriority=TailPracticeStudy.rank(DR,exactPool,['zodiac','element'].includes(UP.tailStudyModel)?UP.tailStudyModel:'frequency',gz,gwx,CUR_LOT);
+      var exactGroups=ExactCombos.select(DR,exactPool,gz,gwx,{mode:UP.exactTripleMode||'auto',lot:CUR_LOT,priority:exactPriority,valid:function(ns){return exactCtx.poolValid(ns)&&exactCtx.tripleValid(ns);}});
+      top3=exactGroups.length?exactGroups[0].pool.slice():[];
+    }
+  }
   // top6 = 【核心修复】从 scoreZ3Combo TOP10 组合中按频率统计，与主推3码一致
   // 不能再用 sc（用户筛选评分）因为那跟主推3码不一致
   var top10Trios=scoredTrios.slice(0,Math.min(10,scoredTrios.length));
@@ -16354,7 +16363,8 @@ function renderZ3(){
 
   // ===== AI推荐（不受用户限制，纯算法评分）=====
   const aiSc3=scoreZheng({pick_z:[],excl_z:[],excl_n:[],excl_t:[],pick_pool:[]});
-  const aiTop3=aiSc3.slice(0,3).map(x=>x.n).sort((a,b)=>a-b);
+  const _aiExact=ExactCombos.select(DR,aiSc3.map(x=>x.n),gz,gwx,{lot:CUR_LOT,priority:aiSc3.map(x=>x.n)});
+  const aiTop3=_aiExact.length?_aiExact[0].pool:[];
   const aiTop6=aiSc3.slice(0,6).map(x=>x.n).sort((a,b)=>a-b);
   h+='<div class="card" style="background:linear-gradient(135deg,#1a4a2a,#0d3a1a);color:#fff;border:2px solid #00ff88">'+
      '<div style="font-weight:bold;font-size:12px;color:#00ff88;margin-bottom:6px">方案A｜系统独立三中三（纯算法TOP6，仅供对照，不读取你的筛选与九肖限制）</div>'+
@@ -19498,7 +19508,7 @@ function render(){
     document.getElementById('tabContent').innerHTML=contentHTML;
   }catch(e){
     console.error('Render error in tab '+activeTab+':',e);
-    window.__lastRenderError={version:'10101057',lot:CUR_LOT,tab:activeTab,target:NEXT,rows:DR.length,error:String(e.message),stack:String(e.stack||'')};
+    window.__lastRenderError={version:'10101058',lot:CUR_LOT,tab:activeTab,target:NEXT,rows:DR.length,error:String(e.message),stack:String(e.stack||'')};
     document.getElementById('tabContent').innerHTML='<div class="card" style="border:2px solid #c0392b;padding:20px;text-align:center">'+
       '<b style="color:#c0392b">⚠️ 页面渲染出错</b><br>'+
       '<span style="font-size:10px;color:#888">Tab: '+activeTab+'</span><br>'+
@@ -19904,60 +19914,60 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10101057"></script>
-<script src="discovery-ui.js?v=10101057"></script>
-<script src="reference-rules.js?v=10101057"></script>
-<script src="reference-system.js?v=10101057"></script>
-<script src="prediction-review.js?v=10101057"></script>
-<script src="candidate-display.js?v=10101057"></script>
-<script src="practical-actions.js?v=10101057"></script>
-<script src="practice-evidence.js?v=10101057"></script>
-<script src="exact-combos.js?v=10101057"></script>
-<script src="practice-engine.js?v=10101057"></script>
-<script src="formula-audit.js?v=10101057"></script>
-<script src="formula-signals.js?v=10101057"></script>
-<script src="practice-ui.js?v=10101057"></script>
-<script src="discovery-engine.js?v=10101057"></script>
-<script src="transition-audit.js?v=10101057"></script>
-<script src="transition-audit-ui.js?v=10101057"></script>
-<script src="history-profile.js?v=10101057"></script>
-<script src="history-profile-ui.js?v=10101057"></script>
-<script src="file-rules.js?v=10101057"></script>
-<script src="file-rules-ui.js?v=10101057"></script>
-<script src="range-audit.js?v=10101057"></script>
-<script src="range-audit-ui.js?v=10101057"></script>
-<script src="image-formula-audit.js?v=10101057"></script>
-<script src="image-formula-audit-ui.js?v=10101057"></script>
-<script src="traditional-audit.js?v=10101057"></script>
-<script src="traditional-audit-ui.js?v=10101057"></script>
-<script src="heat-practice.js?v=10101057"></script>
-<script src="heat-practice-ui.js?v=10101057"></script>
-<script src="prediction-review-ui.js?v=10101057"></script>
-<script src="image-batch.js?v=10101057"></script>
-<script src="source-intersection.js?v=10101057"></script>
-<script src="source-slots.js?v=10101057"></script>
-<script src="pdf-import.js?v=10101057"></script><script src="image-batch-ui.js?v=10101057"></script>
-<script src="manual-entry-ui.js?v=10101057"></script>
-<script src="web-text-rules.js?v=10101057"></script>
-<script src="source-quality.js?v=10101057"></script>
-<script src="web-text-ui.js?v=10101057"></script>
-<script src="applied-audit.js?v=10101057"></script>
-<script src="applied-audit-ui.js?v=10101057"></script>
-<script src="recommendation-routing.js?v=10101057"></script>
-<script src="tail-rule-audit.js?v=10101057"></script><script src="live-insights.js?v=10101057"></script>
-<script src="copy-audit.js?v=10101057"></script>
-<script src="copy-audit-ui.js?v=10101057"></script>
-<script src="random-control.js?v=10101057"></script>
-<script src="external-material-ui.js?v=10101057"></script>
-<script src="actual-random-ui.js?v=10101057"></script>
-<script src="navigation-guard.js?v=10101057"></script>
-<script src="frequent-combos.js?v=10101057"></script><script src="frequent-combos-ui.js?v=10101057"></script><script src="simulation-draw-actions.js?v=10101057"></script><script src="random-journal-ui.js?v=10101057"></script><script src="source-groups.js?v=10101057"></script><script src="source-journal.js?v=10101057"></script><script src="prediction-sources-ui.js?v=10101057"></script><script src="manual-intersection-ui.js?v=10101057"></script><script src="evidence-overview.js?v=10101057"></script>
-<script src="nine-source-ui.js?v=10101057"></script>
-<script src="candidate-materials-ui.js?v=10101057"></script><script src="image-entry-ui.js?v=10101057"></script>
-<script src="practice-evidence-ui.js?v=10101057"></script>
-<script src="tail-practice-study.js?v=10101057"></script>
-<script src="exact-combos-ui.js?v=10101057"></script>
-<script src="new-hk-ui.js?v=10101057"></script>
+<script src="analytics-v1008-01.js?v=10101058"></script>
+<script src="discovery-ui.js?v=10101058"></script>
+<script src="reference-rules.js?v=10101058"></script>
+<script src="reference-system.js?v=10101058"></script>
+<script src="prediction-review.js?v=10101058"></script>
+<script src="candidate-display.js?v=10101058"></script>
+<script src="practical-actions.js?v=10101058"></script>
+<script src="practice-evidence.js?v=10101058"></script>
+<script src="exact-combos.js?v=10101058"></script>
+<script src="practice-engine.js?v=10101058"></script>
+<script src="formula-audit.js?v=10101058"></script>
+<script src="formula-signals.js?v=10101058"></script>
+<script src="practice-ui.js?v=10101058"></script>
+<script src="discovery-engine.js?v=10101058"></script>
+<script src="transition-audit.js?v=10101058"></script>
+<script src="transition-audit-ui.js?v=10101058"></script>
+<script src="history-profile.js?v=10101058"></script>
+<script src="history-profile-ui.js?v=10101058"></script>
+<script src="file-rules.js?v=10101058"></script>
+<script src="file-rules-ui.js?v=10101058"></script>
+<script src="range-audit.js?v=10101058"></script>
+<script src="range-audit-ui.js?v=10101058"></script>
+<script src="image-formula-audit.js?v=10101058"></script>
+<script src="image-formula-audit-ui.js?v=10101058"></script>
+<script src="traditional-audit.js?v=10101058"></script>
+<script src="traditional-audit-ui.js?v=10101058"></script>
+<script src="heat-practice.js?v=10101058"></script>
+<script src="heat-practice-ui.js?v=10101058"></script>
+<script src="prediction-review-ui.js?v=10101058"></script>
+<script src="image-batch.js?v=10101058"></script>
+<script src="source-intersection.js?v=10101058"></script>
+<script src="source-slots.js?v=10101058"></script>
+<script src="pdf-import.js?v=10101058"></script><script src="image-batch-ui.js?v=10101058"></script>
+<script src="manual-entry-ui.js?v=10101058"></script>
+<script src="web-text-rules.js?v=10101058"></script>
+<script src="source-quality.js?v=10101058"></script>
+<script src="web-text-ui.js?v=10101058"></script>
+<script src="applied-audit.js?v=10101058"></script>
+<script src="applied-audit-ui.js?v=10101058"></script>
+<script src="recommendation-routing.js?v=10101058"></script>
+<script src="tail-rule-audit.js?v=10101058"></script><script src="live-insights.js?v=10101058"></script>
+<script src="copy-audit.js?v=10101058"></script>
+<script src="copy-audit-ui.js?v=10101058"></script>
+<script src="random-control.js?v=10101058"></script>
+<script src="external-material-ui.js?v=10101058"></script>
+<script src="actual-random-ui.js?v=10101058"></script>
+<script src="navigation-guard.js?v=10101058"></script>
+<script src="frequent-combos.js?v=10101058"></script><script src="frequent-combos-ui.js?v=10101058"></script><script src="simulation-draw-actions.js?v=10101058"></script><script src="random-journal-ui.js?v=10101058"></script><script src="source-groups.js?v=10101058"></script><script src="source-journal.js?v=10101058"></script><script src="prediction-sources-ui.js?v=10101058"></script><script src="manual-intersection-ui.js?v=10101058"></script><script src="evidence-overview.js?v=10101058"></script>
+<script src="nine-source-ui.js?v=10101058"></script>
+<script src="candidate-materials-ui.js?v=10101058"></script><script src="image-entry-ui.js?v=10101058"></script>
+<script src="practice-evidence-ui.js?v=10101058"></script>
+<script src="tail-practice-study.js?v=10101058"></script>
+<script src="exact-combos-ui.js?v=10101058"></script>
+<script src="new-hk-ui.js?v=10101058"></script>
 </body>
 </html>
 <!-- GitHub Pages deploy trigger: v10.1008.03 -->
