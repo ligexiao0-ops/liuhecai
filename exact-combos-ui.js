@@ -1,0 +1,32 @@
+(function(){'use strict';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),fmt=n=>String(n).padStart(2,'0');
+function savedScore(game,strategy,zod){const all=typeof __DR_FULL!=='undefined'&&__DR_FULL?__DR_FULL:DR,records=PredictionReview.unique((UP.practice_forecasts||[]).filter(r=>r.lot===CUR_LOT&&r.modelVersion==='10101055'&&r.game===game&&r.strategy===strategy)),done=records.map(r=>({r,s:PredictionReview.score(r,all.find(d=>d.p===r.targetPeriod),zod)})).filter(x=>x.s),h=done.filter(x=>x.s.success).length,prev=done.filter(x=>x.r.targetPeriod===DR.at(-1).p);
+ return '<span style="margin-left:auto;color:#176c52;font-size:11px">整组准确率 '+(done.length?(100*h/done.length).toFixed(1)+'%（'+h+'/'+done.length+'组）':'暂无样本')+'</span><p style="font-size:11px">'+(prev.length?'第'+DR.at(-1).p+'期：'+prev.map(x=>(x.s.success?'✅准':'❌错')+' '+x.r.pool.map(v=>typeof v==='number'?fmt(v):v).join('、')+'，中'+x.s.hits.length+'个').join('；'):'第'+DR.at(-1).p+'期无本版已保存组合，不补造原推荐')+'</p>';
+}
+function record(group,ctx){if(typeof winCurOff==='function'&&winCurOff()>0)return false;const id=[CUR_LOT,ctx.meta.sourcePeriod,ctx.meta.targetPeriod,'10101055',group.strategy,group.pool.join(',')].join('|');UP.practice_forecasts=UP.practice_forecasts||[];if(UP.practice_forecasts.some(r=>r.recordId===id))return false;UP.practice_forecasts.push({...group,recordId:id,lot:CUR_LOT,sourcePeriod:ctx.meta.sourcePeriod,targetPeriod:ctx.meta.targetPeriod,modelVersion:'10101055',arm:'filtered',action:'track',savedAt:new Date().toISOString(),source:'结构组合首次显示保存'});return true;}
+function fold(id,label){document.querySelectorAll('[data-exact-fold]').forEach(w=>{if(w.children.length===1)w.remove();});const panel=document.getElementById(id);if(!panel||panel.parentElement.dataset.exactFold)return;const wrap=document.createElement('details');wrap.dataset.exactFold='1';wrap.innerHTML='<summary style="color:#61756d;font-size:12px">'+label+'</summary>';panel.before(wrap);wrap.appendChild(panel);}
+function refresh(){if(!['zm3','lx'].includes(activeTab)||!window.ExactCombos||!window.TailPracticeStudy)return;document.getElementById('exact-combo-panel')?.remove();const ctx=getPracticeContext();if(!ctx)return;
+ const last=ctx.rows.at(-1),mode=ExactCombos.names[UP.exactTripleMode]?UP.exactTripleMode:'auto',game=activeTab==='zm3'?'z3':'lx';let groups=[],controls='',changed=false;
+ if(game==='z3'){
+  const layer=TailPracticeStudy.modes[UP.tailStudyMode]?UP.tailStudyMode:'all',pool=TailPracticeStudy.range(ctx.rows,layer).filter(ctx.z3Allowed),model=['zodiac','element'].includes(UP.tailStudyModel)?UP.tailStudyModel:'frequency',priority=TailPracticeStudy.rank(ctx.rows,pool,model,ctx.zod,gwx,CUR_LOT);
+  groups=ExactCombos.select(ctx.rows,pool,ctx.zod,gwx,{mode,lot:CUR_LOT,priority,valid:ns=>(!ctx.poolValid||ctx.poolValid(ns))&&(!ctx.tripleValid||ctx.tripleValid(ns))}).map((x,i)=>({...x,game:'z3',strategy:'exact-'+mode+'-'+i,label:(i?'备选三码':'主三码')+' · '+x.structure.tags.join('＋')}));
+  controls='<label>三码搭配 <select data-exact-mode>'+Object.entries(ExactCombos.names).map(([k,v])=>'<option value="'+k+'" '+(k===mode?'selected':'')+'>'+v+'</option>').join('')+'</select></label><p style="font-size:11px">先遵守上期特尾±3、当前已出／未出分层及你的全部选号限制，再直接按整组三码排序。不会先取最小8码，也不会把8码中3当成某组三码命中。</p>';
+ }else{
+  groups=ctx.lx.filter(zs=>zs.length===5).slice(0,3).map((pool,i)=>({game:'lx',pool:pool.slice(),strategy:'exact-lx5-'+i,label:i?'备选五连肖':'主选五连肖'}));
+  controls='<p style="font-size:11px">每组恰好5肖，遵守必选、排除、不同组上限、不能同出和家野限制；条件无解就显示无解，不回填违规生肖。</p>';
+ }
+ for(const g of groups)changed=record(g,ctx)||changed;if(changed)saveData();
+ let h='<section id="exact-combo-panel" class="card" style="border:2px solid #176c52;padding:10px;font-size:12px"><h3 style="margin:0 0 6px">'+(game==='z3'?'按条件生成 · 三中三具体组合':'按条件生成 · 五连肖具体组合')+'</h3><p><b>依据第'+ctx.meta.sourcePeriod+'期 → '+(typeof winCurOff==='function'&&winCurOff()>0?'历史重算第':'预测第')+ctx.meta.targetPeriod+'期</b></p>'+controls;
+ for(const g of groups){h+='<article data-exact-group="'+g.game+'" data-exact-pool="'+esc(g.pool.join(','))+'" style="border:1px solid #b6d0c4;border-radius:7px;margin:8px 0;padding:8px"><b>'+esc(g.label)+'</b>'+savedScore(game,g.strategy,ctx.zod)+'<div style="color:#176c52;font-size:19px;font-weight:bold">'+(game==='z3'?CandidateDisplay.pool(g.pool):g.pool.join('　'))+'</div>';
+  if(game==='z3')h+='<p style="font-size:11px">'+g.pool.map(n=>fmt(n)+'('+ctx.zod(n)+'·'+gwx(n)+')').join('　')+'<br>此前'+g.sample+'期正码：这三个号码整组同开'+g.joint+'次；三个对子同开次数合计'+g.pairSupport+'。历史同开仅为搭配参考，不是预测准确率。</p>';
+  else h+='<p style="font-size:11px">'+(UP.lx_grp_limits||[]).map(r=>'['+r.zods.join('')+'] 含'+g.pool.filter(z=>r.zods.includes(z)).length+'/'+r.max+'肖').join('；')+'</p>';
+  h+=PracticalActions.buttons(g.pool,game,g.label+' 第'+ctx.meta.targetPeriod+'期')+'</article>';
+ }
+ if(!groups.length)h+='<p style="color:#b33434">当前限制下没有合格的'+(game==='z3'?'三码':'五连肖')+'组合；请调整限制或搭配类型，不自动补入违规号码。</p>';
+ h+='<p style="font-size:10px;color:#65756e">搭配顺序是观察排序，不是中奖概率。统计仅核对已保存的本版同类组合；同一期调整条件可能保存多组，因此分母为组数，不是期数。三中三只认6个正码全部中3；五连肖按现有平特口径核对7球生肖全部中5。历史回看不保存成新预测。</p></section>';
+ document.getElementById('tabContent')?.insertAdjacentHTML('afterbegin',h);fold('tail-practice-study','展开尾数分层、范围与8码对照统计');fold('practice-panel','展开原有范围方案与独立对照');
+}
+document.addEventListener('change',e=>{if(e.target.matches('[data-exact-mode]')){const y=window.scrollY;UP.exactTripleMode=e.target.value;saveData();refresh();requestAnimationFrame(()=>window.scrollTo(0,y));}else if(e.target.matches('[data-tail-study]'))refresh();});
+const base=window.render;window.render=function(){const r=base.apply(this,arguments);refresh();return r;};refresh();
+window.ExactComboPlans={refresh};
+})();
