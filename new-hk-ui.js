@@ -1,0 +1,7 @@
+(function(){'use strict';
+function show(){document.getElementById('new-hk-info')?.remove();if(CUR_LOT!=='xgc')return;const pending=NewHongKongData.pending.filter(r=>!DR.some(d=>d.p===r.p));let h='<section class="card" id="new-hk-info" style="border:1px solid #2b8d85;font-size:12px"><b>🌉 新港彩 · 每日开奖／手动录入</b><p>属性与新老澳相同，生肖按号码统一计算。开奖记录、筛选条件与复盘独立保存；不启用旧港彩每周开奖日或自动抓奖。</p>';
+if(activeTab==='rec'){h+='<p>文件中'+NewHongKongData.records.length+'期号码通过校验；以下'+pending.length+'期待补（空白不计入统计）：</p><table style="width:100%;font-size:12px"><tr><th>期数</th><th>日期</th><th>6个正码＋特码</th><th></th></tr>'+pending.map(r=>'<tr><td>'+r.p+'</td><td>'+r.d+'</td><td>— — — — — — ＋ —</td><td><button data-xgc-fill="'+r.p+'">补录</button></td></tr>').join('')+'</table>';}else h+='<p>手动录入入口：开奖记录 → 添加开奖。待补'+pending.length+'期；空白记录不计入统计。</p>';
+document.getElementById('tabContent')?.insertAdjacentHTML('afterbegin',h+'</section>');}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-xgc-fill]');if(!b||CUR_LOT!=='xgc')return;showAddModal();if(document.getElementById('addModal').style.display!=='block')return;const r=NewHongKongData.pending.find(r=>r.p===+b.dataset.xgcFill);if(!r)return;document.getElementById('record-period').value=r.p;document.getElementById('record-date').value='2026/'+r.d;document.getElementById('modal-next-p').textContent=r.p;document.getElementById('modal-date').textContent=r.d;});
+const base=window.render;window.render=function(){const r=base.apply(this,arguments);show();return r;};show();
+})();
