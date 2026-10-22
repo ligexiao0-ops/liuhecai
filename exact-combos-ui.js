@@ -11,6 +11,7 @@ function refresh(){if(!['zm3','lx'].includes(activeTab)||!window.ExactCombos||!w
   const layer=TailPracticeStudy.modes[UP.tailStudyMode]?UP.tailStudyMode:'all',pool=TailPracticeStudy.range(ctx.rows,layer).filter(ctx.z3Allowed),model=['zodiac','element'].includes(UP.tailStudyModel)?UP.tailStudyModel:'frequency',priority=TailPracticeStudy.rank(ctx.rows,pool,model,ctx.zod,gwx,CUR_LOT);
   groups=ExactCombos.select(ctx.rows,pool,ctx.zod,gwx,{mode,lot:CUR_LOT,priority,valid:ns=>(!ctx.poolValid||ctx.poolValid(ns))&&(!ctx.tripleValid||ctx.tripleValid(ns))}).map((x,i)=>({...x,game:'z3',strategy:'exact-'+mode+'-'+i,label:(i?'备选三码':'主三码')+' · '+x.structure.tags.join('＋')}));
   controls='<label>三码搭配 <select data-exact-mode>'+Object.entries(ExactCombos.names).map(([k,v])=>'<option value="'+k+'" '+(k===mode?'selected':'')+'>'+v+'</option>').join('')+'</select></label><p style="font-size:11px">先遵守上期特尾±3、当前已出／未出分层及你的全部选号限制，再直接按整组三码排序。不会先取最小8码，也不会把8码中3当成某组三码命中。</p>';
+  controls+='<details><summary style="color:#a63838">🚫 排除正码生肖 · 已排除'+(UP.zm3_excl_zods||[]).join('、')+'</summary><p style="font-size:11px">点击生肖，整肖号码立即退出本期三中三候选；不影响特码和连肖。排除是否正确，只核对6个正码有没有这个生肖，不能用特码未出现代替判断。历史偏冷或遗漏长不代表下一期不会出。</p>'+mkZodPicker('zm3_excl_zods','excl')+'</details>';
  }else{
   groups=ctx.lx.filter(zs=>zs.length===5).slice(0,3).map((pool,i)=>({game:'lx',pool:pool.slice(),strategy:'exact-lx5-'+i,label:i?'备选五连肖':'主选五连肖'}));
   controls='<p style="font-size:11px">每组恰好5肖，遵守必选、排除、不同组上限、不能同出和家野限制；条件无解就显示无解，不回填违规生肖。</p>';
