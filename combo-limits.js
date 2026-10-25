@@ -12,7 +12,8 @@
  }
  const out=[];for(const c of chunks){const zods=[...new Set(c.text.match(/[鼠牛虎兔龙蛇马羊猴鸡狗猪]/g)||[])];if(zods.length<2)continue;const raw=c.max??global?.[1]??(zods.length>=5?4:2),max=Math.max(0,Math.min(zods.length,Number(raw)));if(!out.some(g=>g.max===max&&g.zods.length===zods.length&&g.zods.every(z=>zods.includes(z))))out.push({zods,max});}return out;
 }
-root.ComboLimits={allowed,save,parse};
+function parseNumbers(text){const out=[];for(const part of String(text).normalize('NFKC').split(/[\n;；]|[【\[（(]/)){const before=part.split(/[】\]）)]/)[0],ns=(before.match(/(?<!\d)\d{1,2}(?!\d)/g)||[]).map(Number);if(ns.length!==3||new Set(ns).size!==3||ns.some(n=>n<1||n>49))continue;const pool=ns.sort((a,b)=>a-b);if(!out.some(g=>g.pool.join()===pool.join()))out.push({pool,max:2});}return out;}
+root.ComboLimits={allowed,save,parse,parseNumbers};
 if(typeof document!=='undefined'){
  const preview=()=>{const input=document.getElementById('lx-grp-input'),box=document.getElementById('lx-group-preview');if(!input||!box)return;const groups=parse(input.value);box.textContent=groups.length?groups.map((g,i)=>(i+1)+'. '+g.zods.join('')+' → 最多含'+g.max+'肖（'+(g.max<g.zods.length?'禁止整组包含':'此组不限制')+'）').join('； '):'每组至少2个生肖；保存前请核对分组。';};
  document.addEventListener('input',e=>{if(e.target.id==='lx-grp-input')preview();});

@@ -1,0 +1,10 @@
+(function(root){'use strict';
+const all=Array.from({length:49},(_,i)=>i+1),valid=n=>Number.isInteger(n)&&n>=1&&n<=49,uniq=ns=>[...new Set(ns.filter(valid))].sort((a,b)=>a-b);
+function pool(r,method,negative='abs'){if(!r)return [];if(method==='adjacent')return uniq(r.n.flatMap(n=>[n-1,n+1]));return uniq(r.n.flatMap(n=>[Math.abs(n+r.t),Math.abs(n-r.t)]).map(n=>n>49?n-60:n).map(n=>negative==='abs'?Math.abs(n):n));}
+function ten(rows,negative='abs'){const last=rows.at(-1),a=pool(last,'adjacent',negative),b=pool(last,'sumdiff',negative),recent=rows.slice(-30),freq=n=>recent.filter(r=>r.n.includes(n)).length;return all.slice().sort((n,m)=>((b.includes(m)?2:0)+(a.includes(m)?1:0))-((b.includes(n)?2:0)+(a.includes(n)?1:0))||freq(n)-freq(m)||((n*17+(last?.p||0))%49)-((m*17+(last?.p||0))%49)).slice(0,10);}
+function choose(n,k){if(n<k||k<0)return 0;let v=1;for(let i=1;i<=k;i++)v=v*(n-k+i)/i;return v;}
+function zeroBaseline(size){return choose(49-size,6)/choose(49,6);}
+function study(input,method,negative='abs'){const rows=root.TailPracticeStudy?root.TailPracticeStudy.clean(input).rows:input.slice().sort((a,b)=>a.p-b.p),tests=[];for(let i=1;i<rows.length;i++){if(rows[i].p!==rows[i-1].p+1||method==='ten'&&i<30)continue;const set=method==='ten'?ten(rows.slice(0,i),negative):pool(rows[i-1],method,negative),hits=rows[i].n.filter(n=>set.includes(n));tests.push({source:rows[i-1].p,target:rows[i].p,pool:set,hits,retained:6-hits.length,baseline:zeroBaseline(set.length)});}return {n:tests.length,zero:tests.filter(t=>!t.hits.length).length,retain3:tests.filter(t=>t.retained>=3).length,hits:tests.reduce((s,t)=>s+t.hits.length,0),baseline:tests.length?tests.reduce((s,t)=>s+t.baseline,0)/tests.length:0,last:tests.at(-1),tests};}
+function allowed(n,rows,up){return !((up.zm3_exclude_adjacent&&pool(rows.at(-1),'adjacent',up.exclusionNegative).includes(n))||(up.zm3_exclude_sumdiff&&pool(rows.at(-1),'sumdiff',up.exclusionNegative).includes(n)));}
+root.ExclusionStudy={pool,ten,study,allowed,zeroBaseline};if(typeof module!=='undefined')module.exports=root.ExclusionStudy;
+})(typeof window==='undefined'?globalThis:window);
