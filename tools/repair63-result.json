@@ -1,0 +1,24 @@
+{
+  "gc97Before": "09/01",
+  "gc97After": "09/08",
+  "gcNumbersUnchanged": true,
+  "xaSource": "https://un102618.30854a58.cyou/kj.html?type=am2lhc",
+  "xaCutoff": "2026-02-17",
+  "xaSourceRange": [
+    269,
+    298
+  ],
+  "xaExistingMismatches": [
+    271,
+    270,
+    269
+  ],
+  "xa154InSource": false,
+  "xaDatabaseUnchanged": false,
+  "xaCorrectedPeriods": [
+    269,
+    270,
+    271
+  ],
+  "xa154DatabaseUnchanged": true
+}

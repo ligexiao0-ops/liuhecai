@@ -299,10 +299,11 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="new-hk-data.js?v=10101062"></script>
-<script src="record-vault.js?v=10101062"></script>
-<script src="exclusion-study.js?v=10101062"></script>
-<script src="combo-limits.js?v=10101062"></script><script src="score-projects.js?v=10101062"></script>
+<script src="new-hk-data.js?v=10101063"></script>
+<script src="xa-corrections63.js?v=10101063"></script>
+<script src="record-vault.js?v=10101063"></script>
+<script src="exclusion-study.js?v=10101063"></script>
+<script src="combo-limits.js?v=10101063"></script><script src="score-projects.js?v=10101063"></script>
 <script>
 // ===== 域名锁：已关闭（CloudStudio部署） =====
 // 个人自用，无盗用风险，域名锁已移除
@@ -791,6 +792,8 @@ function loadData(){
     (NewHongKongData.verifiedRecords||[]).forEach(function(r){verifiedMap[r.p]={p:r.p,d:r.d,n:r.n.slice(),t:r.t};delete xgcState.pending[String(r.p)];});
     DR=Object.values(verifiedMap).sort(function(a,b){return a.p-b.p;});try{storePending('xgc');localStorage.setItem(cfg.dr_key,JSON.stringify(DR));localStorage.setItem(cfg.dr_key+'_safe',JSON.stringify(DR));localStorage.setItem(NewHongKongData.revision,'done');}catch(storageError){console.warn('记录已加载，本机缓存待空间释放后保存',storageError);}
   }
+  if(CUR_LOT==='gc'&&!localStorage.getItem('gc97_date_fix_v63')){var row97=DR.find(function(r){return r.p===97;});if(row97&&row97.d==='09/01'){try{localStorage.setItem('gc97_date_fix_v63_backup',JSON.stringify(row97));}catch(e){}row97.d='09/08';var gcState63=cloudState('gc');if(gcState63.pending[97]&&gcState63.pending[97].d==='09/01')gcState63.pending[97].d='09/08';try{storePending('gc');localStorage.setItem(cfg.dr_key,JSON.stringify(DR));localStorage.setItem('gc97_date_fix_v63','done');}catch(e){}}}
+  if(CUR_LOT==='xa'&&!localStorage.getItem('xa_source_fix63')){try{localStorage.setItem('xa_source_fix63_backup',JSON.stringify({rows:DR,pending:cloudState('xa').pending}));}catch(e){}var xaMap63={};DR.forEach(function(r){xaMap63[r.p]=r;});XaCorrections63.rows.forEach(function(r){xaMap63[r.p]={p:r.p,d:r.d,n:r.n.slice(),t:r.t};delete cloudState('xa').pending[r.p];});DR=Object.values(xaMap63).sort(function(a,b){return a.p-b.p;});try{storePending('xa');localStorage.setItem(cfg.dr_key,JSON.stringify(DR));localStorage.setItem('xa_source_fix63','done');}catch(e){}}
   // 用户2026-10-15截图确认的老澳280—286期，一次性修正并备份旧缓存/待上传记录。
   if(CUR_LOT==='la'&&!localStorage.getItem('la_image_fix_20261015')){
     var correction=[{"p": 280, "d": "10/07", "n": [25, 39, 4, 16, 10, 31], "t": 7}, {"p": 281, "d": "10/08", "n": [37, 47, 12, 22, 23, 35], "t": 24}, {"p": 282, "d": "10/09", "n": [25, 10, 4, 29, 38, 41], "t": 37}, {"p": 283, "d": "10/10", "n": [11, 32, 39, 18, 1, 30], "t": 10}, {"p": 284, "d": "10/11", "n": [4, 32, 25, 26, 33, 45], "t": 11}, {"p": 285, "d": "10/12", "n": [25, 11, 21, 15, 29, 7], "t": 34}, {"p": 286, "d": "10/13", "n": [35, 27, 10, 33, 44, 49], "t": 1}];
@@ -820,7 +823,7 @@ function loadData(){
   }
 }
 // 同步状态: idle/syncing/synced/error
-var SYNC_STATUS='idle',SYNC_MSG='',LAST_SYNC_AT=0,_syncDebounceTimer=null,PREFS_CLOUD_DISABLED=false;
+var SYNC_STATUS='idle',SYNC_MSG='',LAST_SYNC_AT=0,_syncDebounceTimer=null,PREFS_CLOUD_DISABLED=true;
 function missingPrefsTable(err){var m=String((err&&err.message)||err||'');return /user_prefs/i.test(m)&&(/schema cache/i.test(m)||/PGRST205/i.test(m)||/does not exist/i.test(m));}
 function scheduleCloudSync(delay){
   try{if(_syncDebounceTimer)clearTimeout(_syncDebounceTimer);}catch(e){}
@@ -975,7 +978,7 @@ function syncAllToServer(){
     return sb.from('user_prefs').upsert({lot_type:lot,prefs:prefs,updated_at:new Date().toISOString()},{onConflict:'lot_type'});
   }).then(function(res){
     if(res&&res.error){if(missingPrefsTable(res.error)){PREFS_CLOUD_DISABLED=true;}else throw new Error(res.error.message||'设置同步失败');}
-    if(lot===CUR_LOT){SYNC_STATUS='synced';SYNC_MSG='';updateSyncUI();}
+    if(lot===CUR_LOT){SYNC_STATUS='synced';SYNC_MSG=PREFS_CLOUD_DISABLED?'开奖记录已同步；筛选与历史仅本机，可导出／导入':'';updateSyncUI();}
   }).catch(function(e){if(lot===CUR_LOT){SYNC_STATUS='error';SYNC_MSG=e.message||'云端写入失败，待上传修改已保留';updateSyncUI();}}).finally(function(){
     s.writing=false;s.epoch++;
     if(lot===CUR_LOT){if(s.writeAgain){s.writeAgain=false;syncAllToServer();}else refreshFromServer();}
@@ -995,7 +998,7 @@ function refreshFromServer(){
     s.verified={time:Date.now(),latest:server.length?server[server.length-1]:null,count:server.length};
     SYNC_STATUS=Object.keys(s.pending).length?'error':'synced';SYNC_MSG=Object.keys(s.pending).length?'本机有待上传修改':'已读取云端最新记录';updateSyncUI();
     if(dataChanged){_renderZ3Cache=null;_z3StaticCache=null;calcDerived();if(window._appInited)render();}
-    if(PREFS_CLOUD_DISABLED)return;
+    if(PREFS_CLOUD_DISABLED){SYNC_MSG='开奖记录已读取；筛选与历史仅本机，可导出／导入';updateSyncUI();return;}
     return sb.from('user_prefs').select('prefs,updated_at').eq('lot_type',lot).then(function(pr){
       if(lot!==CUR_LOT||s.writing||s.epoch!==epoch||s.request!==request)return;
       if(pr.error){if(missingPrefsTable(pr.error)){PREFS_CLOUD_DISABLED=true;SYNC_STATUS='synced';SYNC_MSG='开奖记录已同步；筛选设置保存在本机';updateSyncUI();return;}throw new Error(pr.error.message||'云端设置读取失败');}
@@ -1312,6 +1315,7 @@ function chartTrend(data,opts){
   return svg;
 }
 function fallbackCopy(txt){
+  if(window.NavigationGuard)NavigationGuard.cancelPendingRestore();
   const y=window.scrollY,x=window.scrollX,focused=document.activeElement,ta=document.createElement('textarea');ta.value=txt;ta.readOnly=true;ta.style.cssText='position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0';document.body.appendChild(ta);ta.focus({preventScroll:true});ta.select();
   try{document.execCommand('copy');showCopyToast();}catch(e){showCopyToastFail();}
   ta.remove();if(focused&&focused.isConnected&&typeof focused.focus==='function')focused.focus({preventScroll:true});window.scrollTo(x,y);requestAnimationFrame(()=>window.scrollTo(x,y));
@@ -2694,6 +2698,7 @@ function nextDrawDate(afterDate){
   for(var i=0;i<14;i++){if(dd.indexOf(d.getDay())>=0)break;d.setDate(d.getDate()+1);}
   return d;
 }
+function knownHongKongDates(){var map={};(CUR_LOT==='gc'?DR:[]).forEach(function(r){if(r&&parseRecordDate(r.d))map[r.p]={p:r.p,d:r.d};});INIT_DR_GC.forEach(function(r){map[r.p]={p:r.p,d:r.d};});map[97]={p:97,d:'09/08'};return Object.values(map).sort(function(a,b){return a.p-b.p;});}
 function pToDate(p){
   return pToDateByBase(p);
 }
@@ -2704,6 +2709,8 @@ function parseRecordDate(v){
 }
 function periodForRecordDate(v){
   var dt=parseRecordDate(v),cfg=LOTTERIES[CUR_LOT];if(!dt)return null;
+  if(CUR_LOT==='gc'){var rows=knownHongKongDates(),canonical=String(dt.getMonth()+1).padStart(2,'0')+'/'+String(dt.getDate()).padStart(2,'0'),exact=rows.filter(function(r){return r.d===canonical;});if(exact.length===1)return exact[0].p;var anchor=rows.at(-1),date=anchor&&parseRecordDate(anchor.d);if(!date||dt<=date)return null;var period=anchor.p;while(date<dt){date.setDate(date.getDate()+1);if(cfg.draw_days.includes(date.getDay()))period++;}return cfg.draw_days.includes(dt.getDay())?period:null;}
+
   var base=new Date(cfg.base_date);base=new Date(base.getFullYear(),base.getMonth(),base.getDate());
   if(!cfg.draw_days)return cfg.base_p+Math.round((dt-base)/86400000);
   var p=cfg.base_p,cur=new Date(base),step=dt>=base?1:-1;
@@ -2757,6 +2764,13 @@ function validateGcDates(){
 }
 // 基于base_date精确计算港彩日期（不依赖DR中已有日期）
 function pToDateByBase(p){
+  if(CUR_LOT==='gc'){
+    var dates=knownHongKongDates(),known=dates.find(function(r){return r.p===Number(p);});if(known)return known.d;
+    var anchor=dates.filter(function(r){return r.p<Number(p);}).sort(function(a,b){return b.p-a.p;})[0];
+    if(!anchor)return '';
+    var date=parseRecordDate(anchor.d),count=anchor.p,days=LOTTERIES.gc.draw_days;while(count<Number(p)){date.setDate(date.getDate()+1);if(days.includes(date.getDay()))count++;}
+    return String(date.getMonth()+1).padStart(2,'0')+'/'+String(date.getDate()).padStart(2,'0');
+  }
   if(LOTTERIES[CUR_LOT].draw_days){
     var dd=LOTTERIES[CUR_LOT].draw_days;
     var d2=new Date(LOTTERIES[CUR_LOT].base_date);
@@ -2805,7 +2819,7 @@ function recordDataIssues(){
 }
 function normalizeRecordDates(queue){
   var changed=0;
-  DR.forEach(function(r){var d=pToDateByBase(r.p);if(r.d!==d){r.d=d;changed++;}});
+  DR.forEach(function(r){var d=pToDateByBase(r.p);if(d&&r.d!==d){r.d=d;changed++;}});
   if(changed&&queue)saveData();
   return changed;
 }
@@ -19521,7 +19535,7 @@ function render(){
     document.getElementById('tabContent').innerHTML=contentHTML;
   }catch(e){
     console.error('Render error in tab '+activeTab+':',e);
-    window.__lastRenderError={version:'10101062',lot:CUR_LOT,tab:activeTab,target:NEXT,rows:DR.length,error:String(e.message),stack:String(e.stack||'')};
+    window.__lastRenderError={version:'10101063',lot:CUR_LOT,tab:activeTab,target:NEXT,rows:DR.length,error:String(e.message),stack:String(e.stack||'')};
     document.getElementById('tabContent').innerHTML='<div class="card" style="border:2px solid #c0392b;padding:20px;text-align:center">'+
       '<b style="color:#c0392b">⚠️ 页面渲染出错</b><br>'+
       '<span style="font-size:10px;color:#888">Tab: '+activeTab+'</span><br>'+
@@ -19927,62 +19941,64 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10101062"></script>
-<script src="discovery-ui.js?v=10101062"></script>
-<script src="reference-rules.js?v=10101062"></script>
-<script src="reference-system.js?v=10101062"></script>
-<script src="prediction-review.js?v=10101062"></script>
-<script src="candidate-display.js?v=10101062"></script>
-<script src="practical-actions.js?v=10101062"></script>
-<script src="practice-evidence.js?v=10101062"></script>
-<script src="exact-combos.js?v=10101062"></script>
-<script src="practice-engine.js?v=10101062"></script>
-<script src="formula-audit.js?v=10101062"></script>
-<script src="formula-signals.js?v=10101062"></script>
-<script src="practice-ui.js?v=10101062"></script>
-<script src="discovery-engine.js?v=10101062"></script>
-<script src="transition-audit.js?v=10101062"></script>
-<script src="transition-audit-ui.js?v=10101062"></script>
-<script src="history-profile.js?v=10101062"></script>
-<script src="history-profile-ui.js?v=10101062"></script>
-<script src="file-rules.js?v=10101062"></script>
-<script src="file-rules-ui.js?v=10101062"></script>
-<script src="range-audit.js?v=10101062"></script>
-<script src="range-audit-ui.js?v=10101062"></script>
-<script src="image-formula-audit.js?v=10101062"></script>
-<script src="image-formula-audit-ui.js?v=10101062"></script>
-<script src="traditional-audit.js?v=10101062"></script>
-<script src="traditional-audit-ui.js?v=10101062"></script>
-<script src="heat-practice.js?v=10101062"></script>
-<script src="heat-practice-ui.js?v=10101062"></script>
-<script src="prediction-review-ui.js?v=10101062"></script>
-<script src="image-batch.js?v=10101062"></script>
-<script src="source-intersection.js?v=10101062"></script>
-<script src="source-slots.js?v=10101062"></script>
-<script src="pdf-import.js?v=10101062"></script><script src="image-batch-ui.js?v=10101062"></script>
-<script src="manual-entry-ui.js?v=10101062"></script>
-<script src="web-text-rules.js?v=10101062"></script>
-<script src="source-quality.js?v=10101062"></script>
-<script src="web-text-ui.js?v=10101062"></script>
-<script src="applied-audit.js?v=10101062"></script>
-<script src="applied-audit-ui.js?v=10101062"></script>
-<script src="recommendation-routing.js?v=10101062"></script>
-<script src="tail-rule-audit.js?v=10101062"></script><script src="live-insights.js?v=10101062"></script>
-<script src="copy-audit.js?v=10101062"></script>
-<script src="copy-audit-ui.js?v=10101062"></script>
-<script src="random-control.js?v=10101062"></script>
-<script src="external-material-ui.js?v=10101062"></script>
-<script src="actual-random-ui.js?v=10101062"></script>
-<script src="navigation-guard.js?v=10101062"></script>
-<script src="frequent-combos.js?v=10101062"></script><script src="frequent-combos-ui.js?v=10101062"></script><script src="simulation-draw-actions.js?v=10101062"></script><script src="random-journal-ui.js?v=10101062"></script><script src="source-groups.js?v=10101062"></script><script src="source-journal.js?v=10101062"></script><script src="prediction-sources-ui.js?v=10101062"></script><script src="manual-intersection-ui.js?v=10101062"></script><script src="evidence-overview.js?v=10101062"></script>
-<script src="nine-source-ui.js?v=10101062"></script>
-<script src="candidate-materials-ui.js?v=10101062"></script><script src="image-entry-ui.js?v=10101062"></script>
-<script src="practice-evidence-ui.js?v=10101062"></script>
-<script src="tail-practice-study.js?v=10101062"></script>
-<script src="exact-combos-ui.js?v=10101062"></script>
-<script src="exclusion-study-ui.js?v=10101062"></script>
-<script src="new-hk-ui.js?v=10101062"></script>
-<script src="record-vault-ui.js?v=10101062"></script>
+<script src="analytics-v1008-01.js?v=10101063"></script>
+<script src="discovery-ui.js?v=10101063"></script>
+<script src="reference-rules.js?v=10101063"></script>
+<script src="reference-system.js?v=10101063"></script>
+<script src="prediction-review.js?v=10101063"></script>
+<script src="candidate-display.js?v=10101063"></script>
+<script src="practical-actions.js?v=10101063"></script>
+<script src="practice-evidence.js?v=10101063"></script>
+<script src="exact-combos.js?v=10101063"></script>
+<script src="practice-engine.js?v=10101063"></script>
+<script src="formula-audit.js?v=10101063"></script>
+<script src="formula-signals.js?v=10101063"></script>
+<script src="practice-ui.js?v=10101063"></script>
+<script src="discovery-engine.js?v=10101063"></script>
+<script src="transition-audit.js?v=10101063"></script>
+<script src="transition-audit-ui.js?v=10101063"></script>
+<script src="history-profile.js?v=10101063"></script>
+<script src="history-profile-ui.js?v=10101063"></script>
+<script src="file-rules.js?v=10101063"></script>
+<script src="file-rules-ui.js?v=10101063"></script>
+<script src="range-audit.js?v=10101063"></script>
+<script src="range-audit-ui.js?v=10101063"></script>
+<script src="image-formula-audit.js?v=10101063"></script>
+<script src="image-formula-audit-ui.js?v=10101063"></script>
+<script src="traditional-audit.js?v=10101063"></script>
+<script src="traditional-audit-ui.js?v=10101063"></script>
+<script src="heat-practice.js?v=10101063"></script>
+<script src="heat-practice-ui.js?v=10101063"></script>
+<script src="prediction-review-ui.js?v=10101063"></script>
+<script src="image-batch.js?v=10101063"></script>
+<script src="source-intersection.js?v=10101063"></script>
+<script src="source-slots.js?v=10101063"></script>
+<script src="pdf-import.js?v=10101063"></script><script src="image-batch-ui.js?v=10101063"></script>
+<script src="manual-entry-ui.js?v=10101063"></script>
+<script src="web-text-rules.js?v=10101063"></script>
+<script src="source-quality.js?v=10101063"></script>
+<script src="web-text-ui.js?v=10101063"></script>
+<script src="applied-audit.js?v=10101063"></script>
+<script src="applied-audit-ui.js?v=10101063"></script>
+<script src="recommendation-routing.js?v=10101063"></script>
+<script src="tail-rule-audit.js?v=10101063"></script><script src="live-insights.js?v=10101063"></script>
+<script src="copy-audit.js?v=10101063"></script>
+<script src="copy-audit-ui.js?v=10101063"></script>
+<script src="random-control.js?v=10101063"></script>
+<script src="external-material-ui.js?v=10101063"></script>
+<script src="actual-random-ui.js?v=10101063"></script>
+<script src="navigation-guard.js?v=10101063"></script>
+<script src="frequent-combos.js?v=10101063"></script><script src="frequent-combos-ui.js?v=10101063"></script><script src="simulation-draw-actions.js?v=10101063"></script><script src="random-journal-ui.js?v=10101063"></script><script src="source-groups.js?v=10101063"></script><script src="source-journal.js?v=10101063"></script><script src="prediction-sources-ui.js?v=10101063"></script><script src="manual-intersection-ui.js?v=10101063"></script><script src="evidence-overview.js?v=10101063"></script>
+<script src="nine-source-ui.js?v=10101063"></script>
+<script src="candidate-materials-ui.js?v=10101063"></script><script src="image-entry-ui.js?v=10101063"></script>
+<script src="practice-evidence-ui.js?v=10101063"></script>
+<script src="tail-practice-study.js?v=10101063"></script>
+<script src="exact-combos-ui.js?v=10101063"></script>
+<script src="exclusion-study-ui.js?v=10101063"></script>
+<script src="new-hk-ui.js?v=10101063"></script>
+<script src="record-vault-ui.js?v=10101063"></script>
+<script src="backup-transfer.js?v=10101063"></script>
+<script src="data-quality-ui.js?v=10101063"></script>
 </body>
 </html>
 <!-- GitHub Pages deploy trigger: v10.1008.03 -->

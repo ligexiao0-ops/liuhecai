@@ -1,0 +1,22 @@
+{
+  "original": [
+    {
+      "period": 154,
+      "date": "05/24",
+      "n1": 38,
+      "n2": 26,
+      "n3": 22,
+      "n4": 14,
+      "n5": 42,
+      "n6": 31,
+      "t": 22
+    }
+  ],
+  "status": "unverified; excluded from statistics",
+  "providedSource": "https://un102618.30854a58.cyou/kj.html?type=am2lhc",
+  "sourceRange": [
+    269,
+    298
+  ],
+  "cutoff": "2026-02-17"
+}
