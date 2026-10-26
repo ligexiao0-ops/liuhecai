@@ -1,0 +1,15 @@
+{
+  "source": "https://207.148.88.30:2583/kj/index/history.html",
+  "verifiedRange": [
+    1,
+    298
+  ],
+  "sourceRows": 298,
+  "changedOrInserted": 274,
+  "removedOutsideSource": [],
+  "cloudBefore": 88,
+  "cloudAfter": 298,
+  "otherLotteriesUnchanged": true,
+  "fullReplacement": true,
+  "at": "2026-10-26T04:41:12.352976+00:00"
+}

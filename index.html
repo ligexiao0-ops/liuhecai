@@ -299,9 +299,10 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="new-hk-data.js?v=10101060"></script>
-<script src="exclusion-study.js?v=10101060"></script>
-<script src="combo-limits.js?v=10101060"></script><script src="score-projects.js?v=10101060"></script>
+<script src="new-hk-data.js?v=10101061"></script>
+<script src="record-vault.js?v=10101061"></script>
+<script src="exclusion-study.js?v=10101061"></script>
+<script src="combo-limits.js?v=10101061"></script><script src="score-projects.js?v=10101061"></script>
 <script>
 // ===== 域名锁：已关闭（CloudStudio部署） =====
 // 个人自用，无盗用风险，域名锁已移除
@@ -765,6 +766,7 @@ function loadData(){
       });
     }
   }catch(e){}
+  if(window.RecordVault)RecordVault.restore(CUR_LOT,UP);
   // 【v10.0815.01-#558】DR 加载后立即按期间排序：此前 DR.sort 仅在 refreshFromServer 合并云端新数据时执行，
   // 本地加载(localStorage/基准INIT_DR)路径未排序，一旦 localStorage 里 DR 乱序/截断就会"数据会乱/期号错乱"。
   // 此处兜底，确保任何来源的数据都顺序正确，所有"近N期/遗漏/连号"计算才可靠。
@@ -785,7 +787,7 @@ function loadData(){
   // Only the actually retrieved new-Hong-Kong source range is authoritative for this migration.
   if(CUR_LOT==='xgc'&&NewHongKongData.revision&&!localStorage.getItem(NewHongKongData.revision)){
     var xgcState=cloudState('xgc');localStorage.setItem(NewHongKongData.revision+'_backup',JSON.stringify({rows:DR,pending:xgcState.pending,at:new Date().toISOString()}));
-    var verifiedMap={};DR.forEach(function(r){verifiedMap[r.p]=r;});
+    var verifiedMap={};if(!NewHongKongData.fullReplacement)DR.forEach(function(r){verifiedMap[r.p]=r;});else xgcState.pending={};
     (NewHongKongData.verifiedRecords||[]).forEach(function(r){verifiedMap[r.p]={p:r.p,d:r.d,n:r.n.slice(),t:r.t};delete xgcState.pending[String(r.p)];});
     DR=Object.values(verifiedMap).sort(function(a,b){return a.p-b.p;});storePending('xgc');
     localStorage.setItem(cfg.dr_key,JSON.stringify(DR));localStorage.setItem(cfg.dr_key+'_safe',JSON.stringify(DR));localStorage.setItem(NewHongKongData.revision,'done');
@@ -3004,8 +3006,9 @@ function saveData(){
   if(__winActive){console.warn('[窗口回退模式] 已跳过saveData，防止截断后的DR覆盖真实数据');return;}
   const cfg=LOTTERIES[CUR_LOT];
   queueRecordChanges(CUR_LOT,DR);
+  if(window.RecordVault){RecordVault.compact(UP);RecordVault.persist(CUR_LOT,UP);}
   UP._syncedAt=Date.now();
-  try{var prefsText=JSON.stringify(UP),oldPrefs=localStorage.getItem(cfg.up_key);if(oldPrefs&&oldPrefs!==prefsText){try{JSON.parse(oldPrefs);localStorage.setItem(cfg.up_key+'_safe',oldPrefs);}catch(backupError){console.warn('筛选备份未写入',backupError);}}localStorage.setItem(cfg.up_key,prefsText);}catch(e){console.error('筛选保存失败',e);if(typeof showClickFeedback==='function')showClickFeedback('⚠ 筛选未保存：浏览器空间不足，请导出备份');}
+  try{var prefsText=JSON.stringify(window.RecordVault?RecordVault.preferences(CUR_LOT,UP):UP),oldPrefs=localStorage.getItem(cfg.up_key);if(oldPrefs&&oldPrefs!==prefsText){try{JSON.parse(oldPrefs);localStorage.setItem(cfg.up_key+'_safe',oldPrefs);}catch(backupError){console.warn('筛选备份未写入',backupError);}}localStorage.setItem(cfg.up_key,prefsText);}catch(e){console.error('筛选保存失败',e);if(typeof showClickFeedback==='function')showClickFeedback('⚠ 筛选未保存：浏览器空间不足，请导出备份');}
   try{localStorage.setItem(cfg.dr_key,JSON.stringify(DR));}catch(e){}
   try{localStorage.setItem(cfg.dr_key+'_safe',JSON.stringify(DR));}catch(e){}
   scheduleCloudSync(700);
@@ -19519,7 +19522,7 @@ function render(){
     document.getElementById('tabContent').innerHTML=contentHTML;
   }catch(e){
     console.error('Render error in tab '+activeTab+':',e);
-    window.__lastRenderError={version:'10101060',lot:CUR_LOT,tab:activeTab,target:NEXT,rows:DR.length,error:String(e.message),stack:String(e.stack||'')};
+    window.__lastRenderError={version:'10101061',lot:CUR_LOT,tab:activeTab,target:NEXT,rows:DR.length,error:String(e.message),stack:String(e.stack||'')};
     document.getElementById('tabContent').innerHTML='<div class="card" style="border:2px solid #c0392b;padding:20px;text-align:center">'+
       '<b style="color:#c0392b">⚠️ 页面渲染出错</b><br>'+
       '<span style="font-size:10px;color:#888">Tab: '+activeTab+'</span><br>'+
@@ -19925,61 +19928,62 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10101060"></script>
-<script src="discovery-ui.js?v=10101060"></script>
-<script src="reference-rules.js?v=10101060"></script>
-<script src="reference-system.js?v=10101060"></script>
-<script src="prediction-review.js?v=10101060"></script>
-<script src="candidate-display.js?v=10101060"></script>
-<script src="practical-actions.js?v=10101060"></script>
-<script src="practice-evidence.js?v=10101060"></script>
-<script src="exact-combos.js?v=10101060"></script>
-<script src="practice-engine.js?v=10101060"></script>
-<script src="formula-audit.js?v=10101060"></script>
-<script src="formula-signals.js?v=10101060"></script>
-<script src="practice-ui.js?v=10101060"></script>
-<script src="discovery-engine.js?v=10101060"></script>
-<script src="transition-audit.js?v=10101060"></script>
-<script src="transition-audit-ui.js?v=10101060"></script>
-<script src="history-profile.js?v=10101060"></script>
-<script src="history-profile-ui.js?v=10101060"></script>
-<script src="file-rules.js?v=10101060"></script>
-<script src="file-rules-ui.js?v=10101060"></script>
-<script src="range-audit.js?v=10101060"></script>
-<script src="range-audit-ui.js?v=10101060"></script>
-<script src="image-formula-audit.js?v=10101060"></script>
-<script src="image-formula-audit-ui.js?v=10101060"></script>
-<script src="traditional-audit.js?v=10101060"></script>
-<script src="traditional-audit-ui.js?v=10101060"></script>
-<script src="heat-practice.js?v=10101060"></script>
-<script src="heat-practice-ui.js?v=10101060"></script>
-<script src="prediction-review-ui.js?v=10101060"></script>
-<script src="image-batch.js?v=10101060"></script>
-<script src="source-intersection.js?v=10101060"></script>
-<script src="source-slots.js?v=10101060"></script>
-<script src="pdf-import.js?v=10101060"></script><script src="image-batch-ui.js?v=10101060"></script>
-<script src="manual-entry-ui.js?v=10101060"></script>
-<script src="web-text-rules.js?v=10101060"></script>
-<script src="source-quality.js?v=10101060"></script>
-<script src="web-text-ui.js?v=10101060"></script>
-<script src="applied-audit.js?v=10101060"></script>
-<script src="applied-audit-ui.js?v=10101060"></script>
-<script src="recommendation-routing.js?v=10101060"></script>
-<script src="tail-rule-audit.js?v=10101060"></script><script src="live-insights.js?v=10101060"></script>
-<script src="copy-audit.js?v=10101060"></script>
-<script src="copy-audit-ui.js?v=10101060"></script>
-<script src="random-control.js?v=10101060"></script>
-<script src="external-material-ui.js?v=10101060"></script>
-<script src="actual-random-ui.js?v=10101060"></script>
-<script src="navigation-guard.js?v=10101060"></script>
-<script src="frequent-combos.js?v=10101060"></script><script src="frequent-combos-ui.js?v=10101060"></script><script src="simulation-draw-actions.js?v=10101060"></script><script src="random-journal-ui.js?v=10101060"></script><script src="source-groups.js?v=10101060"></script><script src="source-journal.js?v=10101060"></script><script src="prediction-sources-ui.js?v=10101060"></script><script src="manual-intersection-ui.js?v=10101060"></script><script src="evidence-overview.js?v=10101060"></script>
-<script src="nine-source-ui.js?v=10101060"></script>
-<script src="candidate-materials-ui.js?v=10101060"></script><script src="image-entry-ui.js?v=10101060"></script>
-<script src="practice-evidence-ui.js?v=10101060"></script>
-<script src="tail-practice-study.js?v=10101060"></script>
-<script src="exact-combos-ui.js?v=10101060"></script>
-<script src="exclusion-study-ui.js?v=10101060"></script>
-<script src="new-hk-ui.js?v=10101060"></script>
+<script src="analytics-v1008-01.js?v=10101061"></script>
+<script src="discovery-ui.js?v=10101061"></script>
+<script src="reference-rules.js?v=10101061"></script>
+<script src="reference-system.js?v=10101061"></script>
+<script src="prediction-review.js?v=10101061"></script>
+<script src="candidate-display.js?v=10101061"></script>
+<script src="practical-actions.js?v=10101061"></script>
+<script src="practice-evidence.js?v=10101061"></script>
+<script src="exact-combos.js?v=10101061"></script>
+<script src="practice-engine.js?v=10101061"></script>
+<script src="formula-audit.js?v=10101061"></script>
+<script src="formula-signals.js?v=10101061"></script>
+<script src="practice-ui.js?v=10101061"></script>
+<script src="discovery-engine.js?v=10101061"></script>
+<script src="transition-audit.js?v=10101061"></script>
+<script src="transition-audit-ui.js?v=10101061"></script>
+<script src="history-profile.js?v=10101061"></script>
+<script src="history-profile-ui.js?v=10101061"></script>
+<script src="file-rules.js?v=10101061"></script>
+<script src="file-rules-ui.js?v=10101061"></script>
+<script src="range-audit.js?v=10101061"></script>
+<script src="range-audit-ui.js?v=10101061"></script>
+<script src="image-formula-audit.js?v=10101061"></script>
+<script src="image-formula-audit-ui.js?v=10101061"></script>
+<script src="traditional-audit.js?v=10101061"></script>
+<script src="traditional-audit-ui.js?v=10101061"></script>
+<script src="heat-practice.js?v=10101061"></script>
+<script src="heat-practice-ui.js?v=10101061"></script>
+<script src="prediction-review-ui.js?v=10101061"></script>
+<script src="image-batch.js?v=10101061"></script>
+<script src="source-intersection.js?v=10101061"></script>
+<script src="source-slots.js?v=10101061"></script>
+<script src="pdf-import.js?v=10101061"></script><script src="image-batch-ui.js?v=10101061"></script>
+<script src="manual-entry-ui.js?v=10101061"></script>
+<script src="web-text-rules.js?v=10101061"></script>
+<script src="source-quality.js?v=10101061"></script>
+<script src="web-text-ui.js?v=10101061"></script>
+<script src="applied-audit.js?v=10101061"></script>
+<script src="applied-audit-ui.js?v=10101061"></script>
+<script src="recommendation-routing.js?v=10101061"></script>
+<script src="tail-rule-audit.js?v=10101061"></script><script src="live-insights.js?v=10101061"></script>
+<script src="copy-audit.js?v=10101061"></script>
+<script src="copy-audit-ui.js?v=10101061"></script>
+<script src="random-control.js?v=10101061"></script>
+<script src="external-material-ui.js?v=10101061"></script>
+<script src="actual-random-ui.js?v=10101061"></script>
+<script src="navigation-guard.js?v=10101061"></script>
+<script src="frequent-combos.js?v=10101061"></script><script src="frequent-combos-ui.js?v=10101061"></script><script src="simulation-draw-actions.js?v=10101061"></script><script src="random-journal-ui.js?v=10101061"></script><script src="source-groups.js?v=10101061"></script><script src="source-journal.js?v=10101061"></script><script src="prediction-sources-ui.js?v=10101061"></script><script src="manual-intersection-ui.js?v=10101061"></script><script src="evidence-overview.js?v=10101061"></script>
+<script src="nine-source-ui.js?v=10101061"></script>
+<script src="candidate-materials-ui.js?v=10101061"></script><script src="image-entry-ui.js?v=10101061"></script>
+<script src="practice-evidence-ui.js?v=10101061"></script>
+<script src="tail-practice-study.js?v=10101061"></script>
+<script src="exact-combos-ui.js?v=10101061"></script>
+<script src="exclusion-study-ui.js?v=10101061"></script>
+<script src="new-hk-ui.js?v=10101061"></script>
+<script src="record-vault-ui.js?v=10101061"></script>
 </body>
 </html>
 <!-- GitHub Pages deploy trigger: v10.1008.03 -->
