@@ -1,0 +1,17 @@
+{
+  "user_prefs": {
+    "status": 401,
+    "code": "42501",
+    "message": "permission denied for table user_prefs"
+  },
+  "user_prediction_records": {
+    "status": 401,
+    "code": "42501",
+    "message": "permission denied for table user_prediction_records"
+  },
+  "auth": {
+    "email_enabled": true,
+    "disable_signup": false,
+    "mailer_autoconfirm": false
+  }
+}

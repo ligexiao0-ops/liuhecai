@@ -299,11 +299,11 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="new-hk-data.js?v=10101063"></script>
-<script src="xa-corrections63.js?v=10101063"></script>
-<script src="record-vault.js?v=10101063"></script>
-<script src="exclusion-study.js?v=10101063"></script>
-<script src="combo-limits.js?v=10101063"></script><script src="score-projects.js?v=10101063"></script>
+<script src="new-hk-data.js?v=10101064"></script>
+<script src="xa-corrections63.js?v=10101064"></script>
+<script src="record-vault.js?v=10101064"></script>
+<script src="exclusion-study.js?v=10101064"></script>
+<script src="combo-limits.js?v=10101064"></script><script src="score-projects.js?v=10101064"></script>
 <script>
 // ===== 域名锁：已关闭（CloudStudio部署） =====
 // 个人自用，无盗用风险，域名锁已移除
@@ -978,7 +978,7 @@ function syncAllToServer(){
     return sb.from('user_prefs').upsert({lot_type:lot,prefs:prefs,updated_at:new Date().toISOString()},{onConflict:'lot_type'});
   }).then(function(res){
     if(res&&res.error){if(missingPrefsTable(res.error)){PREFS_CLOUD_DISABLED=true;}else throw new Error(res.error.message||'设置同步失败');}
-    if(lot===CUR_LOT){SYNC_STATUS='synced';SYNC_MSG=PREFS_CLOUD_DISABLED?'开奖记录已同步；筛选与历史仅本机，可导出／导入':'';updateSyncUI();}
+    if(lot===CUR_LOT){SYNC_STATUS='synced';SYNC_MSG=PREFS_CLOUD_DISABLED?'开奖记录已同步；账号同步见上方☁面板':'';updateSyncUI();}
   }).catch(function(e){if(lot===CUR_LOT){SYNC_STATUS='error';SYNC_MSG=e.message||'云端写入失败，待上传修改已保留';updateSyncUI();}}).finally(function(){
     s.writing=false;s.epoch++;
     if(lot===CUR_LOT){if(s.writeAgain){s.writeAgain=false;syncAllToServer();}else refreshFromServer();}
@@ -998,7 +998,7 @@ function refreshFromServer(){
     s.verified={time:Date.now(),latest:server.length?server[server.length-1]:null,count:server.length};
     SYNC_STATUS=Object.keys(s.pending).length?'error':'synced';SYNC_MSG=Object.keys(s.pending).length?'本机有待上传修改':'已读取云端最新记录';updateSyncUI();
     if(dataChanged){_renderZ3Cache=null;_z3StaticCache=null;calcDerived();if(window._appInited)render();}
-    if(PREFS_CLOUD_DISABLED){SYNC_MSG='开奖记录已读取；筛选与历史仅本机，可导出／导入';updateSyncUI();return;}
+    if(PREFS_CLOUD_DISABLED){SYNC_MSG='开奖记录已读取；账号同步见上方☁面板';updateSyncUI();return;}
     return sb.from('user_prefs').select('prefs,updated_at').eq('lot_type',lot).then(function(pr){
       if(lot!==CUR_LOT||s.writing||s.epoch!==epoch||s.request!==request)return;
       if(pr.error){if(missingPrefsTable(pr.error)){PREFS_CLOUD_DISABLED=true;SYNC_STATUS='synced';SYNC_MSG='开奖记录已同步；筛选设置保存在本机';updateSyncUI();return;}throw new Error(pr.error.message||'云端设置读取失败');}
@@ -19535,7 +19535,7 @@ function render(){
     document.getElementById('tabContent').innerHTML=contentHTML;
   }catch(e){
     console.error('Render error in tab '+activeTab+':',e);
-    window.__lastRenderError={version:'10101063',lot:CUR_LOT,tab:activeTab,target:NEXT,rows:DR.length,error:String(e.message),stack:String(e.stack||'')};
+    window.__lastRenderError={version:'10101064',lot:CUR_LOT,tab:activeTab,target:NEXT,rows:DR.length,error:String(e.message),stack:String(e.stack||'')};
     document.getElementById('tabContent').innerHTML='<div class="card" style="border:2px solid #c0392b;padding:20px;text-align:center">'+
       '<b style="color:#c0392b">⚠️ 页面渲染出错</b><br>'+
       '<span style="font-size:10px;color:#888">Tab: '+activeTab+'</span><br>'+
@@ -19941,64 +19941,65 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10101063"></script>
-<script src="discovery-ui.js?v=10101063"></script>
-<script src="reference-rules.js?v=10101063"></script>
-<script src="reference-system.js?v=10101063"></script>
-<script src="prediction-review.js?v=10101063"></script>
-<script src="candidate-display.js?v=10101063"></script>
-<script src="practical-actions.js?v=10101063"></script>
-<script src="practice-evidence.js?v=10101063"></script>
-<script src="exact-combos.js?v=10101063"></script>
-<script src="practice-engine.js?v=10101063"></script>
-<script src="formula-audit.js?v=10101063"></script>
-<script src="formula-signals.js?v=10101063"></script>
-<script src="practice-ui.js?v=10101063"></script>
-<script src="discovery-engine.js?v=10101063"></script>
-<script src="transition-audit.js?v=10101063"></script>
-<script src="transition-audit-ui.js?v=10101063"></script>
-<script src="history-profile.js?v=10101063"></script>
-<script src="history-profile-ui.js?v=10101063"></script>
-<script src="file-rules.js?v=10101063"></script>
-<script src="file-rules-ui.js?v=10101063"></script>
-<script src="range-audit.js?v=10101063"></script>
-<script src="range-audit-ui.js?v=10101063"></script>
-<script src="image-formula-audit.js?v=10101063"></script>
-<script src="image-formula-audit-ui.js?v=10101063"></script>
-<script src="traditional-audit.js?v=10101063"></script>
-<script src="traditional-audit-ui.js?v=10101063"></script>
-<script src="heat-practice.js?v=10101063"></script>
-<script src="heat-practice-ui.js?v=10101063"></script>
-<script src="prediction-review-ui.js?v=10101063"></script>
-<script src="image-batch.js?v=10101063"></script>
-<script src="source-intersection.js?v=10101063"></script>
-<script src="source-slots.js?v=10101063"></script>
-<script src="pdf-import.js?v=10101063"></script><script src="image-batch-ui.js?v=10101063"></script>
-<script src="manual-entry-ui.js?v=10101063"></script>
-<script src="web-text-rules.js?v=10101063"></script>
-<script src="source-quality.js?v=10101063"></script>
-<script src="web-text-ui.js?v=10101063"></script>
-<script src="applied-audit.js?v=10101063"></script>
-<script src="applied-audit-ui.js?v=10101063"></script>
-<script src="recommendation-routing.js?v=10101063"></script>
-<script src="tail-rule-audit.js?v=10101063"></script><script src="live-insights.js?v=10101063"></script>
-<script src="copy-audit.js?v=10101063"></script>
-<script src="copy-audit-ui.js?v=10101063"></script>
-<script src="random-control.js?v=10101063"></script>
-<script src="external-material-ui.js?v=10101063"></script>
-<script src="actual-random-ui.js?v=10101063"></script>
-<script src="navigation-guard.js?v=10101063"></script>
-<script src="frequent-combos.js?v=10101063"></script><script src="frequent-combos-ui.js?v=10101063"></script><script src="simulation-draw-actions.js?v=10101063"></script><script src="random-journal-ui.js?v=10101063"></script><script src="source-groups.js?v=10101063"></script><script src="source-journal.js?v=10101063"></script><script src="prediction-sources-ui.js?v=10101063"></script><script src="manual-intersection-ui.js?v=10101063"></script><script src="evidence-overview.js?v=10101063"></script>
-<script src="nine-source-ui.js?v=10101063"></script>
-<script src="candidate-materials-ui.js?v=10101063"></script><script src="image-entry-ui.js?v=10101063"></script>
-<script src="practice-evidence-ui.js?v=10101063"></script>
-<script src="tail-practice-study.js?v=10101063"></script>
-<script src="exact-combos-ui.js?v=10101063"></script>
-<script src="exclusion-study-ui.js?v=10101063"></script>
-<script src="new-hk-ui.js?v=10101063"></script>
-<script src="record-vault-ui.js?v=10101063"></script>
-<script src="backup-transfer.js?v=10101063"></script>
-<script src="data-quality-ui.js?v=10101063"></script>
+<script src="analytics-v1008-01.js?v=10101064"></script>
+<script src="discovery-ui.js?v=10101064"></script>
+<script src="reference-rules.js?v=10101064"></script>
+<script src="reference-system.js?v=10101064"></script>
+<script src="prediction-review.js?v=10101064"></script>
+<script src="candidate-display.js?v=10101064"></script>
+<script src="practical-actions.js?v=10101064"></script>
+<script src="practice-evidence.js?v=10101064"></script>
+<script src="exact-combos.js?v=10101064"></script>
+<script src="practice-engine.js?v=10101064"></script>
+<script src="formula-audit.js?v=10101064"></script>
+<script src="formula-signals.js?v=10101064"></script>
+<script src="practice-ui.js?v=10101064"></script>
+<script src="discovery-engine.js?v=10101064"></script>
+<script src="transition-audit.js?v=10101064"></script>
+<script src="transition-audit-ui.js?v=10101064"></script>
+<script src="history-profile.js?v=10101064"></script>
+<script src="history-profile-ui.js?v=10101064"></script>
+<script src="file-rules.js?v=10101064"></script>
+<script src="file-rules-ui.js?v=10101064"></script>
+<script src="range-audit.js?v=10101064"></script>
+<script src="range-audit-ui.js?v=10101064"></script>
+<script src="image-formula-audit.js?v=10101064"></script>
+<script src="image-formula-audit-ui.js?v=10101064"></script>
+<script src="traditional-audit.js?v=10101064"></script>
+<script src="traditional-audit-ui.js?v=10101064"></script>
+<script src="heat-practice.js?v=10101064"></script>
+<script src="heat-practice-ui.js?v=10101064"></script>
+<script src="prediction-review-ui.js?v=10101064"></script>
+<script src="image-batch.js?v=10101064"></script>
+<script src="source-intersection.js?v=10101064"></script>
+<script src="source-slots.js?v=10101064"></script>
+<script src="pdf-import.js?v=10101064"></script><script src="image-batch-ui.js?v=10101064"></script>
+<script src="manual-entry-ui.js?v=10101064"></script>
+<script src="web-text-rules.js?v=10101064"></script>
+<script src="source-quality.js?v=10101064"></script>
+<script src="web-text-ui.js?v=10101064"></script>
+<script src="applied-audit.js?v=10101064"></script>
+<script src="applied-audit-ui.js?v=10101064"></script>
+<script src="recommendation-routing.js?v=10101064"></script>
+<script src="tail-rule-audit.js?v=10101064"></script><script src="live-insights.js?v=10101064"></script>
+<script src="copy-audit.js?v=10101064"></script>
+<script src="copy-audit-ui.js?v=10101064"></script>
+<script src="random-control.js?v=10101064"></script>
+<script src="external-material-ui.js?v=10101064"></script>
+<script src="actual-random-ui.js?v=10101064"></script>
+<script src="navigation-guard.js?v=10101064"></script>
+<script src="frequent-combos.js?v=10101064"></script><script src="frequent-combos-ui.js?v=10101064"></script><script src="simulation-draw-actions.js?v=10101064"></script><script src="random-journal-ui.js?v=10101064"></script><script src="source-groups.js?v=10101064"></script><script src="source-journal.js?v=10101064"></script><script src="prediction-sources-ui.js?v=10101064"></script><script src="manual-intersection-ui.js?v=10101064"></script><script src="evidence-overview.js?v=10101064"></script>
+<script src="nine-source-ui.js?v=10101064"></script>
+<script src="candidate-materials-ui.js?v=10101064"></script><script src="image-entry-ui.js?v=10101064"></script>
+<script src="practice-evidence-ui.js?v=10101064"></script>
+<script src="tail-practice-study.js?v=10101064"></script>
+<script src="exact-combos-ui.js?v=10101064"></script>
+<script src="exclusion-study-ui.js?v=10101064"></script>
+<script src="new-hk-ui.js?v=10101064"></script>
+<script src="record-vault-ui.js?v=10101064"></script>
+<script src="backup-transfer.js?v=10101064"></script>
+<script src="data-quality-ui.js?v=10101064"></script>
+<script src="private-sync.js?v=10101064"></script>
 </body>
 </html>
 <!-- GitHub Pages deploy trigger: v10.1008.03 -->
