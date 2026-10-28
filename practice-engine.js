@@ -3,7 +3,7 @@ const uniq=a=>[...new Set(a)],C=(n,k)=>{if(k<0||k>n)return 0;let x=1;for(let i=1
 function valid(ns,pairs){return !pairs.some(p=>p.filter(n=>ns.includes(n)).length>1);}
 function pool(list,pairs,size,extra){let out=[];for(const n of uniq(list))if(out.length<size&&valid(out.concat(n),pairs)&&(!extra||extra(out.concat(n))))out.push(n);return out;}
 function triples(ns,pairs,extra){let all=[];for(let i=0;i<ns.length;i++)for(let j=i+1;j<ns.length;j++)for(let k=j+1;k<ns.length;k++){let a=[ns[i],ns[j],ns[k]];if(valid(a,pairs)&&(!extra||extra(a)))all.push(a);}let out=[];for(const a of all)if(!out.some(b=>a.filter(n=>b.includes(n)).length>1)&&out.length<2)out.push(a);return out;}
-function build(ctx){const groups=[],seen=new Set(),labels={'tail-practice':'特尾±3优先 · 逐期试算方案',balance:'均衡观察',continuity:'上期同肖/同尾延续',complement:'同肖换号观察',frequency:'近期与长期频率',rebound:'冷号回补观察'};
+function build(ctx){const groups=[],seen=new Set(),labels={'tail-practice':'特尾±3优先 · 逐期试算方案',balance:'均衡观察',continuity:'上期同肖/同尾延续',complement:'同肖换码观察（如虎29→虎17）',frequency:'近期与长期频率',rebound:'冷号回补观察'};
  const add=(g)=>{let id=g.game+':'+g.pool.slice().sort((a,b)=>String(a).localeCompare(String(b))).join(',');if(!g.pool.length||seen.has(id))return;seen.add(id);groups.push({...g,id});};
  for(const [strategy,list] of Object.entries(ctx.special))add({game:'te',strategy,label:labels[strategy],pool:uniq(list).filter(ctx.teAllowed).slice(0,6)});
  const wide=uniq(ctx.special.balance||[]).filter(ctx.teAllowed);add({game:'te',strategy:'wide24',label:'24码宽范围观察',pool:wide.slice(0,24)});const six=uniq(wide.map(ctx.zod)).slice(0,6);add({game:'te',strategy:'six-zodiac',label:'六肖范围观察（'+six.join('、')+'）',pool:Array.from({length:49},(_,i)=>i+1).filter(n=>ctx.teAllowed(n)&&six.includes(ctx.zod(n)))});
