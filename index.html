@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="app-version" content="10.1010.68">
+<meta name="app-version" content="10.1010.69">
 <script>window.APP_BUILD=Object.freeze({label:"v"+document.querySelector('meta[name="app-version"]').content,id:document.querySelector('meta[name="app-version"]').content.replace(/\./g,"")});</script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -235,7 +235,7 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 </div>
 <div class="lottery-bar" id="lotteryBar"></div>
 <div class="header">
-  <h1 id="appTitle">🎱 分析工具 v10.1010.68 · 预测第<span id="nextPeriod">--</span>期</h1>
+  <h1 id="appTitle">🎱 分析工具 v10.1010.69 · 预测第<span id="nextPeriod">--</span>期</h1>
   <p>📅 今天 <b id="today-date">--</b> · 截至第<span id="lastPeriod">--</span>期 · 云端动态数据 · 结论驱动</p>
 </div>
 <div id="latest-draw-strip" style="padding:10px;background:#eef6ff;color:#12345b;line-height:1.8;overflow-wrap:anywhere"></div>
@@ -301,11 +301,11 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="new-hk-data.js?v=10101068"></script>
-<script src="xa-corrections63.js?v=10101068"></script>
-<script src="record-vault.js?v=10101068"></script>
-<script src="exclusion-study.js?v=10101068"></script>
-<script src="combo-limits.js?v=10101068"></script><script src="score-projects.js?v=10101068"></script>
+<script src="new-hk-data.js?v=10101069"></script>
+<script src="xa-corrections63.js?v=10101069"></script>
+<script src="record-vault.js?v=10101069"></script>
+<script src="exclusion-study.js?v=10101069"></script>
+<script src="combo-limits.js?v=10101069"></script><script src="score-projects.js?v=10101069"></script>
 <script>
 // ===== 域名锁：已关闭（CloudStudio部署） =====
 // 个人自用，无盗用风险，域名锁已移除
@@ -1368,56 +1368,7 @@ function showClickFeedback(msg){
   clearTimeout(t._ctid);t._ctid=setTimeout(function(){t.style.opacity='0';},2800);
 }
 // 【v10.0814.01-#553】三中三随机选号功能
-window.z3RandomPick=function(mode){
-  var pool=[];
-  var exclNums=(UP.zm3_excl_nums||[]).slice();
-  var exclZods=(UP.zm3_excl_zods||[]).slice();
-  if(mode==='select'){
-    // 从选择集合中选
-    pool=calcZ3SelectSet(scoreZheng({pick_z:[],excl_z:[],excl_n:[],excl_t:[],pick_pool:[]}));
-    pool=pool.filter(function(n){return exclNums.indexOf(n)<0&&exclZods.indexOf(gz(n))<0;});
-  }else if(mode==='pool'){
-    // 从候选池中选
-    pool=(UP.zm3_pick_pool||[]).slice();
-    if(pool.length<3){showClickFeedback('候选池不足3码，改用选择集合');pool=calcZ3SelectSet(scoreZheng({pick_z:[],excl_z:[],excl_n:[],excl_t:[],pick_pool:[]}));}
-    pool=pool.filter(function(n){return exclNums.indexOf(n)<0&&exclZods.indexOf(gz(n))<0;});
-  }else{
-    // 从全49码(排除后)中选
-    pool=A49.filter(function(n){return exclNums.indexOf(n)<0&&exclZods.indexOf(gz(n))<0;});
-  }
-  if(pool.length<3){showClickFeedback('可用号码不足3个，请减少排除项');return;}
-  // 随机选3个不重复
-  var picked=[];
-  var tempPool=pool.slice();
-  for(var i=0;i<3&&tempPool.length>0;i++){
-    var idx=Math.floor(Math.random()*tempPool.length);
-    picked.push(tempPool[idx]);
-    tempPool.splice(idx,1);
-  }
-  picked.sort(function(a,b){return a-b;});
-  var pickedStr=picked.map(function(n){return String(n).padStart(2,'0');}).join(',');
-  var copyTxt=lotLabel()+'随机三中三,'+pickedStr;
-  // 显示结果
-  var el=document.getElementById('z3-random-result');
-  if(el){
-    el.style.display='block';
-    el.innerHTML='<div style="padding:8px;background:#fff;border:2px dashed #e65100;border-radius:8px">'+
-      '<b style="font-size:11px;color:#e65100">🎲 随机选中三中三：</b>'+
-      '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'+
-      picked.map(function(n){
-        return '<div style="text-align:center;border:2px solid #e65100;border-radius:6px;padding:4px 8px;background:#fff3e0">'+
-          ball(n,28)+'<div style="font-size:9px">'+gz(n)+'</div><div style="font-size:8px;color:'+WXC[gwx(n)]+';font-weight:bold">'+gwx(n)+'</div></div>';
-      }).join('')+
-      '</div>'+
-      '<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">'+
-      '<button style="background:#e65100;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:10px;cursor:pointer" onclick="z3RandomPick(\''+mode+'\')">🔄 再随机一次</button>'+
-      '<button style="background:#1e8449;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:10px;cursor:pointer" onclick="UP.zm3_pick_pool=Array.from(new Set((UP.zm3_pick_pool||[]).concat(['+picked.join(',')+'])));saveData();render();showClickFeedback(\'✅ 已加入候选池\')">✅ 加入候选池</button>'+
-      '<button style="background:#1a6baa;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:10px;cursor:pointer" onclick="copyAiRec(this,\''+copyTxt+'\')">📋 复制</button>'+
-      '</div>'+
-      '<div style="font-size:9px;color:#888;margin-top:4px">来源: '+(mode==='select'?'选择集合':mode==='pool'?'候选池':'全49码(排除后)')+' · 共'+pool.length+'码中随机选3</div>'+
-      '</div>';
-  }
-};
+window.z3RandomPick=function(){showClickFeedback('随机批次组件尚未加载，请刷新页面');};
 // 复制号码并同时应用到候选池（特码/正码通用）
 window.copyAndApplyPool=function(numsStr,poolKey){
   try{
@@ -15939,11 +15890,11 @@ function renderZ3(){
     // 随机选功能
     h+='<div style="padding:8px;background:#fff3e0;border-radius:8px;border:2px solid #e65100">'+
        '<b style="font-size:12px;color:#e65100">🎲 随机选三中三</b>'+
-       '<div style="font-size:9px;color:#888;margin-top:2px">从选择集合(或全49码排除后)中随机选3码，每次不同。用户反馈："哪怕随机选也不止"，添加此功能作为兜底参考。</div>'+
+       '<div style="font-size:9px;color:#888;margin-top:2px">可设置一次生成1—20组，每组3码，默认6组。同批不重复，遵守当前限制；逐组保存至目标期开奖后核对。</div>'+
        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'+
-       '<button style="background:#e65100;color:#fff;border:none;border-radius:4px;padding:6px 14px;font-size:11px;cursor:pointer" onclick="z3RandomPick(\'select\')">🎲 从选择集合随机选3码</button>'+
-       '<button style="background:#8e44ad;color:#fff;border:none;border-radius:4px;padding:6px 14px;font-size:11px;cursor:pointer" onclick="z3RandomPick(\'pool\')">🎲 从候选池随机选3码</button>'+
-       '<button style="background:#1a6baa;color:#fff;border:none;border-radius:4px;padding:6px 14px;font-size:11px;cursor:pointer" onclick="z3RandomPick(\'all\')">🎲 从全49码(排除后)随机选3码</button>'+
+       '<button style="background:#e65100;color:#fff;border:none;border-radius:4px;padding:6px 14px;font-size:11px;cursor:pointer" onclick="z3RandomPick(\'select\')">🎲 从选择集合批量抽取</button>'+
+       '<button style="background:#8e44ad;color:#fff;border:none;border-radius:4px;padding:6px 14px;font-size:11px;cursor:pointer" onclick="z3RandomPick(\'pool\')">🎲 从候选池批量抽取</button>'+
+       '<button style="background:#1a6baa;color:#fff;border:none;border-radius:4px;padding:6px 14px;font-size:11px;cursor:pointer" onclick="z3RandomPick(\'all\')">🎲 从全49码按条件批量抽取</button>'+
        '</div>'+
        '<div id="z3-random-result" style="margin-top:8px;display:none"></div>'+
        '</div>';
@@ -19958,67 +19909,69 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10101068"></script>
-<script src="discovery-ui.js?v=10101068"></script>
-<script src="reference-rules.js?v=10101068"></script>
-<script src="reference-system.js?v=10101068"></script>
-<script src="prediction-review.js?v=10101068"></script>
-<script src="candidate-display.js?v=10101068"></script>
-<script src="practical-actions.js?v=10101068"></script>
-<script src="practice-evidence.js?v=10101068"></script>
-<script src="exact-combos.js?v=10101068"></script>
-<script src="practice-engine.js?v=10101068"></script>
-<script src="formula-audit.js?v=10101068"></script>
-<script src="formula-signals.js?v=10101068"></script>
-<script src="practice-ui.js?v=10101068"></script>
-<script src="discovery-engine.js?v=10101068"></script>
-<script src="transition-audit.js?v=10101068"></script>
-<script src="transition-audit-ui.js?v=10101068"></script>
-<script src="history-profile.js?v=10101068"></script>
-<script src="history-profile-ui.js?v=10101068"></script>
-<script src="file-rules.js?v=10101068"></script>
-<script src="file-rules-ui.js?v=10101068"></script>
-<script src="range-audit.js?v=10101068"></script>
-<script src="range-audit-ui.js?v=10101068"></script>
-<script src="image-formula-audit.js?v=10101068"></script>
-<script src="image-formula-audit-ui.js?v=10101068"></script>
-<script src="traditional-audit.js?v=10101068"></script>
-<script src="traditional-audit-ui.js?v=10101068"></script>
-<script src="heat-practice.js?v=10101068"></script>
-<script src="heat-practice-ui.js?v=10101068"></script>
-<script src="prediction-review-ui.js?v=10101068"></script>
-<script src="image-batch.js?v=10101068"></script>
-<script src="source-intersection.js?v=10101068"></script>
-<script src="source-slots.js?v=10101068"></script>
-<script src="pdf-import.js?v=10101068"></script><script src="image-batch-ui.js?v=10101068"></script>
-<script src="manual-entry-ui.js?v=10101068"></script>
-<script src="web-text-rules.js?v=10101068"></script>
-<script src="source-quality.js?v=10101068"></script>
-<script src="web-text-ui.js?v=10101068"></script>
-<script src="applied-audit.js?v=10101068"></script>
-<script src="applied-audit-ui.js?v=10101068"></script>
-<script src="recommendation-routing.js?v=10101068"></script>
-<script src="tail-rule-audit.js?v=10101068"></script><script src="live-insights.js?v=10101068"></script>
-<script src="copy-audit.js?v=10101068"></script>
-<script src="copy-audit-ui.js?v=10101068"></script>
-<script src="random-control.js?v=10101068"></script>
-<script src="external-material-ui.js?v=10101068"></script>
-<script src="actual-random-ui.js?v=10101068"></script>
-<script src="navigation-guard.js?v=10101068"></script>
-<script src="frequent-combos.js?v=10101068"></script><script src="frequent-combos-ui.js?v=10101068"></script><script src="simulation-draw-actions.js?v=10101068"></script><script src="random-journal-ui.js?v=10101068"></script><script src="source-groups.js?v=10101068"></script><script src="source-journal.js?v=10101068"></script><script src="prediction-sources-ui.js?v=10101068"></script><script src="manual-intersection-ui.js?v=10101068"></script><script src="evidence-overview.js?v=10101068"></script>
-<script src="nine-source-ui.js?v=10101068"></script>
-<script src="candidate-materials-ui.js?v=10101068"></script><script src="image-entry-ui.js?v=10101068"></script>
-<script src="practice-evidence-ui.js?v=10101068"></script>
-<script src="tail-practice-study.js?v=10101068"></script>
-<script src="exclusion-study-ui.js?v=10101068"></script>
-<script src="new-hk-ui.js?v=10101068"></script>
-<script src="record-vault-ui.js?v=10101068"></script>
-<script src="backup-transfer.js?v=10101068"></script>
-<script src="data-quality-ui.js?v=10101068"></script>
-<script src="private-sync.js?v=10101068"></script>
-<script src="constraint-tracker.js?v=10101068"></script>
-<script src="exact-combos-ui.js?v=10101068"></script>
+<script src="analytics-v1008-01.js?v=10101069"></script>
+<script src="discovery-ui.js?v=10101069"></script>
+<script src="reference-rules.js?v=10101069"></script>
+<script src="reference-system.js?v=10101069"></script>
+<script src="prediction-review.js?v=10101069"></script>
+<script src="candidate-display.js?v=10101069"></script>
+<script src="practical-actions.js?v=10101069"></script>
+<script src="practice-evidence.js?v=10101069"></script>
+<script src="exact-combos.js?v=10101069"></script>
+<script src="practice-engine.js?v=10101069"></script>
+<script src="formula-audit.js?v=10101069"></script>
+<script src="formula-signals.js?v=10101069"></script>
+<script src="practice-ui.js?v=10101069"></script>
+<script src="discovery-engine.js?v=10101069"></script>
+<script src="transition-audit.js?v=10101069"></script>
+<script src="transition-audit-ui.js?v=10101069"></script>
+<script src="history-profile.js?v=10101069"></script>
+<script src="history-profile-ui.js?v=10101069"></script>
+<script src="file-rules.js?v=10101069"></script>
+<script src="file-rules-ui.js?v=10101069"></script>
+<script src="range-audit.js?v=10101069"></script>
+<script src="range-audit-ui.js?v=10101069"></script>
+<script src="image-formula-audit.js?v=10101069"></script>
+<script src="image-formula-audit-ui.js?v=10101069"></script>
+<script src="traditional-audit.js?v=10101069"></script>
+<script src="traditional-audit-ui.js?v=10101069"></script>
+<script src="heat-practice.js?v=10101069"></script>
+<script src="heat-practice-ui.js?v=10101069"></script>
+<script src="prediction-review-ui.js?v=10101069"></script>
+<script src="image-batch.js?v=10101069"></script>
+<script src="source-intersection.js?v=10101069"></script>
+<script src="source-slots.js?v=10101069"></script>
+<script src="pdf-import.js?v=10101069"></script><script src="image-batch-ui.js?v=10101069"></script>
+<script src="manual-entry-ui.js?v=10101069"></script>
+<script src="web-text-rules.js?v=10101069"></script>
+<script src="source-quality.js?v=10101069"></script>
+<script src="web-text-ui.js?v=10101069"></script>
+<script src="applied-audit.js?v=10101069"></script>
+<script src="applied-audit-ui.js?v=10101069"></script>
+<script src="recommendation-routing.js?v=10101069"></script>
+<script src="tail-rule-audit.js?v=10101069"></script><script src="live-insights.js?v=10101069"></script>
+<script src="copy-audit.js?v=10101069"></script>
+<script src="copy-audit-ui.js?v=10101069"></script>
+<script src="random-control.js?v=10101069"></script>
+<script src="external-material-ui.js?v=10101069"></script>
+<script src="actual-random-ui.js?v=10101069"></script>
+<script src="navigation-guard.js?v=10101069"></script>
+<script src="frequent-combos.js?v=10101069"></script><script src="frequent-combos-ui.js?v=10101069"></script><script src="simulation-draw-actions.js?v=10101069"></script><script src="random-journal-ui.js?v=10101069"></script><script src="source-groups.js?v=10101069"></script><script src="source-journal.js?v=10101069"></script><script src="prediction-sources-ui.js?v=10101069"></script><script src="manual-intersection-ui.js?v=10101069"></script><script src="evidence-overview.js?v=10101069"></script>
+<script src="nine-source-ui.js?v=10101069"></script>
+<script src="candidate-materials-ui.js?v=10101069"></script><script src="image-entry-ui.js?v=10101069"></script>
+<script src="practice-evidence-ui.js?v=10101069"></script>
+<script src="tail-practice-study.js?v=10101069"></script>
+<script src="exclusion-study-ui.js?v=10101069"></script>
+<script src="new-hk-ui.js?v=10101069"></script>
+<script src="record-vault-ui.js?v=10101069"></script>
+<script src="backup-transfer.js?v=10101069"></script>
+<script src="data-quality-ui.js?v=10101069"></script>
+<script src="private-sync.js?v=10101069"></script>
+<script src="constraint-tracker.js?v=10101069"></script>
+<script src="exact-combos-ui.js?v=10101069"></script>
+<script src="random-triples69.js?v=10101069"></script>
+<script src="draw-frequency69.js?v=10101069"></script>
 </body>
 </html>
-<!-- GitHub Pages deploy trigger: v10.1010.68 -->
+<!-- GitHub Pages deploy trigger: v10.1010.69 -->
 

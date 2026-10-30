@@ -1,0 +1,16 @@
+const assert=require('assert'),R=require('../random-triples69'),F=require('../draw-frequency69'),B=require('../backup-transfer');
+let a=R.generate([1,2,3,4,5],6,null,()=>.42);assert.equal(a.groups.length,6);assert.equal(new Set(a.groups.map(g=>g.join(','))).size,6);assert(a.groups.every(g=>new Set(g).size===3));
+a=R.generate([1,2,3,4,5],20,g=>g.join(',')!=='1,2,3',()=>.5);assert.equal(a.available,9);assert.equal(a.groups.length,9);assert(!a.groups.some(g=>g.join(',')==='1,2,3'));
+assert.equal(R.generate([1,2],6).groups.length,0);assert.throws(()=>R.generate([1,2,3],1.5));assert.throws(()=>R.generate([1,2,3],21));
+const balls=[[1,2,3,4,5,6,7],[8,9,10,11,12,13,14],[15,16,17,18,19,20,21],[22,23,24,25,26,27,28],[23,24,25,26,27,28,29],[23,24,25,26,27,28,29]],rows=balls.map((a,i)=>({p:281+i,d:'10/'+(i+1),n:a.slice(0,6),t:a[6]}));
+const data=F.analyze(rows,2026),s=F.summarize(data.recent,'all');assert.deepEqual([s.draws,s.total,s.distinct,s.unseen,s.repeatedNumbers,s.repeatedOccurrences],[6,42,29,20,7,13]);assert.equal(s.averageAll,42/49);assert.equal(s.averageSeen,42/29);
+const independent=new Map();balls.flat().forEach(n=>independent.set(n,(independent.get(n)||0)+1));assert.deepEqual(Object.fromEntries(independent),Object.fromEntries(Object.entries(s.counts).filter(([n,c])=>c)));assert.equal(Object.values(s.distribution).reduce((x,y)=>x+y),49);assert.equal(Object.entries(s.distribution).reduce((x,[k,c])=>x+k*c,0),42);
+assert.equal(F.summarize(rows,'normal').total,36);assert.equal(F.summarize(rows,'special').total,6);assert(Math.abs(s.expectedUnseen-49*(42/49)**6)<1e-12);
+const empty=F.summarize([],'normal');assert.equal(empty.averageSeen,null);assert.equal(empty.unseen,49);
+const duplicate=F.analyze([...rows,rows[0]],2026);assert.equal(duplicate.rows.length,6);assert.equal(duplicate.duplicates,1);
+const bad=F.analyze([...rows,{...rows[0],n:[2,3,4,5,6,8]}],2026);assert.equal(bad.conflicts,1);assert.equal(bad.rows.length,5);
+const invalid=F.analyze([...rows,{p:290,d:'10/10',n:[1,1,2,3,4,5],t:6}],2026);assert.equal(invalid.invalid,1);
+assert.equal(F.dateOf({d:'02/30'},2026),null);assert.equal(F.dateOf({d:'2025-12-31'},2026).month,'2025-12');
+const years=F.analyze([{...rows[0],p:365,d:'2025-12-31'},{...rows[1],p:1,d:'2026-01-01'},{...rows[2],p:2,d:''}],2026);assert.deepEqual(Object.keys(years.months),['2025-12','2026-01']);assert.equal(years.unknownDates,1);assert.equal(years.rows.at(-1).p,2);
+assert.equal(B.payload('xa',{exactTailOnly:true,zm3_random_count:6}).prefs.exactTailOnly,true);assert.equal(B.payload('xa',{zm3_random_count:6}).prefs.zm3_random_count,6);
+console.log('PASS batch uniqueness/caps/constraints, independent 42-ball reconciliation (29 distinct,20 unseen,7 repeated numbers,13 extra occurrences), monthly boundaries, conflicts/duplicates, role-separated totals and backup preferences.');
