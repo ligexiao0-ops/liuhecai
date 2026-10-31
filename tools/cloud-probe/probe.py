@@ -5,7 +5,7 @@ OUT=Path('cloud-probe-output');OUT.mkdir(exist_ok=True)
 async def main():
     report={'at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'environment':'GitHub-hosted Ubuntu Chromium','responses':[],'errors':[]}
     async with async_playwright() as p:
-        browser=await p.chromium.launch(headless=True)
+        browser=await p.chromium.launch(channel='chrome',headless=True)
         page=await browser.new_page()
         async def route(r):
             from urllib.parse import urlparse
