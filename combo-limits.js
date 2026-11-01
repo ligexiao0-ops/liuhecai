@@ -1,21 +1,20 @@
-(function(root){'use strict';function allowed(pool,rules){return !(rules||[]).some(r=>[...new Set(pool)].filter(x=>(r.pool||r.zods||[]).includes(x)).length>r.max);}function save(up,game,pool){const key=game==='lx'?'lx_grp_limits':'zm3_group_limits',max=game==='lx'?pool.length-1:2;up[key]=up[key]||[];const item=game==='lx'?{zods:pool.slice(),max}:{pool:pool.slice(),max};if(!up[key].some(x=>JSON.stringify(x)===JSON.stringify(item)))up[key].push(item);return max;}function parse(text){
- const normal=String(text).normalize('NFKC').replace(/[龍雞豬馬]/g,c=>({'龍':'龙','雞':'鸡','豬':'猪','馬':'马'}[c])).replace(/[零一二三四五六七八九十]/g,c=>String('零一二三四五六七八九十'.indexOf(c))),global=normal.match(/每组\s*(?:最多|上限)\s*(\d+)/),chunks=[];
- const limit='(?:最多|上限|不超过)\\s*(\\d+)\\s*个?';
- for(const line of normal.split(/\n|[;；]/)){
-  const bracket=new RegExp('[【\\[（(<《]([^】\\]）)>》]+)[】\\]）)>》]\\s*(?:'+limit+')?','g');
-  const matches=[...line.matchAll(bracket)];
-  if(matches.length)chunks.push(...matches.map(m=>({text:m[1],max:m[2]})));
-  else {const labeled=[...line.matchAll(/(?:[A-Za-z](?:组)?\s*[:：]?\s*)([鼠牛虎兔龙蛇马羊猴鸡狗猪]{2,})(?:\s*(?:最多|上限|不超过)\s*(\d+))?/g)];
-   if(labeled.length)chunks.push(...labeled.map(m=>({text:m[1],max:m[2]})));
-   else for(const part of line.split(/[/、,|]+/))if(part.trim())chunks.push({text:part,max:part.match(/(?:最多|上限|不超过)\s*(\d+)/)?.[1]});
-  }
- }
- const out=[];for(const c of chunks){const zods=[...new Set(c.text.match(/[鼠牛虎兔龙蛇马羊猴鸡狗猪]/g)||[])];if(zods.length<2)continue;const raw=c.max??global?.[1]??(zods.length>=5?4:2),max=Math.max(0,Math.min(zods.length,Number(raw)));if(!out.some(g=>g.max===max&&g.zods.length===zods.length&&g.zods.every(z=>zods.includes(z))))out.push({zods,max});}return out;
+(function(root){'use strict';
+function bounds(rule){const members=rule.pool||rule.zods||[],min=Number(rule.min??0),max=Number(rule.max??rule.limit??members.length);return {min,max,valid:Number.isInteger(min)&&Number.isInteger(max)&&min>=0&&max>=min&&max<=members.length};}
+function allowed(pool,rules){const selected=[...new Set(pool)];return (rules||[]).every(r=>{const b=bounds(r),n=selected.filter(x=>(r.pool||r.zods||[]).includes(x)).length;return b.valid&&n>=b.min&&n<=b.max;});}
+function describe(r){const b=bounds(r);return b.min>0?'选'+b.min+'—'+b.max+'肖':'最多'+b.max+'肖';}
+function save(up,game,pool){const key=game==='lx'?'lx_grp_limits':'zm3_group_limits',max=game==='lx'?pool.length-1:2;up[key]=up[key]||[];const item=game==='lx'?{zods:pool.slice(),max}:{pool:pool.slice(),max};if(!up[key].some(x=>JSON.stringify(x)===JSON.stringify(item)))up[key].push(item);return max;}
+function parse(text){const nums={'零':0,'一':1,'二':2,'两':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'十一':11,'十二':12};const normal=String(text).normalize('NFKC').replace(/[龍雞豬馬]/g,c=>({'龍':'龙','雞':'鸡','豬':'猪','馬':'马'}[c])).replace(/十二|十一|十|[零一二两三四五六七八九]/g,c=>String(nums[c]));
+ const chunks=[],errors=[],out=[],globalLine=normal.match(/每组[^\n;；【\[（(<《]*/)?.[0]||'';
+ function readLimit(s){let m=s.match(/(?:至少|最少|下限)\s*(\d+)\s*个?[^鼠牛虎兔龙蛇马羊猴鸡狗猪]*?(?:最多|上限|不超过)\s*(\d+)/);if(m)return {min:+m[1],max:+m[2]};m=s.match(/(?:(?:选|含|包含|取)\s*)?(\d+)\s*[-–—~至到]\s*(\d+)\s*(?:个|肖)?/);if(m)return {min:+m[1],max:+m[2]};const lower=s.match(/(?:至少|最少|下限)\s*(\d+)/),upper=s.match(/(?:最多|上限|不超过)\s*(\d+)/);return lower||upper?{min:lower?+lower[1]:0,max:upper?+upper[1]:null}:null;}
+ const defaults=readLimit(globalLine);
+ for(const line of normal.split(/\n|[;；]/)){const bracket=/[【\[（(<《]([^】\]）)>》]+)[】\]）)>》]/g,matches=[...line.matchAll(bracket)];if(matches.length){matches.forEach((m,i)=>chunks.push({body:m[1],limit:m[1]+line.slice(m.index+m[0].length,matches[i+1]?.index??line.length)}));continue;}const labels=[...line.matchAll(/[A-Za-z](?:组\s*[:：]?|\s*[:：])\s*([^A-Za-z]+)/g)];if(labels.length){labels.forEach(m=>chunks.push({body:m[1],limit:m[1]}));continue;}for(const part of line.split(/[/、,|]+/))if(part.trim())chunks.push({body:part,limit:part});}
+ for(const c of chunks){const zods=[...new Set(c.body.match(/[鼠牛虎兔龙蛇马羊猴鸡狗猪]/g)||[])];if(zods.length<2)continue;const explicit=readLimit(c.limit)||defaults,min=explicit?.min??0,max=explicit?(explicit.max??zods.length):(zods.length>=5?4:2);if(!Number.isInteger(min)||!Number.isInteger(max)||min<0||min>max||max>zods.length){errors.push('['+zods.join('')+'] 范围须满足0≤最少≤最多≤'+zods.length);continue;}const item=min?{zods,min,max}:{zods,max};if(!out.some(g=>(g.min||0)===min&&g.max===max&&g.zods.length===zods.length&&g.zods.every(z=>zods.includes(z))))out.push(item);}
+ const result=errors.length?[]:out;Object.defineProperty(result,'errors',{value:errors,enumerable:false});return result;
 }
 function parseNumbers(text){const out=[];for(const part of String(text).normalize('NFKC').split(/[\\/\n;；|]|[【\[（(]|[】\]）)]/)){let ns;const word=part.trim();if(/^\d{3}$/.test(word))ns=word.split('').map(Number);else if(/^\d{6}$/.test(word))ns=word.match(/\d{2}/g).map(Number);else ns=(word.match(/(?<!\d)\d{1,2}(?!\d)/g)||[]).map(Number);if(ns.length!==3||new Set(ns).size!==3||ns.some(n=>n<1||n>49))continue;const pool=ns.sort((a,b)=>a-b);if(!out.some(g=>g.pool.join()===pool.join()))out.push({pool,max:2});}return out;}
-root.ComboLimits={allowed,save,parse,parseNumbers};
+root.ComboLimits={allowed,save,parse,parseNumbers,bounds,describe};
 if(typeof document!=='undefined'){
- const preview=()=>{const input=document.getElementById('lx-grp-input'),box=document.getElementById('lx-group-preview');if(!input||!box)return;const groups=parse(input.value);box.textContent=groups.length?groups.map((g,i)=>(i+1)+'. '+g.zods.join('')+' → 最多含'+g.max+'肖（'+(g.max<g.zods.length?'禁止整组包含':'此组不限制')+'）').join('； '):'每组至少2个生肖；保存前请核对分组。';};
+ const preview=()=>{const input=document.getElementById('lx-grp-input'),box=document.getElementById('lx-group-preview');if(!input||!box)return;const groups=parse(input.value);box.textContent=groups.errors.length?groups.errors.join('； '):groups.length?groups.map((g,i)=>(i+1)+'. '+g.zods.join('')+' → '+describe(g)).join('； '):'每组至少2个生肖；保存前请核对分组。';};
  document.addEventListener('input',e=>{if(e.target.id==='lx-grp-input')preview();});
  document.addEventListener('click',e=>{if(e.target.closest('[data-action="saveGrpLimits"]'))setTimeout(preview,0);});
 }

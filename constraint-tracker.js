@@ -30,7 +30,7 @@ function canonical(values){return uniq(values).slice().sort((a,b)=>String(a).loc
 function limitFor(r){return Number(r.maxHits??(r.strategy==='constraint:zm3_no_together'?1:r.game==='lx'?(r.pool||[]).length-1:2));}
 function identity(r,includeVersion){
  const members=(r.values||[]).map(normalizedMember),pool=(r.pool||[]).map(normalizedMember);
- return [r.game,r.action||'track',r.strategy||'',canonical(pool),canonical(members),r.action==='exclude-combination'?limitFor(r):'',includeVersion?r.modelVersion||'旧版':''].join('|');
+ return [r.game,r.action||'track',r.strategy||'',canonical(pool),canonical(members),['exclude-combination','range-combination'].includes(r.action)?(r.minHits??0)+'~'+limitFor(r):'',includeVersion?r.modelVersion||'旧版':''].join('|');
 }
 function captureContext(){
  if(typeof UP==='undefined'||!UP||typeof LAST==='undefined'||!LAST||typeof NEXT!=='number'||!Number.isInteger(NEXT)||!Array.isArray(DR)||!DR.length)return null;
@@ -65,12 +65,12 @@ function records(meta){
  for(const item of UP.lx_grp_limits||[]){
   if(!item||!Array.isArray(item.zods)||!item.zods.length)continue;
   const pool=normalizedPool('lx',item.zods),max=Number(item.max??item.limit??item.zods.length-1);
-  if(pool&&Number.isInteger(max)&&max>=0&&max<=pool.length)specs.push({game:'lx',key:'lx_grp_limits',label:'连肖组最多'+max+'肖',pool,action:'exclude-combination',maxHits:max});
+  const min=Number(item.min??0);if(pool&&Number.isInteger(max)&&Number.isInteger(min)&&min>=0&&max>=min&&max<=pool.length)specs.push({game:'lx',key:'lx_grp_limits',label:min?'连肖组含'+min+'—'+max+'肖':'连肖组最多'+max+'肖',pool,action:min?'range-combination':'exclude-combination',minHits:min,maxHits:max});
  }
  const seen=new Set((UP.practice_forecasts||[]).filter(r=>r.lot===CUR_LOT&&r.arm==='manual-choice').map(r=>r.targetPeriod+'|'+identity(r,false))),out=[];
  for(const x of specs){
   const pool=normalizedPool(x.game,x.pool);if(!pool||!pool.length)continue;
-  const r={lot:CUR_LOT,...meta,game:x.game,modelVersion:VERSION,arm:'manual-choice',strategy:'constraint:'+x.key,action:x.action,maxHits:x.maxHits,pool,label:(x.action.indexOf('exclude')===0?'排除':'选择')+x.label+' · '+(x.values||pool).map(fmt).join(' '),savedAt:new Date().toISOString(),source:'保存时目标期尚未录入'};
+  const r={lot:CUR_LOT,...meta,game:x.game,modelVersion:VERSION,arm:'manual-choice',strategy:'constraint:'+x.key,action:x.action,maxHits:x.maxHits,minHits:x.minHits,pool,label:(x.action.indexOf('exclude')===0?'排除':'选择')+x.label+' · '+(x.values||pool).map(fmt).join(' '),savedAt:new Date().toISOString(),source:'保存时目标期尚未录入'};
   if(x.values)r.values=x.values.slice();
   const sig=r.targetPeriod+'|'+identity(r,false);if(seen.has(sig))continue;seen.add(sig);
   r.recordId='manual-choice:'+CUR_LOT+'|'+sig;out.push(r);
@@ -98,8 +98,8 @@ function evaluate(r,draw,zod){
  }
  const pool=normalizedPool(r.game,r.pool);
  if(!pool||!pool.length)return {score:null,needsReview:true,reason:'号码／生肖格式待核对'};
- if(r.action==='exclude-combination'){
-  const max=limitFor({...r,pool});if(!Number.isInteger(max)||max<0||max>pool.length)return {score:null,needsReview:true,reason:'命中上限待核对'};
+ if(['exclude-combination','range-combination'].includes(r.action)){
+  const max=limitFor({...r,pool}),min=Number(r.minHits??0);if(!Number.isInteger(max)||!Number.isInteger(min)||min<0||min>max||max>pool.length)return {score:null,needsReview:true,reason:'命中上限待核对'};
  }
  return {score:standardScore({...r,pool},draw,zodiac),needsReview:false};
 }

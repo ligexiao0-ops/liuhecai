@@ -80,7 +80,8 @@
   function lxPool(hist, model, usePrefs) {
     var w = LX_MODELS[model], last = hist[hist.length - 1], prev = new Set(drawZods(last)), lng = hist.slice(-60), sh = hist.slice(-8), score = {};
     ZODS.forEach(function (z) { var l = lng.filter(function (r) { return drawZods(r).indexOf(z) >= 0; }).length / Math.max(1, lng.length), s = sh.filter(function (r) { return drawZods(r).indexOf(z) >= 0; }).length / Math.max(1, sh.length), om = 0; for (var i = hist.length - 1; i >= 0; i--) { if (drawZods(hist[i]).indexOf(z) >= 0) break; om++; } score[z] = w.long*l + w.short*s + w.prev*(prev.has(z)?1:0) + w.omit*Math.min(om,10)/10; });
-    var excl = usePrefs ? (UP.lx_excl_zods || []) : [], force = usePrefs ? (UP.lx_force_zods || []) : [], allowed = ZODS.filter(function (z) { return excl.indexOf(z) < 0; }), out = [];
+    var excl = usePrefs ? (UP.lx_excl_zods || []).concat(UP.lx_ban_zods||[]) : [], force = usePrefs ? (UP.lx_force_zods || []) : [], allowed = ZODS.filter(function (z) { return excl.indexOf(z) < 0; }), out = [];
+    if(usePrefs){var combos=combNK(allowed,6).filter(function(zs){return force.every(z=>zs.includes(z))&&ComboLimits.allowed(zs,UP.lx_grp_limits||[])&&!(UP.lx_no_together||[]).some(pair=>pair.filter(z=>zs.includes(z)).length>1);});combos.sort((a,b)=>b.reduce((sum,z)=>sum+score[z],0)-a.reduce((sum,z)=>sum+score[z],0));return combos[0]||[];}
     force.forEach(function (z) { if (allowed.indexOf(z) >= 0 && out.indexOf(z) < 0 && out.length < 6) out.push(z); });
     allowed.sort(function (a, b) { return score[b] - score[a] || ZODS.indexOf(a) - ZODS.indexOf(b); }).forEach(function (z) { if (out.length < 6 && out.indexOf(z) < 0) out.push(z); }); return out;
   }
@@ -116,13 +117,15 @@
     ['balance','continuity','complement'].forEach(function(m){normal[m]=ScoreProjects.prioritize(numberRank(rows,m,'n').list.filter(practicalAllowed),rows.at(-1));});
     ['balance','frequency','rebound'].forEach(function(m){special[m]=numberRank(rows,m,'t').list.filter(function(n){return typeof planTeAllowed!=='function'||planTeAllowed(n);});});
     var lx=typeof planReasonLx==='function'?planReasonLx(rows,5,{window:60}):null;
+    var lxRules=JSON.parse(JSON.stringify(UP.lx_grp_limits||[])),lxForce=(UP.lx_force_zods||[]).slice(),lxExcl=(UP.lx_excl_zods||[]).concat(UP.lx_ban_zods||[]),lxNo=(UP.lx_no_together||[]).map(x=>x.slice());
+    var lxValid=function(zs){return ComboLimits.allowed(zs,lxRules)&&lxForce.every(z=>zs.includes(z))&&!zs.some(z=>lxExcl.includes(z))&&!lxNo.some(pair=>pair.filter(z=>zs.includes(z)).length>1);};
     return {lot:CUR_LOT,meta:targetMeta(rows),rows:rows.map(function(r){return {p:r.p,d:r.d,n:r.n.slice(),t:r.t};}),normal:normal,special:special,lx:lx?[lx.best].concat(lx.alts||[]).filter(Boolean).map(function(x){return x.zs;}):[],
-      blockedTe:A49.filter(function(n){return typeof planTeAllowed==='function'&&!planTeAllowed(n);}),blockedZ3:A49.filter(function(n){return !practicalAllowed(n);}),blockedLx:uniq((UP.lx_excl_zods||[]).concat(UP.lx_ban_zods||[])),noTogether:UP.zm3_no_together||[],
+      lxValid:lxValid,blockedTe:A49.filter(function(n){return typeof planTeAllowed==='function'&&!planTeAllowed(n);}),blockedZ3:A49.filter(function(n){return !practicalAllowed(n);}),blockedLx:uniq((UP.lx_excl_zods||[]).concat(UP.lx_ban_zods||[])),noTogether:UP.zm3_no_together||[],
       attrs:function(n){return {生肖:gz(n),大小:gsz(n),单双:gpar(n),合数单双:ghe(n),家野:gfam(n),波色:gwv(n),五行:gwx(n),尾数:String(n%10),头数:String(Math.floor(n/10))};},zod:zod,zodElement:typeof zodWx==='function'?zodWx:null,
       teAllowed:function(n){return typeof planTeAllowed!=='function'||planTeAllowed(n);},z3Allowed:practicalAllowed,poolValid:pairsValid,tripleValid:trioValid};
   };
   var preferenceContext=window.getPracticeContext;
-  window.getPracticeContext=function(independent){if(!independent)return preferenceContext();var savedPrefs=UP;try{UP={};var c=preferenceContext();if(c){c.teAllowed=function(){return true;};c.z3Allowed=function(){return true;};c.poolValid=function(){return true;};c.tripleValid=function(){return true;};c.noTogether=[];c.blockedTe=[];c.blockedZ3=[];c.blockedLx=[];}return c;}finally{UP=savedPrefs;}};
+  window.getPracticeContext=function(independent){if(!independent)return preferenceContext();var savedPrefs=UP;try{UP={};var c=preferenceContext();if(c){c.teAllowed=function(){return true;};c.z3Allowed=function(){return true;};c.poolValid=function(){return true;};c.tripleValid=function(){return true;};c.noTogether=[];c.blockedTe=[];c.blockedZ3=[];c.blockedLx=[];c.lxValid=function(){return true;};}return c;}finally{UP=savedPrefs;}};
   function dayPillar(d) { var base=new Date(2026,9,8), delta=Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-base)/86400000), gan=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'], zhi=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']; return gan[(1+delta%10+10)%10]+zhi[(3+delta%12+12)%12]; }
   function luckyZods(dayZ) { var six={鼠:'牛',牛:'鼠',虎:'猪',猪:'虎',兔:'狗',狗:'兔',龙:'鸡',鸡:'龙',蛇:'猴',猴:'蛇',马:'羊',羊:'马'}, tri=[['猴','鼠','龙'],['虎','马','狗'],['猪','兔','羊'],['蛇','鸡','牛']], out=[six[dayZ]];tri.forEach(function(g){if(g.indexOf(dayZ)>=0)out=out.concat(g.filter(function(z){return z!==dayZ;}));});return uniq(out); }
   window.LuckyCalendar={nextDate:nextRecordedDate,lucky:luckyZods};
