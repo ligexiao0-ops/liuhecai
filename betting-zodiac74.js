@@ -1,0 +1,14 @@
+(function(root){'use strict';
+const all=Array.from({length:49},(_,i)=>i+1),cache=new Map();
+function choose(n,k){if(k<0||n<k)return 0;let v=1;for(let i=1;i<=k;i++)v=v*(n-k+i)/i;return v;}
+// Inclusion/exclusion: each selected zodiac must appear at least once among 7 balls.
+function fullBaseline(zs,zod,balls=7){const sizes=zs.map(z=>all.filter(n=>zod(n)===z).length).sort((a,b)=>a-b),key=balls+'|'+sizes.join();if(cache.has(key))return cache.get(key);if(!sizes.length||sizes.some(n=>n===0))return null;let total=0;for(let mask=0;mask<(1<<sizes.length);mask++){let absent=0,bits=0;for(let i=0;i<sizes.length;i++)if(mask&(1<<i)){absent+=sizes[i];bits++;}total+=(bits%2?-1:1)*choose(49-absent,balls)/choose(49,balls);}const p=Math.max(0,Math.min(1,total));cache.set(key,p);return p;}
+const groups=[3,4,5].flatMap(k=>[{id:'hot'+k,k,cold:false,label:'热门前'+k+'肖 · '+k+'连肖'},{id:'cold'+k,k,cold:true,label:'冷门后'+k+'肖 · '+k+'连肖'}]);
+function selected(ranked,g){return g.cold?ranked.slice(-g.k):ranked.slice(0,g.k);}
+function analyze(report,zod){const items=report.items.filter(r=>r.zodiacEligible),cut=Math.floor(items.length*.7);
+ const rankRows=Array.from({length:12},(_,i)=>{const tests=items.map(r=>{const z=r.snapshot.zodiacs[i],size=all.filter(n=>zod(n)===z).length,normal=r.draw.n.some(n=>zod(n)===z),te=zod(r.draw.t)===z;return {issue:r.issue,period:r.period,z,te,normal,flat:te||normal,baseline:size/49,normalBaseline:1-choose(49-size,6)/choose(49,6),flatBaseline:1-choose(49-size,7)/choose(49,7)};});const n=tests.length,avg=key=>n?tests.reduce((s,t)=>s+Number(t[key]),0)/n:null;return {rank:i+1,n,h:tests.filter(t=>t.te).length,rate:avg('te'),baseline:avg('baseline'),normal:avg('normal'),normalBaseline:avg('normalBaseline'),flat:avg('flat'),flatBaseline:avg('flatBaseline'),tests};});
+ const linked=groups.map(g=>{const tests=items.map((r,i)=>{const pool=selected(r.snapshot.zodiacs,g),actual=[...new Set(r.draw.n.concat(r.draw.t).map(zod))],hits=pool.filter(z=>actual.includes(z)),normal=[...new Set(r.draw.n.map(zod))];return {issue:r.issue,period:r.period,date:r.date,pool,hits,full:hits.length===g.k,normalFull:pool.every(z=>normal.includes(z)),te:zod(r.draw.t),teRank:r.snapshot.zodiacs.indexOf(zod(r.draw.t))+1,baseline:fullBaseline(pool,zod),training:i<cut};});function summary(ts){const n=ts.length,h=ts.filter(t=>t.full).length;return {n,h,rate:n?h/n:null,baseline:n?ts.reduce((s,t)=>s+t.baseline,0)/n:null,meanHits:n?ts.reduce((s,t)=>s+t.hits.length,0)/n:null};}return {...g,...summary(tests),training:summary(tests.filter(t=>t.training)),check:summary(tests.filter(t=>!t.training)),distribution:Array.from({length:g.k+1},(_,i)=>tests.filter(t=>t.hits.length===i).length),tests};});
+ return {mode:report.mode,n:items.length,rankRows,linked};
+}
+root.BettingZodiac74={analyze,groups,selected,fullBaseline};if(typeof module!=='undefined')module.exports=root.BettingZodiac74;
+})(typeof window==='undefined'?globalThis:window);
