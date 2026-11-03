@@ -27,7 +27,7 @@ function refresh(){if(!['zm3','lx'].includes(activeTab)||!window.ExactCombos||!w
  }
  if(!groups.length)h+='<p style="color:#b33434">当前限制下没有合格的'+(game==='z3'?'三码':'五连肖')+'组合；请调整限制或搭配类型，不自动补入违规号码。</p>';
  if(game==='z3')h+='<p style="font-size:11px;color:#a25c00">随机对照：固定一组三码全中6个正码的概率为20/18424≈0.109%；最多3个不同组三码至少一组全中不超过0.326%。8码复式至少含3个正码是另一指标，不能当成单组三中三准确率。</p>';
- h+='<p style="font-size:10px;color:#65756e">搭配顺序是观察排序，不是中奖概率；避免三连号是组码偏好，不证明其它具体组合中奖率更高。统计仅核对已保存的本版同类组合；同一期调整条件可能保存多组，因此分母为组数，不是期数。三中三只认6个正码全部中3；五连肖按现有平特口径核对7球生肖全部中5。历史回看不保存成新预测。</p></section>';
+ h+='<p style="font-size:10px;color:#65756e">搭配顺序是观察排序，不是中奖概率；避免三连号是组码偏好，不证明其它具体组合中奖率更高。统计仅核对已保存的本版同类组合；同一期调整条件可能保存多组，因此分母为组数，不是期数。三中三只认6个正码全部中3；五连肖按7球去重生肖全部中5（与仅6正码的平肖区分）。历史回看不保存成新预测。</p></section>';
  document.getElementById('tabContent')?.insertAdjacentHTML('afterbegin',h);fold('tail-practice-study','展开尾数分层、范围与8码对照统计');fold('practice-panel','展开原有范围方案与独立对照');
 }
 document.addEventListener('change',e=>{if(e.target.matches('[data-exact-tail]')){const y=window.scrollY;UP.exactTailOnly=e.target.checked;saveData();refresh();requestAnimationFrame(()=>window.scrollTo(0,y));}else if(e.target.matches('[data-exact-mode]')){const y=window.scrollY;UP.exactTripleMode=e.target.value;saveData();refresh();requestAnimationFrame(()=>window.scrollTo(0,y));}else if(e.target.matches('[data-tail-study]'))refresh();});

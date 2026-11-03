@@ -1,7 +1,7 @@
 name: Betting ranks hourly archive
 on:
   schedule:
-    - cron: '20 * * * *'
+    - cron: '17,47 * * * *'
   workflow_dispatch:
     inputs:
       backfill:
