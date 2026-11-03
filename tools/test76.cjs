@@ -4,3 +4,5 @@ const p=N.parse('排除鼠猴；只选红绿波；头数124；尾数1-3；候选
 const attrs=n=>({波色:n<=16?'红':n<=32?'绿':'蓝'}),ctx={attrs,rows:Array.from({length:30},(_,i)=>({p:i+1,t:1})),special:{balance:Array.from({length:49},(_,i)=>i+1)}};
 const first=E.attributeRank(ctx,'波色');ctx.rows=ctx.rows.map(r=>({...r,t:49}));const next=E.attributeRank(ctx,'波色');assert(first[0].v!==next[0].v);assert(first.find(x=>x.v==='红').recent===6);assert(next.find(x=>x.v==='蓝').recent===6);
 console.log('PASS Chinese exclusions do not become selections; multi-zodiac, traditional text, Chinese numbers, multiple heads/tails, unknown input atomic rejection, and history-dependent attribute ranking.');
+
+assert.deepEqual(N.parse('排除五行金').ops[0].values,['金']);assert.equal(N.parse('排除五行金').ops[0].key,'element');

@@ -8,7 +8,7 @@ else if(/^(?:头数?|尾数?)/.test(s)||/^[0-9、/\-至到]+[头尾]$/.test(s)){
 else if(/^(?:波色)?[红蓝绿、/]+波?$/.test(s)){key='wave';values=[...new Set(s.match(/[红蓝绿]/g))];}
 else if(/^(?:红单|红双|绿单|绿双|蓝单|蓝双|大单|大双|小单|小双|红小|红大|蓝小|蓝大|绿小|绿大|家单|家双|野单|野双)$/.test(s)){key='combo';values=[s];}
 else if(/^(合单|合双)$/.test(s)){key='sumParity';values=[s];}
-else if(/^(?:五行)?[金木水火土、/]+$/.test(s)){key='element';values=[...new Set(s.match(/[金木水火土]/g))];}
+else if(/^(?:五行|5行)?[金木水火土、/]+$/.test(s)){key='element';values=[...new Set(s.match(/[金木水火土]/g))];}
 else if(/^(大数?|小数?)$/.test(s)){key='size';values=[s[0]];}
 else if(/^(单数?|双数?)$/.test(s)){key='parity';values=[s[0]];}
 else if(/^(野兽?|家禽?|家畜)$/.test(s)){key='family';values=[s[0]];}
