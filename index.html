@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="app-version" content="10.1010.75">
+<meta name="app-version" content="10.1010.76">
 <script>window.APP_BUILD=Object.freeze({label:"v"+document.querySelector('meta[name="app-version"]').content,id:document.querySelector('meta[name="app-version"]').content.replace(/\./g,"")});</script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -301,11 +301,11 @@ textarea{border:1px solid #ddd;border-radius:5px;padding:6px;font-size:11px;widt
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="new-hk-data.js?v=10101075"></script>
-<script src="xa-corrections63.js?v=10101075"></script>
-<script src="record-vault.js?v=10101075"></script>
-<script src="exclusion-study.js?v=10101075"></script>
-<script src="combo-limits.js?v=10101075"></script><script src="score-projects.js?v=10101075"></script>
+<script src="new-hk-data.js?v=10101076"></script>
+<script src="xa-corrections63.js?v=10101076"></script>
+<script src="record-vault.js?v=10101076"></script>
+<script src="exclusion-study.js?v=10101076"></script>
+<script src="combo-limits.js?v=10101076"></script><script src="score-projects.js?v=10101076"></script>
 <script>
 // ===== 域名锁：已关闭（CloudStudio部署） =====
 // 个人自用，无盗用风险，域名锁已移除
@@ -6020,7 +6020,7 @@ document.addEventListener('click',function(e){
     if(!UP[key])UP[key]=[];const i=UP[key].indexOf(val);
     i>=0?UP[key].splice(i,1):UP[key].push(val);saveData();render();showClickFeedback(i>=0?'已取消'+val:'✓'+val);
   } else if(action==='applyNL'){
-    const fn=(el.dataset.fn||'').replace('()','');if(typeof window[fn]==='function')window[fn]();showClickFeedback('✅ 已应用自然语言');
+    const fn=(el.dataset.fn||'').replace('()','');if(typeof window[fn]==='function')window[fn]();
   } else if(action==='clearNL'){
     UP[key+'_nl']='';saveData();render();showClickFeedback('✅ 已清空');
   } else if(action==='clearPrefs'){
@@ -6481,7 +6481,7 @@ function z3TheoryHit(n){var den=_chooseCount(49,n),p=0;for(var k=3;k<=Math.min(6
 function commonZodiacNumbers(kind){
   var rows=DR.slice(-Math.min(60,DR.length)),cnt={};A49.forEach(function(n){cnt[n]=0;});
   rows.forEach(function(r){(kind==='te'?[r.t]:r.n).forEach(function(n){cnt[n]++;});});
-  return ZODS.map(function(z){var a=(ZM[z]||[]).slice().sort(function(a,b){return cnt[b]-cnt[a]||a-b;}).slice(0,2);return EMJ[z]+z+' '+a.map(function(n){return String(n).padStart(2,'0')+'('+cnt[n]+')';}).join('/')+' <button data-zodiac-copy75="'+a.join(',')+'" title="只复制号码，不含次数">📋</button>';}).join('　');
+  var copied=[];var body=ZODS.map(function(z){var a=(ZM[z]||[]).slice().sort(function(a,b){return cnt[b]-cnt[a]||a-b;}).slice(0,2);copied=copied.concat(a);return EMJ[z]+z+' '+a.map(function(n){return String(n).padStart(2,'0')+'('+cnt[n]+')';}).join('/')+' <button data-zodiac-copy75="'+a.join(',')+'" title="只复制号码，不含次数">📋</button>';}).join('　');return '<span>'+body+'</span><div><b>以上全部'+copied.length+'码：</b>'+PracticalActions.buttons(Array.from(new Set(copied)),kind==='te'?'te':'z3','近60期各生肖常见'+(kind==='te'?'特码':'正码')+'整组')+'</div>';
 }
 function teChiDiagnostics(){
   var rows=DR.slice(-Math.min(30,DR.length)),defs={大小:gsz,单双:gpar,合数:ghe,家野:gfam,波色:gwv,五行:gwx},crit={1:3.84,2:5.99,4:9.49};
@@ -12157,7 +12157,7 @@ function renderTE(){
      '<b style="font-size:11px;margin-top:8px;display:block">✅ 必须组合：</b>'+mkComboPicker('te_pick_combos','pick')+
      '</div></div>'+
      mkPoolBox('te_pick_pool','特码候选池','如：08 20 32 44 05 17 29 41')+
-     mkNLBox('te','例：必须红波，排除蓝双，排除猴，不要尾3，合数1-13','applyTeNL()')+
+     mkNLBox('te','例：不要红波；只选虎；尾数1-3；候选01，07，13','applyTeNL()')+
      '<button class="btn btn-gray" data-action="clearPrefs" data-keys="te_excl_nums|te_excl_tails|te_pick_tails|te_pick_attrs|te_excl_attrs|te_excl_combos|te_pick_combos|te_pick_pool|te_pick_zods|te_excl_zods|te_excl_heads|te_pick_heads|te_pick_wx_multi|te_excl_wx_multi|te_pick_wv_multi|te_excl_wv_multi|te_excl_diffs|te_pick_diffs|te_excl_hesums|te_pick_hesums|te_pick_app|te_om10|te_excl_om10|te_t100_hot|te_excl_t100_hot|te_t100_cold|te_excl_t100_cold|te_tm_om10|te_excl_tm_om10|te_excl_app|te_excl_prev_zod|te_excl_prev_tail|te_pick_prev_zod|te_pick_prev_tail|te_t100_hot7|te_excl_t100_hot7|te_t100_cold7|te_excl_t100_cold7" style="margin-top:6px">🔄 清空所有特码设定</button>'+
      '</div>';
 
@@ -12717,8 +12717,8 @@ function renderLX(){
   '<b style="font-size:11px;color:#1a6baa">💬 智能输入（用中文描述你的需求）：</b>'+
   '<div style="font-size:9px;color:#888;margin:3px 0">如："【鼠牛虎】[龙蛇马]"（括号内最多选2肖）、"42码居中的生肖"、"排除狗龙"、"全野兽"、"包含鼠牛但不含虎"等</div>'+
   '<div style="display:flex;gap:4px">'+
-  '<input type="text" id="nl-lx" placeholder="输入筛选需求，如：42码居中的6个生肖，排除狗" style="flex:1;padding:6px;border:1px solid #1a6baa;border-radius:4px;font-size:11px">'+
-  '<button class="btn btn-blue" onclick="parseNLInput(document.getElementById(\'nl-lx\').value,\'lx\')">应用</button>'+
+  '<input type="text" id="nl-smart-lx" placeholder="例：排除鼠猴；只选龙虎；或【鼠牛虎兔龙蛇】选2-4个" style="flex:1;padding:6px;border:1px solid #1a6baa;border-radius:4px;font-size:11px">'+
+  '<button class="btn btn-blue" onclick="parseNLInput(document.getElementById(\'nl-smart-lx\').value,\'lx\')">应用</button>'+
   '</div></div>'+
      '<b style="font-size:11px">⭐ 必须包含：</b>'+mkZodPicker('lx_force_zods','sel')+
      '<b style="font-size:11px;margin-top:8px;display:block">🚫 排除生肖：</b>'+mkZodPicker('lx_excl_zods','excl')+
@@ -15539,8 +15539,8 @@ function renderZ3(){
   '<b style="font-size:11px;color:#1a6baa">💬 智能输入（用中文描述你的需求）：</b>'+
   '<div style="font-size:9px;color:#888;margin:3px 0">如："包含鼠龙但排除狗"、"一肖两码一已出一未出"、"居中的号码"、"排除五行金"、"同尾延续上期"、"15期特肖居中"等</div>'+
   '<div style="display:flex;gap:4px">'+
-  '<input type="text" id="nl-zm3" placeholder="输入筛选需求，如：包含鼠龙，一已出一未出，排除金" style="flex:1;padding:6px;border:1px solid #1a6baa;border-radius:4px;font-size:11px">'+
-  '<button class="btn btn-blue" onclick="parseNLInput(document.getElementById(\'nl-zm3\').value,\'zm3\')">应用</button>'+
+  '<input type="text" id="nl-smart-zm3" placeholder="例：排除鼠猴；只选红绿波；尾数1-3" style="flex:1;padding:6px;border:1px solid #1a6baa;border-radius:4px;font-size:11px">'+
+  '<button class="btn btn-blue" onclick="parseNLInput(document.getElementById(\'nl-smart-zm3\').value,\'zm3\')">应用</button>'+
   '</div></div>'+
   '<div class="grid2"><div>'+
      '<b style="font-size:11px">🚫 排除号码：</b>'+mkNumPicker('zm3_excl_nums','excl')+
@@ -15595,7 +15595,7 @@ function renderZ3(){
      '<textarea id="zm3-noTog" rows="2" placeholder="如：鼠 龙 或 08 20">'+(UP.zm3_no_together||[]).map(p=>p.join(' ')).join(String.fromCharCode(10))+'</textarea>'+
      '<button class="btn btn-green" data-action="saveNoTog" data-key="zm3_no_together" data-elid="zm3-noTog" style="margin-top:2px">💾 保存</button></div>'+
      mkPoolBox('zm3_pick_pool','三中三候选池','如：08 20 32 44 05 17')+
-     mkNLBox('zm3','如：必须牛，排除猴，排除绿单','applyZm3NL()')+
+     mkNLBox('zm3','例：必须牛；排除猴；不要绿波','applyZm3NL()')+
      '<button class="btn btn-gray" data-action="clearPrefs" data-keys="zm3_excl_nums|zm3_excl_tails|zm3_pick_tails|zm3_pick_zods|zm3_excl_zods|zm3_no_together|zm3_pick_pool|zm3_pick_attrs|zm3_excl_attrs|zm3_excl_wx_multi|zm3_pick_app|zm3_excl_app|zm3_same_tail|zm3_same_zod|zm3_one_zod_2|zm3_two_zod_2|zm3_z100_hot|zm3_excl_z100_hot|zm3_z100_cold|zm3_excl_z100_cold|zm3_zm2_om10|zm3_excl_zm2_om10|zm3_mode|zm3_tuo_zods|zm3_tuo_nums|zm3_two_zods|zm3_z100_hot7|zm3_excl_z100_hot7|zm3_z100_cold7|zm3_excl_z100_cold7" style="margin-top:6px">🔄 清空设定</button></div>';
 
   var _fastNums=function(a){return a.map(function(n){return String(n).padStart(2,'0');}).join('、');};
@@ -19909,73 +19909,74 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10101075"></script>
-<script src="discovery-ui.js?v=10101075"></script>
-<script src="reference-rules.js?v=10101075"></script>
-<script src="reference-system.js?v=10101075"></script>
-<script src="prediction-review.js?v=10101075"></script>
-<script src="candidate-display.js?v=10101075"></script>
-<script src="practical-actions.js?v=10101075"></script>
-<script src="practice-evidence.js?v=10101075"></script>
-<script src="exact-combos.js?v=10101075"></script>
-<script src="practice-engine.js?v=10101075"></script>
-<script src="formula-audit.js?v=10101075"></script>
-<script src="formula-signals.js?v=10101075"></script>
-<script src="practice-ui.js?v=10101075"></script>
-<script src="discovery-engine.js?v=10101075"></script>
-<script src="transition-audit.js?v=10101075"></script>
-<script src="transition-audit-ui.js?v=10101075"></script>
-<script src="history-profile.js?v=10101075"></script>
-<script src="history-profile-ui.js?v=10101075"></script>
-<script src="file-rules.js?v=10101075"></script>
-<script src="file-rules-ui.js?v=10101075"></script>
-<script src="range-audit.js?v=10101075"></script>
-<script src="range-audit-ui.js?v=10101075"></script>
-<script src="image-formula-audit.js?v=10101075"></script>
-<script src="image-formula-audit-ui.js?v=10101075"></script>
-<script src="traditional-audit.js?v=10101075"></script>
-<script src="traditional-audit-ui.js?v=10101075"></script>
-<script src="heat-practice.js?v=10101075"></script>
-<script src="heat-practice-ui.js?v=10101075"></script>
-<script src="prediction-review-ui.js?v=10101075"></script>
-<script src="image-batch.js?v=10101075"></script>
-<script src="source-intersection.js?v=10101075"></script>
-<script src="source-slots.js?v=10101075"></script>
-<script src="pdf-import.js?v=10101075"></script><script src="image-batch-ui.js?v=10101075"></script>
-<script src="manual-entry-ui.js?v=10101075"></script>
-<script src="web-text-rules.js?v=10101075"></script>
-<script src="source-quality.js?v=10101075"></script>
-<script src="web-text-ui.js?v=10101075"></script>
-<script src="applied-audit.js?v=10101075"></script>
-<script src="applied-audit-ui.js?v=10101075"></script>
-<script src="recommendation-routing.js?v=10101075"></script>
-<script src="tail-rule-audit.js?v=10101075"></script><script src="live-insights.js?v=10101075"></script>
-<script src="copy-audit.js?v=10101075"></script>
-<script src="copy-audit-ui.js?v=10101075"></script>
-<script src="random-control.js?v=10101075"></script>
-<script src="external-material-ui.js?v=10101075"></script>
-<script src="actual-random-ui.js?v=10101075"></script>
-<script src="frequent-combos.js?v=10101075"></script><script src="frequent-combos-ui.js?v=10101075"></script><script src="simulation-draw-actions.js?v=10101075"></script><script src="random-journal-ui.js?v=10101075"></script><script src="source-groups.js?v=10101075"></script><script src="source-journal.js?v=10101075"></script><script src="prediction-sources-ui.js?v=10101075"></script><script src="manual-intersection-ui.js?v=10101075"></script><script src="evidence-overview.js?v=10101075"></script>
-<script src="nine-source-ui.js?v=10101075"></script>
-<script src="candidate-materials-ui.js?v=10101075"></script><script src="image-entry-ui.js?v=10101075"></script>
-<script src="practice-evidence-ui.js?v=10101075"></script>
-<script src="tail-practice-study.js?v=10101075"></script>
-<script src="exclusion-study-ui.js?v=10101075"></script>
-<script src="new-hk-ui.js?v=10101075"></script>
-<script src="record-vault-ui.js?v=10101075"></script>
-<script src="backup-transfer.js?v=10101075"></script>
-<script src="data-quality-ui.js?v=10101075"></script>
-<script src="private-sync.js?v=10101075"></script>
-<script src="constraint-tracker.js?v=10101075"></script>
-<script src="exact-combos-ui.js?v=10101075"></script>
-<script src="random-triples69.js?v=10101075"></script>
-<script src="draw-frequency69.js?v=10101075"></script>
-<script src="zodiac-single70.js?v=10101075"></script>
-<script src="betting-analysis71.js?v=10101075"></script>
-<script src="betting-attributes72.js?v=10101075"></script>
-<script src="betting-zodiac74.js?v=10101075"></script>
-<script src="betting-ui71.js?v=10101075"></script>
-<script src="navigation-state70.js?v=10101075"></script>
+<script src="analytics-v1008-01.js?v=10101076"></script>
+<script src="discovery-ui.js?v=10101076"></script>
+<script src="reference-rules.js?v=10101076"></script>
+<script src="reference-system.js?v=10101076"></script>
+<script src="prediction-review.js?v=10101076"></script>
+<script src="candidate-display.js?v=10101076"></script>
+<script src="practical-actions.js?v=10101076"></script>
+<script src="practice-evidence.js?v=10101076"></script>
+<script src="exact-combos.js?v=10101076"></script>
+<script src="practice-engine.js?v=10101076"></script>
+<script src="formula-audit.js?v=10101076"></script>
+<script src="formula-signals.js?v=10101076"></script>
+<script src="practice-ui.js?v=10101076"></script>
+<script src="discovery-engine.js?v=10101076"></script>
+<script src="transition-audit.js?v=10101076"></script>
+<script src="transition-audit-ui.js?v=10101076"></script>
+<script src="history-profile.js?v=10101076"></script>
+<script src="history-profile-ui.js?v=10101076"></script>
+<script src="file-rules.js?v=10101076"></script>
+<script src="file-rules-ui.js?v=10101076"></script>
+<script src="range-audit.js?v=10101076"></script>
+<script src="range-audit-ui.js?v=10101076"></script>
+<script src="image-formula-audit.js?v=10101076"></script>
+<script src="image-formula-audit-ui.js?v=10101076"></script>
+<script src="traditional-audit.js?v=10101076"></script>
+<script src="traditional-audit-ui.js?v=10101076"></script>
+<script src="heat-practice.js?v=10101076"></script>
+<script src="heat-practice-ui.js?v=10101076"></script>
+<script src="prediction-review-ui.js?v=10101076"></script>
+<script src="image-batch.js?v=10101076"></script>
+<script src="source-intersection.js?v=10101076"></script>
+<script src="source-slots.js?v=10101076"></script>
+<script src="pdf-import.js?v=10101076"></script><script src="image-batch-ui.js?v=10101076"></script>
+<script src="manual-entry-ui.js?v=10101076"></script>
+<script src="web-text-rules.js?v=10101076"></script>
+<script src="source-quality.js?v=10101076"></script>
+<script src="web-text-ui.js?v=10101076"></script>
+<script src="applied-audit.js?v=10101076"></script>
+<script src="applied-audit-ui.js?v=10101076"></script>
+<script src="recommendation-routing.js?v=10101076"></script>
+<script src="tail-rule-audit.js?v=10101076"></script><script src="live-insights.js?v=10101076"></script>
+<script src="copy-audit.js?v=10101076"></script>
+<script src="copy-audit-ui.js?v=10101076"></script>
+<script src="random-control.js?v=10101076"></script>
+<script src="external-material-ui.js?v=10101076"></script>
+<script src="actual-random-ui.js?v=10101076"></script>
+<script src="frequent-combos.js?v=10101076"></script><script src="frequent-combos-ui.js?v=10101076"></script><script src="simulation-draw-actions.js?v=10101076"></script><script src="random-journal-ui.js?v=10101076"></script><script src="source-groups.js?v=10101076"></script><script src="source-journal.js?v=10101076"></script><script src="prediction-sources-ui.js?v=10101076"></script><script src="manual-intersection-ui.js?v=10101076"></script><script src="evidence-overview.js?v=10101076"></script>
+<script src="nine-source-ui.js?v=10101076"></script>
+<script src="candidate-materials-ui.js?v=10101076"></script><script src="image-entry-ui.js?v=10101076"></script>
+<script src="practice-evidence-ui.js?v=10101076"></script>
+<script src="tail-practice-study.js?v=10101076"></script>
+<script src="exclusion-study-ui.js?v=10101076"></script>
+<script src="new-hk-ui.js?v=10101076"></script>
+<script src="record-vault-ui.js?v=10101076"></script>
+<script src="backup-transfer.js?v=10101076"></script>
+<script src="data-quality-ui.js?v=10101076"></script>
+<script src="private-sync.js?v=10101076"></script>
+<script src="constraint-tracker.js?v=10101076"></script>
+<script src="exact-combos-ui.js?v=10101076"></script>
+<script src="random-triples69.js?v=10101076"></script>
+<script src="draw-frequency69.js?v=10101076"></script>
+<script src="zodiac-single70.js?v=10101076"></script>
+<script src="betting-analysis71.js?v=10101076"></script>
+<script src="betting-attributes72.js?v=10101076"></script>
+<script src="betting-zodiac74.js?v=10101076"></script>
+<script src="betting-ui71.js?v=10101076"></script>
+<script src="chinese-input76.js?v=10101076"></script>
+<script src="navigation-state70.js?v=10101076"></script>
 <script>
 document.addEventListener('click',e=>{const b=e.target.closest('[data-zodiac-copy75]');if(b)navigator.clipboard.writeText(b.dataset.zodiacCopy75.split(',').map(n=>String(n).padStart(2,'0')).join('，')).then(()=>showClickFeedback('已复制号码，不含次数')).catch(()=>showClickFeedback('复制失败'));});
 document.addEventListener('DOMContentLoaded',()=>{const base=window.render;window.render=function(){const result=base.apply(this,arguments);if(['lx','pt'].includes(activeTab)&&!document.getElementById('zodiac-copy75'))document.getElementById('tabContent')?.insertAdjacentHTML('beforeend','<section id="zodiac-copy75" class="card"><h3>各生肖近期常见号码 · 正码／特码分开</h3><p>正码 '+commonZodiacNumbers('zm')+'</p><p>特码 '+commonZodiacNumbers('te')+'</p><small>括号为次数，📋仅复制所列号码。平肖仅指6正码生肖；连肖仍按7球去重。</small></section>');return result;};});

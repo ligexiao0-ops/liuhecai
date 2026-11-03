@@ -1,0 +1,25 @@
+(function(root){'use strict';
+const zodiac=/[鼠牛虎兔龙蛇马羊猴鸡狗猪]/g;
+function normalize(text){return String(text).normalize('NFKC').replace(/[龍雞豬馬殺碼綠藍頭數復紅雙單]/g,c=>({'龍':'龙','雞':'鸡','豬':'猪','馬':'马','殺':'杀','碼':'码','綠':'绿','藍':'蓝','頭':'头','數':'数','復':'复','紅':'红','雙':'双','單':'单'}[c])).replace(/(?:三十|二十|四十|十)[一二三四五六七八九]?|[零一二三四五六七八九]/g,w=>{const n={'零':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9};if(w.includes('十')){const a=w.split('十');return (a[0]?n[a[0]]:1)*10+(n[a[1]]||0);}return n[w];});}
+function parse(text){const parts=normalize(text).replace(/(排除|不要|不选|去掉|去除|不含|杀|必须|只选|选用|候选|保留|选择|选|包含|要有|需要)/g,';$1').split(/[;；，,\n]+/).map(x=>x.trim()).filter(Boolean),ops=[],errors=[];let action='pick',kind='number';
+for(let s of parts){const m=s.match(/^(排除|不要|不选|去掉|去除|不含|杀|必须|只选|选用|候选|保留|选择|选|包含|要有|需要)\s*/);if(m){action=/排除|不要|不选|去掉|去除|不含|杀/.test(m[1])?'exclude':'pick';s=s.slice(m[0].length);kind='number';}s=s.replace(/(\d)\s+(?=\d)/g,'$1、').replace(/\s+/g,'');if(!s)continue;
+let values=[],key='';if(/^(?:生肖|肖)?[鼠牛虎兔龙蛇马羊猴鸡狗猪、/]+(?:生肖|肖)?$/.test(s)){key='zodiac';values=[...new Set(s.match(zodiac))];}
+else if(/^(?:头数?|尾数?)/.test(s)||/^[0-9、/\-至到]+[头尾]$/.test(s)){key=/头/.test(s)?'head':'tail';kind=key;const raw=s.replace(/头数?|尾数?/g,'');let range=raw.match(/^(\d)[-至到](\d)$/);values=range?Array.from({length:+range[2]- +range[1]+1},(_,i)=>+range[1]+i):Array.from(raw.replace(/[、/]/g,'')).map(Number);if(values.some(n=>!Number.isInteger(n)||n<0||n>(key==='head'?4:9)))errors.push('无效头尾：'+s);}
+else if(/^(?:波色)?[红蓝绿、/]+波?$/.test(s)){key='wave';values=[...new Set(s.match(/[红蓝绿]/g))];}
+else if(/^(?:红单|红双|绿单|绿双|蓝单|蓝双|大单|大双|小单|小双|红小|红大|蓝小|蓝大|绿小|绿大|家单|家双|野单|野双)$/.test(s)){key='combo';values=[s];}
+else if(/^(合单|合双)$/.test(s)){key='sumParity';values=[s];}
+else if(/^(?:五行)?[金木水火土、/]+$/.test(s)){key='element';values=[...new Set(s.match(/[金木水火土]/g))];}
+else if(/^(大数?|小数?)$/.test(s)){key='size';values=[s[0]];}
+else if(/^(单数?|双数?)$/.test(s)){key='parity';values=[s[0]];}
+else if(/^(野兽?|家禽?|家畜)$/.test(s)){key='family';values=[s[0]];}
+else if(/^(?:号码)?\d{1,2}(?:[、/]\d{1,2})+$/.test(s)){key=kind;values=s.replace('号码','').split(/[、/]/).map(Number);if(values.some(n=>n<1||n>49))errors.push('号码超范围：'+s);}
+else if(/^(?:号码)?\d{1,2}(?:[-至到]\d{1,2})?$/.test(s)){key=kind;let a=s.replace('号码','').split(/[-至到]/).map(Number);values=a.length===2&&a[1]>=a[0]?Array.from({length:a[1]-a[0]+1},(_,i)=>i+a[0]):a;if(values.some(n=>n<(key==='number'?1:0)||n>(key==='number'?49:key==='head'?4:9)))errors.push('号码超范围：'+s);}
+else errors.push('未识别：'+s);
+if(key)ops.push({action,key,values});}
+return {ops:errors.length?[]:ops,errors};}
+function apply(text,game){const parsed=parse(text);if(parsed.errors.length||!parsed.ops.length){showClickFeedback(parsed.errors.join('；')||'未识别条件，请写“排除鼠猴；只选红绿波；尾数1-3”等明确条件');return false;}
+if(game==='lx'&&parsed.ops.some(o=>o.key!=='zodiac')){showClickFeedback('连肖此入口支持生肖条件；范围分组请用【鼠牛虎兔龙蛇】选2-4个');return false;}
+const prefix=game==='te'?'te':game==='lx'?'lx':'zm3',updates={},merged=[];for(const o of parsed.ops){const old=merged.find(x=>x.key===o.key&&x.action===o.action);if(old)old.values=[...new Set(old.values.concat(o.values))];else merged.push({...o,values:o.values.slice()});}for(const o of merged){const pick=o.action==='pick';let key,values=o.values;if(o.key==='zodiac')key=prefix+'_'+(pick?(game==='lx'?'force_zods':'pick_zods'):'excl_zods');else if(o.key==='number')key=prefix+'_'+(pick?'pick_pool':'excl_nums');else{const fn={wave:gwv,element:gwx,size:gsz,parity:gpar,family:gfam,sumParity:ghe,combo:n=>COMBOS.find(c=>o.values.includes(c.k)&&c.fn(n))?.k,head:n=>Math.floor(n/10),tail:n=>n%10}[o.key];key=prefix+'_'+(pick?'pick_pool':'excl_nums');values=A49.filter(n=>o.values.includes(fn(n)));}const old=updates[key]||UP[key]||[];const next=pick&&o.key!=='zodiac'&&o.key!=='number'&&old.length?old.filter(n=>values.includes(n)):[...new Set(old.concat(values))];if(pick&&!next.length){showClickFeedback('条件交集为空，未改变原筛选；请检查条件冲突');return false;}updates[key]=next;}Object.assign(UP,updates);UP[prefix+'_nl']=text;saveData();render();showClickFeedback('已应用'+parsed.ops.length+'项条件到'+(game==='te'?'特码':game==='lx'?'连肖':'正码')+'筛选；请核对所选／排除');return true;}
+root.ChineseInput76={parse,normalize};if(typeof module!=='undefined')module.exports=root.ChineseInput76;
+if(typeof document!=='undefined')document.addEventListener('DOMContentLoaded',()=>{const old=root.parseNLInput;root.parseNLInput=function(text,game){const groups=game==='lx'&&ComboLimits.parse(text);if(groups?.errors?.length){showClickFeedback(groups.errors.join('；'));return;}if(groups?.length&&/[【\[]|最多|至少|选.{0,2}[-至到]/.test(normalize(text))){UP.lx_grp_limits=groups;saveData();render();showClickFeedback('已设置'+groups.length+'组范围');return;}if(/^(仅从)?(已出|未出)(号码)?(中选)?$/.test(text.trim()))return old(text,game);return apply(text,game);};for(const [name,id,game] of [['applyTeNL','nl-te','te'],['applyZm3NL','nl-zm3','zm3'],['applyLxNL','nl-lx','lx']])root[name]=()=>root.parseNLInput(document.getElementById(id)?.value||'',game);});
+})(typeof window==='undefined'?globalThis:window);

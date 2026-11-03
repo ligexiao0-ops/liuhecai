@@ -1,0 +1,6 @@
+const assert=require('assert'),N=require('../chinese-input76'),E=require('../practice-engine');
+for(const text of ['不要红波','不选紅波']){const p=N.parse(text);assert(!p.errors.length);assert(p.ops.every(x=>x.action==='exclude'));assert.equal(p.ops[0].key,'wave');}
+const p=N.parse('排除鼠猴；只选红绿波；头数124；尾数1-3；候选十三，二十一');assert(!p.errors.length,JSON.stringify(p));assert.deepEqual(p.ops[0].values,['鼠','猴']);assert.deepEqual(p.ops.find(x=>x.key==='head').values,[1,2,4]);assert.deepEqual(p.ops.find(x=>x.key==='tail').values,[1,2,3]);assert(N.parse('排除鼠；随便给我最好的号码').errors.length);assert(!N.parse('排除鼠；随便给我最好的号码').ops.length);
+const attrs=n=>({波色:n<=16?'红':n<=32?'绿':'蓝'}),ctx={attrs,rows:Array.from({length:30},(_,i)=>({p:i+1,t:1})),special:{balance:Array.from({length:49},(_,i)=>i+1)}};
+const first=E.attributeRank(ctx,'波色');ctx.rows=ctx.rows.map(r=>({...r,t:49}));const next=E.attributeRank(ctx,'波色');assert(first[0].v!==next[0].v);assert(first.find(x=>x.v==='红').recent===6);assert(next.find(x=>x.v==='蓝').recent===6);
+console.log('PASS Chinese exclusions do not become selections; multi-zodiac, traditional text, Chinese numbers, multiple heads/tails, unknown input atomic rejection, and history-dependent attribute ranking.');
