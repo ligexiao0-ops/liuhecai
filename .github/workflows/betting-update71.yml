@@ -1,13 +1,17 @@
-name: Betting ranks hourly archive
+name: Evening betting ranks archive
 on:
   schedule:
-    - cron: '17,47 * * * *'
+    - cron: '50 10 * * *'
   workflow_dispatch:
     inputs:
+      validation_only:
+        description: '仅验证晚间计划与时点边界，不采集资料'
+        type: boolean
+        default: false
       backfill:
         description: '每彩本轮最多补采的历史期数（0—30）'
         required: false
-        default: '5'
+        default: '0'
 permissions:
   contents: write
 concurrency:
@@ -16,7 +20,7 @@ concurrency:
 jobs:
   collect:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 185
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,9 +32,16 @@ jobs:
       - run: google-chrome --version
       - name: Collect public current and historical rankings
         env:
-          BETTING_BACKFILL: ${{ inputs.backfill || '5' }}
+          BETTING_BACKFILL: ${{ inputs.backfill || '0' }}
           BETTING_DATA_DIR: betting-data
-        run: python tools/collect-betting71.py
+        run: |
+          if [ "${{ inputs.validation_only }}" = "true" ]; then
+            python tools/test-evening80.py
+          elif [ "${{ github.event_name }}" = "schedule" ]; then
+            python tools/evening-archive80.py
+          else
+            python tools/collect-betting71.py
+          fi
       - name: Preserve successful data and collection status
         if: always()
         run: |

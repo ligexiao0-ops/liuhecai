@@ -41,6 +41,14 @@ def normalize(numbers,zodiacs,issue,t):
     regular=max(gaps)-min(gaps)<=1 if gaps else False
     return {'numbers':n,'zodiacs':z,'websiteUpdatedAt':next(iter(times)),'zodiac2026Verified':verified,'regularAmountSpacing':regular,'resultSeenAtCollection':any(int(x.get('win') if x.get('win') is not None else -1)>=0 for x in ns)}
 def tiny(s):return {k:s.get(k) for k in ['id','collectedAt','websiteUpdatedAt','resultSeenAtCollection','zodiac2026Verified']}|{'numbers':[x['n'] for x in s['numbers']],'zodiacs':[x['z'] for x in s['zodiacs']]}
+def evening_last(record):
+    for o in reversed(record.get('observations',[])):
+        if o.get('phase')!='evening' or o.get('resultSeen'):continue
+        planned=datetime.datetime.fromisoformat(o['scheduledAt']);actual=datetime.datetime.fromisoformat(o['collectedAt']).astimezone(datetime.timezone(datetime.timedelta(hours=8)))
+        if actual.date()!=planned.date() or not 0<=(actual-planned).total_seconds()<=240 or not 19*60<=actual.hour*60+actual.minute<=21*60+34:continue
+        s=next((s for s in record['snapshots'] if s['id']==o['snapshotId']),None)
+        if s:return tiny(s)|{'collectedAt':o['collectedAt'],'scheduledAt':o['scheduledAt'],'resultSeenAtCollection':False}
+    return None
 async def collect():
     from playwright.async_api import async_playwright
     manifest=load(OUT/'index.json',{'schemaVersion':1,'sourcePage':PAGE,'lots':{},'logs':[]})
@@ -92,6 +100,11 @@ async def collect():
                         sid=hashlib.sha256(json.dumps(content,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
                         path=folder/(str(q)+'.json');record=load(path,{'issue':q,'period':q%1000,'lot':lot,'sourceType':t,'snapshots':[]})
                         if not any(s['id']==sid for s in record['snapshots']):record['snapshots'].append({'id':sid,'collectedAt':now(),'timestampPrecision':'exact',**normalized})
+                        slot=os.environ.get('BETTING_SLOT')
+                        if slot:
+                            phase=os.environ.get('BETTING_PHASE','evening');stamp=now();obs={'scheduledAt':slot,'collectedAt':stamp,'phase':phase,'snapshotId':sid,'resultSeen':normalized['resultSeenAtCollection']}
+                            observations=record.setdefault('observations',[])
+                            if not any(o.get('scheduledAt')==slot for o in observations):observations.append(obs)
                         if result:
                             if record.get('result') and record['result']!=result:record.setdefault('resultChanges',[]).append({'at':now(),'previous':record['result']})
                             record['result']=result
@@ -110,8 +123,8 @@ async def collect():
                     snaps=r['snapshots'];first=snaps[0];last=snaps[-1]
                     if r.get('result',{}).get('date','9999')<'2026-02-17':continue
                     retained=next((s for s in snaps if s.get('timestampPrecision','exact')=='exact' and not s.get('resultSeenAtCollection')),None)
-                    summaries.append({'issue':r['issue'],'period':r['period'],'first':tiny(first),'retained':tiny(retained) if retained else None,'last':tiny(last),'result':r.get('result'),'snapshotCount':len(snaps)})
-                    if r['issue']==issue:latest={'issue':issue,'period':period,'snapshot':last,'result':r.get('result'),'snapshotCount':len(snaps)}
+                    summaries.append({'issue':r['issue'],'period':r['period'],'first':tiny(first),'retained':tiny(retained) if retained else None,'last':tiny(last),'result':r.get('result'),'snapshotCount':len(snaps),'observations':r.get('observations',[]),'eveningLast':evening_last(r)})
+                    if r['issue']==issue:latest={'issue':issue,'period':period,'snapshot':last,'result':r.get('result'),'snapshotCount':len(snaps),'observations':r.get('observations',[])}
                 summaries.sort(key=lambda r:r['issue'],reverse=True);meta['periodCount']=len(summaries)
                 summary={'schemaVersion':1,'lot':lot,'sourcePage':PAGE,'updatedAt':now(),'latest':latest,'periods':summaries}
                 save(folder/'summary.json',summary)
