@@ -43,12 +43,21 @@ def normalize(numbers,zodiacs,issue,t):
 def tiny(s):return {k:s.get(k) for k in ['id','collectedAt','websiteUpdatedAt','resultSeenAtCollection','zodiac2026Verified']}|{'numbers':[x['n'] for x in s['numbers']],'zodiacs':[x['z'] for x in s['zodiacs']]}
 def evening_last(record):
     for o in reversed(record.get('observations',[])):
-        if o.get('phase')!='evening' or o.get('resultSeen'):continue
+        if o.get('phase')!='evening' or o.get('resultSeen') or o.get('scheduledAt','')[11:16]>='21:30':continue
         planned=datetime.datetime.fromisoformat(o['scheduledAt']);actual=datetime.datetime.fromisoformat(o['collectedAt']).astimezone(datetime.timezone(datetime.timedelta(hours=8)))
         if actual.date()!=planned.date() or not 0<=(actual-planned).total_seconds()<=240 or not 19*60<=actual.hour*60+actual.minute<=21*60+34:continue
         s=next((s for s in record['snapshots'] if s['id']==o['snapshotId']),None)
         if s:return tiny(s)|{'collectedAt':o['collectedAt'],'scheduledAt':o['scheduledAt'],'resultSeenAtCollection':False}
     return None
+def time_slots(record):
+    out={};allowed={'19:00','19:30','20:00','20:30','21:00','21:30','21:35'}
+    for o in record.get('observations',[]):
+        planned=datetime.datetime.fromisoformat(o['scheduledAt']);actual=datetime.datetime.fromisoformat(o['collectedAt']).astimezone(datetime.timezone(datetime.timedelta(hours=8)));key=planned.strftime('%H:%M')
+        if key not in allowed or actual.date()!=planned.date() or not 0<=(actual-planned).total_seconds()<=60:continue
+        if o.get('phase')!=('final' if key=='21:35' else 'evening'):continue
+        snap=next((s for s in record['snapshots'] if s['id']==o['snapshotId']),None)
+        if snap and (key not in out or o['collectedAt']<out[key]['collectedAt']):out[key]=tiny(snap)|{'collectedAt':o['collectedAt'],'scheduledAt':o['scheduledAt'],'resultSeenAtCollection':bool(o.get('resultSeen'))}
+    return out
 async def collect():
     from playwright.async_api import async_playwright
     manifest=load(OUT/'index.json',{'schemaVersion':1,'sourcePage':PAGE,'lots':{},'logs':[]})
@@ -123,7 +132,7 @@ async def collect():
                     snaps=r['snapshots'];first=snaps[0];last=snaps[-1]
                     if r.get('result',{}).get('date','9999')<'2026-02-17':continue
                     retained=next((s for s in snaps if s.get('timestampPrecision','exact')=='exact' and not s.get('resultSeenAtCollection')),None)
-                    summaries.append({'issue':r['issue'],'period':r['period'],'first':tiny(first),'retained':tiny(retained) if retained else None,'last':tiny(last),'result':r.get('result'),'snapshotCount':len(snaps),'observations':r.get('observations',[]),'eveningLast':evening_last(r)})
+                    summaries.append({'issue':r['issue'],'period':r['period'],'first':tiny(first),'retained':tiny(retained) if retained else None,'last':tiny(last),'result':r.get('result'),'snapshotCount':len(snaps),'observations':r.get('observations',[]),'eveningLast':evening_last(r),'timeSlots':time_slots(r)})
                     if r['issue']==issue:latest={'issue':issue,'period':period,'snapshot':last,'result':r.get('result'),'snapshotCount':len(snaps),'observations':r.get('observations',[])}
                 summaries.sort(key=lambda r:r['issue'],reverse=True);meta['periodCount']=len(summaries)
                 summary={'schemaVersion':1,'lot':lot,'sourcePage':PAGE,'updatedAt':now(),'latest':latest,'periods':summaries}
