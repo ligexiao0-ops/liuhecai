@@ -10,8 +10,10 @@ def decision(slot,now):
  return 'wait' if delay<0 else 'collect' if delay<=(600 if slot.hour==21 and slot.minute==35 else 240) else 'missed'
 def main():
  current=datetime.datetime.now(ZONE);day=current.date() if current.hour>=18 else current.date()-datetime.timedelta(days=1);log=ROOT/'betting-data/evening-log'/(day.isoformat()+'.json');log.parent.mkdir(parents=True,exist_ok=True)
- status={'date':day.isoformat(),'timezone':'Asia/Shanghai','slots':[]}
+ status=json.loads(log.read_text(encoding='utf-8')) if log.exists() else {'date':day.isoformat(),'timezone':'Asia/Shanghai','slots':[]}
+ if status.get('date')!=day.isoformat():raise ValueError('晚间日志日期不符')
  for slot in plan(day):
+  if any(x.get('scheduledAt')==slot.isoformat() for x in status['slots']):continue
   while decision(slot,datetime.datetime.now(ZONE))=='wait':time.sleep(max(0,min(30,(slot-datetime.datetime.now(ZONE)).total_seconds())))
   now=datetime.datetime.now(ZONE);state=decision(slot,now);row={'scheduledAt':slot.isoformat(),'startedAt':now.isoformat(),'state':state}
   if state=='collect':

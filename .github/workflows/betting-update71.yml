@@ -4,6 +4,10 @@ on:
     - cron: '50 10 * * *'
   workflow_dispatch:
     inputs:
+      evening_watch:
+        description: '启动今晚剩余时点值守（错过时点标缺失）'
+        type: boolean
+        default: false
       validation_only:
         description: '仅验证晚间计划与时点边界，不采集资料'
         type: boolean
@@ -37,7 +41,7 @@ jobs:
         run: |
           if [ "${{ inputs.validation_only }}" = "true" ]; then
             python tools/test-evening80.py
-          elif [ "${{ github.event_name }}" = "schedule" ]; then
+          elif [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.evening_watch }}" = "true" ]; then
             python tools/evening-archive80.py
           else
             python tools/collect-betting71.py
