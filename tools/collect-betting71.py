@@ -50,8 +50,9 @@ def evening_last(record):
         if s:return tiny(s)|{'collectedAt':o['collectedAt'],'scheduledAt':o['scheduledAt'],'resultSeenAtCollection':False}
     return None
 def time_slots(record):
-    out={};allowed={'19:00','19:30','20:00','20:30','21:00','21:30','21:35'}
+    out={};dates=sorted(o.get('scheduledAt','')[:10] for o in record.get('observations',[]) if o.get('scheduledAt'));day=record.get('result',{}).get('date') or (dates[-1] if dates else None);allowed={'19:00','19:30','20:00','20:30','21:00','21:30','21:35'}
     for o in record.get('observations',[]):
+        if o.get('scheduledAt','')[:10]!=day:continue
         planned=datetime.datetime.fromisoformat(o['scheduledAt']);actual=datetime.datetime.fromisoformat(o['collectedAt']).astimezone(datetime.timezone(datetime.timedelta(hours=8)));key=planned.strftime('%H:%M')
         if key not in allowed or actual.date()!=planned.date() or not 0<=(actual-planned).total_seconds()<=60:continue
         if o.get('phase')!=('final' if key=='21:35' else 'evening'):continue
