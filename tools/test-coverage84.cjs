@@ -1,0 +1,10 @@
+const a=require('assert');require('../tail-practice-study');const S=require('../normal-coverage84');
+const rows=Array.from({length:6},(_,i)=>({p:i+1,n:[1,2,3,4,5,6],t:49}));
+const draw={p:7,n:[1,2,3,7,8,9],t:4};let s=S.analyze([...rows,draw]);a.equal(s.tests.length,1);let t=s.tests[0];a.deepEqual(t.groups.seen.hits,[1,2,3]);a.deepEqual(t.groups.unseen.hits,[7,8,9]);a.equal(s.both,1);a.equal(s.summary[0].h,1);a.equal(s.summary[0].hist[3],1);a.equal(s.summary[0].meanTriples,1);a(!t.groups.seen.hits.includes(4));
+const all=S.analyze([...rows,{p:7,n:[1,2,3,4,5,6],t:49}]);a.equal(all.summary[0].meanTriples,20);a.equal(all.summary[1].h,0);
+const cold=S.analyze([...rows,{p:7,n:[7,8,9,10,11,12],t:1}]);a.equal(cold.summary[0].h,0);a.equal(cold.summary[1].h,1);a.deepEqual(cold.tests[0].groups.seen.pool,t.groups.seen.pool);
+a.equal(S.analyze([...rows.slice(0,5),draw]).tests.length,0);
+const tail=S.analyze([...rows,{p:7,n:[3,4,5,13,14,15],t:49}],true);a(tail.tests[0].groups.seen.pool.length<6);a.equal(tail.neither,1);
+const future={p:8,n:[20,21,22,23,24,25],t:48};a.deepEqual(S.analyze([...rows,draw,future]).tests[0],t);
+const conflict={...draw,n:[10,11,12,13,14,15],t:16};a.equal(S.analyze([...rows,draw,conflict]).tests.length,0);
+a.equal(S.choose3(2),0);a.equal(S.choose3(4),4);console.log('PASS exact simultaneous >=3 coverage; 0/3/6 histograms; TE excluded; earlier-only classification; missing/conflict exclusion; tail both-fail; not fixed-ticket accuracy');

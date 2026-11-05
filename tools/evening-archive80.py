@@ -18,10 +18,18 @@ def main():
   now=datetime.datetime.now(ZONE);state=decision(slot,now);row={'scheduledAt':slot.isoformat(),'startedAt':now.isoformat(),'state':state}
   if state=='collect':
    env=dict(os.environ,BETTING_BACKFILL='0',BETTING_SLOT=slot.isoformat(),BETTING_PHASE='final' if slot.minute==35 else 'evening')
-   try:
-    result=subprocess.run([sys.executable,str(ROOT/'tools/collect-betting71.py')],cwd=ROOT,env=env,timeout=150)
-    row.update(state='success' if result.returncode==0 else 'failed',finishedAt=datetime.datetime.now(ZONE).isoformat())
-   except subprocess.TimeoutExpired:row.update(state='failed',reason='本时点采集超时，继续等待下一时点')
+   row['attempts']=[]
+   for attempt in range(3):
+    if decision(slot,datetime.datetime.now(ZONE))!='collect':break
+    try:
+     result=subprocess.run([sys.executable,str(ROOT/'tools/collect-betting71.py')],cwd=ROOT,env=env,timeout=45)
+     row['attempts'].append({'attempt':attempt+1,'state':'success' if result.returncode==0 else 'failed'})
+     if result.returncode==0:row['state']='success';break
+    except subprocess.TimeoutExpired:row['attempts'].append({'attempt':attempt+1,'state':'timeout'})
+    row['state']='failed'
+    if attempt<2:time.sleep(3)
+   row['finishedAt']=datetime.datetime.now(ZONE).isoformat()
+   if row['state']!='success':row.update(state='failed',reason='本时点重试未成功，继续下一时点；实际延迟如实保留')
   status['slots'].append(row);log.write_text(json.dumps(status,ensure_ascii=False),encoding='utf-8');print(json.dumps(row),flush=True)
   index=ROOT/'betting-data/index.json'
   if index.exists():
