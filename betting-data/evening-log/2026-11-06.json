@@ -1,0 +1,1 @@
+{"date": "2026-11-06", "timezone": "Asia/Shanghai", "slots": [{"scheduledAt": "2026-11-06T19:00:00+08:00", "startedAt": "2026-11-06T19:00:00.000182+08:00", "state": "success", "attempts": [{"attempt": 1, "state": "success"}], "finishedAt": "2026-11-06T19:00:10.440292+08:00"}]}
