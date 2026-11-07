@@ -1,0 +1,4 @@
+(function(root){'use strict';
+function selected(data,{now=Date.now(),pinned=null,manual=[]}={}){const all=(data?.periods||[]).slice().sort((a,b)=>b.issue-a.issue);if(pinned&&all.some(x=>String(x.issue)===String(pinned)))return {period:all.find(x=>String(x.issue)===String(pinned)),held:false,pinned:true};const newest=all.find(x=>x.issue===data?.latest?.issue)||all[0];const settled=all.find(x=>{const m=manual.find(r=>Number(r.p)===Number(x.period)),raw=x.result?.date||m?.d,date=/^\d{2}\/\d{2}$/.test(raw||'')?'2026-'+raw.replace('/','-'):raw;return /^\d{4}-\d{2}-\d{2}$/.test(date||'')&&Date.parse(date+'T00:00:00+08:00')<=now&&now<Date.parse(date+'T10:00:00+08:00')+86400000;});if(settled&&newest?.issue>settled.issue)return {period:settled,held:true,pinned:false};return {period:newest,held:false,pinned:false};}
+root.BettingPeriod94={selected};if(typeof module!=='undefined')module.exports=root.BettingPeriod94;
+})(typeof window==='undefined'?globalThis:window);
