@@ -1,0 +1,8 @@
+(function(root){'use strict';
+const modes=[{id:'slot2030',slot:'20:30',label:'20:30 · 开奖前参考'},{id:'slot2100',slot:'21:00',label:'21:00 · 开奖前参考'},{id:'slot2135',slot:'21:35',label:'21:35 · 最终核对'},{id:'final',label:'旧记录参考 · 历史末次榜单'},{id:'evening',label:'晚间最后有效留存（19:00—21:00）'},{id:'retained',label:'首次有效留存'}];
+function mode(value){return modes.some(m=>m.id===value)?value:'slot2100';}
+function rows(periods,latestIssue,detail,S){return periods.map(p=>p.issue===latestIssue&&detail?.observations?.length?{...p,timeSlots:S.extract(detail)}:p);}
+function build(periods,manual,zod,S,B){const reports=S.reports(periods,manual,zod,B);return {reports,select(value){const id=mode(value),def=modes.find(x=>x.id===id);if(!def.slot)return {...B.analyze(periods,manual,zod,{mode:id}),focusLabel:def.label};const cohort=reports.find(x=>x.slot===def.slot);return {...cohort.report,mode:def.slot==='21:35'?'final':'clock',clockSlot:def.slot,focusLabel:def.label,missingClock:cohort.missing,capturedClock:cohort.captured};}};}
+function comparison(period){const a=period?.timeSlots?.['20:30'],b=period?.timeSlots?.['21:00'];if(!a||!b)return {available:false};const sameRanks=JSON.stringify(a.numbers)===JSON.stringify(b.numbers)&&JSON.stringify(a.zodiacs)===JSON.stringify(b.zodiacs);return {available:true,sameSnapshot:!!a.id&&a.id===b.id,sameRanks,fromUpdatedAt:a.websiteUpdatedAt,toUpdatedAt:b.websiteUpdatedAt,fromCollectedAt:a.collectedAt,toCollectedAt:b.collectedAt};}
+root.BettingFocus88={modes,mode,rows,build,comparison};if(typeof module!=='undefined')module.exports=root.BettingFocus88;
+})(typeof window==='undefined'?globalThis:window);
