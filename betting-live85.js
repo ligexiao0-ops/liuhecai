@@ -15,7 +15,7 @@ function normalize(numbers,zodiacs,issue,type){
 }
 function create({fetch:request,now=()=>Date.now()}={}){
  async function get(path){let r;try{r=await request(API+path,{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(15000)});}catch(e){throw Error(e.name==='TimeoutError'?'连接原站超时；晚间已采记录不受影响':'无法连接原站公开接口（网络或跨域限制）；晚间已采记录不受影响');}if(!r.ok)throw Error('原站返回 HTTP '+r.status+'；未绕过访问限制');const d=await r.json();if(!d||typeof d!=='object'||Number(d.code??200)!==200)throw Error('原站接口返回失败状态');return d;}
- async function read(lot){
+ async function direct(lot){
   if(!['xa','gc'].includes(lot))throw Error('该原站仅有新澳与港彩');const type=lot==='xa'?1:2;
   const maximum=await get('HotBuyRank/maxIssue');const matches=maximum.data?.filter(x=>Number(x.type)===type);
   if(!Array.isArray(matches)||matches.length!==1)throw Error('原站未返回唯一的本彩最新期号');
@@ -25,6 +25,7 @@ function create({fetch:request,now=()=>Date.now()}={}){
   const snapshot=normalize(numbers,zodiacs,issue,type),collectedAt=new Date(now()).toISOString();
   return {lot,issue,period,sourcePage:SOURCE,sourceApi:API,collectedAt,persisted:false,snapshot:{...snapshot,collectedAt,id:'live-'+lot+'-'+issue+'-'+collectedAt}};
  }
+ async function read(lot){if(!['xa','gc'].includes(lot))throw Error('该原站仅有新澳与港彩');try{const r=await request('https://688638.top/api/betting/latest?lot='+lot,{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(20000)});if(!r.ok){const d=await r.json().catch(()=>({}));throw Error(d.error||'服务端 HTTP '+r.status);}const x=await r.json();if(x.lot!==lot||!x.snapshot||x.snapshot.numbers?.length!==49||x.snapshot.zodiacs?.length!==12||x.issue%1000!==x.period)throw Error('服务端榜单格式不符');return {...x,transport:'server'};}catch(serverError){if(/HTTP (403|429)/.test(serverError.message))throw serverError;try{return await direct(lot);}catch(e){throw Error('服务端与原站直连均未取得新榜单：'+serverError.message+'；'+e.message);}}}
  return {read};
 }
 root.BettingLive85={create,normalize};if(typeof module!=='undefined')module.exports=root.BettingLive85;
