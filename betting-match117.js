@@ -7,8 +7,11 @@ function combinations(n,k) {
   for(let i=1;i<=k;i++) result=result*(n-i+1)/i;
   return result;
 }
-function analyze(report,zodiac,element,any) {
-  const items=report.items.filter(item=>item.zodiacEligible);
+function analyze(report,zodiac,element,any,fullBaseline) {
+  const mappingValid=new Set(balls.map(zodiac)).size===12 &&
+    balls.every(n=>'鼠牛虎兔龙蛇马羊猴鸡狗猪'.includes(zodiac(n)) && zodiac(n).length===1);
+  // The archive flag checks monetary aggregation, not the validity of explicit zodiac names.
+  const items=mappingValid?report.items.filter(item=>item.date>='2026-02-17' && item.date<='2026-12-31'):[];
   const byIssue=new Map(items.map(item=>[Number(item.issue),item]));
   const mapping=new Map(balls.map(n=>[n,zodiac(n)]));
   const rows=items.map(item=>{
@@ -20,7 +23,7 @@ function analyze(report,zodiac,element,any) {
       number:zodiac(s.numbers[0]), aggregate:s.zodiacs[0], flat:validFlat?flat[0]:null
     };
   });
-  const comparisons=[['number','aggregate','热门第1码所属肖 × 号码金额汇总第1肖'],['number','flat','热门第1码所属肖 × 独立平特第1肖'],['aggregate','flat','号码金额汇总第1肖 × 独立平特第1肖']];
+  const comparisons=[['number','aggregate','热门第1码所属肖 × 原站生肖榜第1肖'],['number','flat','热门第1码所属肖 × 独立平特第1肖'],['aggregate','flat','原站生肖榜第1肖 × 独立平特第1肖']];
   const paired=comparisons.flatMap(([left,right,label])=>[true,false].map(equal=>{
     const samples=rows.filter(row=>row[left]&&row[right]&&(row[left]===row[right])===equal);
     const tally=key=>{
@@ -48,7 +51,18 @@ function analyze(report,zodiac,element,any) {
     for(let k=3;k<=6;k++) baseline+=combinations(size,k)*combinations(49-size,6-k)/combinations(49,6);
     return {size,cold,n:hits.length,hit:hits.filter(n=>n>=3).length,baseline};
   }));
-  return {paired,elements,triples,n:items.length,flatN:rows.filter(row=>row.flat).length};
+  const linked=['zodiacs','flatZodiacs'].flatMap(key=>[3,4,5].map(size=>{
+    const samples=rows.filter(row=>key==='zodiacs'||row.flat);
+    let normal=0,seven=0,expected=0;
+    for(const row of samples){
+      const pool=row.item.snapshot[key].slice(0,size).map(v=>typeof v==='string'?v:v.z);
+      if(pool.every(z=>row.normal.has(z))) normal++;
+      if(pool.every(z=>row.normal.has(z)||row.actual===z)) seven++;
+      expected+=fullBaseline(pool,zodiac);
+    }
+    return {key,size,n:samples.length,normal,seven,expected:samples.length?expected/samples.length:null};
+  }));
+  return {paired,elements,triples,linked,n:items.length,flatN:rows.filter(row=>row.flat).length,unverified:items.filter(item=>item.snapshot.zodiac2026Verified!==true).length};
 }
 root.BettingMatch117={analyze};
 if(typeof module!=='undefined')module.exports=root.BettingMatch117;
