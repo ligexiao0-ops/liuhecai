@@ -106,7 +106,7 @@
     if(!old){old={lot:CUR_LOT,sourcePeriod:x.meta.sourcePeriod,targetPeriod:x.meta.targetPeriod,targetDate:x.meta.estimatedDate,generatedAt:new Date().toISOString(),algorithmVersion:VERSION,z3_8:x.p8.slice(),z3_13:x.p13.slice(),lx6:x.lx.slice()};arr.push(old);UP.v1008_forecasts=arr.slice(-300);try{saveData();}catch(e){}}
     return old;
   }
-  function analyze(rows) { var z=bestZ3(rows), l=bestLX(rows), x={meta:targetMeta(rows),z:z,l:l,p8:balancedPool(rows,z.model,8,true),p13:balancedPool(rows,z.model,13,true),lx:lxPool(rows,l.model,true)};x.saved=saveForecast(x);CURRENT[CUR_LOT]=x;return x; }
+  function analyze(rows) {if(Object.keys(CACHE).length>24)CACHE={}; var z=bestZ3(rows), l=bestLX(rows), x={meta:targetMeta(rows),z:z,l:l,p8:balancedPool(rows,z.model,8,true),p13:balancedPool(rows,z.model,13,true),lx:lxPool(rows,l.model,true)};x.saved=saveForecast(x);CURRENT[CUR_LOT]=x;return x; }
 
   window.getPracticeContext=function(){
     var rows=DR,normal={},special={},Z100=calcZ100();if(!rows||rows.length<31)return null;
@@ -152,7 +152,7 @@
   window.v10100803Apply=function(kind){var x=CURRENT[CUR_LOT];if(!x)return;if(kind==='z3'){UP.zm3_pick_pool=x.p8.slice();x.saved.z3_8=x.p8.slice();x.saved.z3_13=x.p13.slice();}else{UP.lx_pick_n_zods=x.lx.slice();UP.lx_pick_k_size=5;x.saved.lx6=x.lx.slice();}x.saved.generatedAt=new Date().toISOString();x.saved.algorithmVersion=VERSION;saveData();render();showClickFeedback('✅ 已应用并锁定为预测第'+x.meta.targetPeriod+'期');};
   window.v10100803Page=function(p){PAGE=Math.max(0,p);render();};
 
-  function panel(tab){if(!DR||DR.length<31)return '';ensureEvidence();var x=analyze(DR),h='<div id="v10100803-root">';if(tab==='plan')h+=auditCard(DR,x);if(tab==='zm3')h+=z3Card(DR,x)+auditCard(DR,x);if(tab==='lx')h+=lxCard(DR,x)+auditCard(DR,x);if(tab==='te'||tab==='tea')h+=teCard(DR);if(tab==='rec'||tab==='rev')h+=auditCard(DR,x);if(tab==='img')h+=imageCard();return h+'</div>';}
+  function panel(tab){if(!['plan','zm3','lx','te','tea','rec','rev','img'].includes(tab)||!DR||DR.length<31)return '';if(tab==='img')return '<div id="v10100803-root">'+imageCard()+'</div>';ensureEvidence();var x=analyze(DR),h='<div id="v10100803-root">';if(tab==='plan')h+=auditCard(DR,x);if(tab==='zm3')h+=z3Card(DR,x)+auditCard(DR,x);if(tab==='lx')h+=lxCard(DR,x)+auditCard(DR,x);if(tab==='te'||tab==='tea')h+=teCard(DR);if(tab==='rec'||tab==='rev')h+=auditCard(DR,x);if(tab==='img')h+=imageCard();return h+'</div>';}
 
   var originalPeriodForDate=window.periodForRecordDate, originalAdd=window.addRecord, originalEdit=window.editRecord;
   window.reindexRecordsByDate=function(){var seen={},bad=[],changed=0;DR.forEach(function(r){var d=canonicalRecordDate(r.d);if(!(Number(r.p)>0)||!d||seen[r.p]){bad.push(r.p);return;}seen[r.p]=1;if(r.d!==d){r.d=d;changed++;}});if(bad.length)return {changed:0,error:'期号重复或日期无效：'+bad.join('、')};DR.sort(function(a,b){return a.p-b.p;});return {changed:changed,error:''};};
