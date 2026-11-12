@@ -91,5 +91,20 @@ document.addEventListener('change',e=>{if(e.target.matches('[data-bet-issue94]')
 function safeShow(){try{show();}catch(e){if(activeTab==='betting')document.getElementById('tabContent').innerHTML='<section class="card"><h3>投注大数据读取未完成</h3><p>'+esc(e.message)+'</p><button data-bet-refresh>重新读取云端资料</button></section>';}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&activeTab==='betting'&&Date.now()-lastFetch>120000)load(true);});
 function init(){const base=window.render;window.render=function(){const r=base.apply(this,arguments);safeShow();return r;};safeShow();setInterval(()=>{if(activeTab==='betting'&&!document.hidden&&Date.now()-lastFetch>5*60*1000)load(true);},60*1000);}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-document.addEventListener('change',e=>{if(!e.target.matches('[data-bet-source103]'))return;UP.te_betting_source103=e.target.value;saveData();summaries.clear();details.clear();liveResults.clear();liveErrors.clear();manifest=null;error='';snapshotIndex=-1;detailIssue='';detailError='';render();});window.BettingData71={refresh:()=>load(true),fetchLatest:loadLive,show};
+document.addEventListener('change',e=>{if(!e.target.matches('[data-bet-source103]'))return;UP.te_betting_source103=e.target.value;saveData();summaries.clear();details.clear();liveResults.clear();liveErrors.clear();manifest=null;error='';snapshotIndex=-1;detailIssue='';detailError='';render();});async function normalEvidence(lot,source,draws,target){
+  const data=summaries.get(lot)||await read(lot+'/summary.json');
+  if(data.lot!==lot||lot!==CUR_LOT||!Array.isArray(data.periods)||source!==(UP.te_betting_source103||'A'))throw Error('榜单来源已切换');
+  const periods=data.periods.filter(p=>String(p.issue).startsWith('2026'));
+  const reports=BettingSlots82.reports(periods,draws,gz,BettingAnalysis71).filter(r=>['20:30','21:00'].includes(r.slot));
+  const p=periods.find(p=>Number(p.period)===target);
+  const slot=p?.timeSlots?.['21:00']?'21:00':p?.timeSlots?.['20:30']?'20:30':UP.te_betting_analysis88==='slot2030'?'20:30':'21:00';
+  const d=pToDate(target).replace('/','-');
+  const currentAt=time=>{
+    const s=p?.timeSlots?.[time],delay=Date.parse(s?.collectedAt)-Date.parse(s?.scheduledAt);
+    return s&&d===s.scheduledAt?.slice(5,10)&&delay>=0&&delay<=60000&&!p.result&&!s.resultSeenAtCollection&&BettingAnalysis71.validRanks(s)&&(!winCurOff()&&target===NEXT)?s:null;
+  };
+  const currentEarly=currentAt('20:30'),currentLate=currentAt('21:00');
+  return {reports,slot:currentLate?'21:00':currentEarly?'20:30':slot,current:currentLate||currentEarly,currentEarly,currentLate};
+}
+window.BettingData71={refresh:()=>load(true),fetchLatest:loadLive,show,normalEvidence};
 })();

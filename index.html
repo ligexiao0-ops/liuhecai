@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="app-version" content="10.1011.20">
+<meta name="app-version" content="10.1011.21">
 <script>window.APP_BUILD=Object.freeze({label:"v"+document.querySelector('meta[name="app-version"]').content,id:document.querySelector('meta[name="app-version"]').content.replace(/\./g,"")});</script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -12541,7 +12541,7 @@ function renderLX(){
   const ptTop=ptforce.length>0?ptforce.map(z=>ptPool.find(x=>x.z===z)).filter(Boolean):ptPool.slice(0,1);
 
   const sameCnt=items=>cur7Z.filter(z=>items.map(x=>x.z).includes(z)).length;
-  let h='<div class="sec-title">🔗 连肖（五连/四连/三连/二连/平特一肖，预测第'+NEXT+'期）</div>'+renderPlayActionPanel('lx')+
+  let h='<div class="sec-title">🔗 连肖（五连/四连/三连/二连/平特一肖，预测第'+NEXT+'期）</div>'+renderPlayActionPanel('lx')+(window.NormalEvidence121?.panel('lx',zSc.filter(x=>!exclLX.includes(x.z)).map(x=>x.z))||'')+
      '<div class="card" style="background:#e8f4ff;font-size:10px;line-height:1.7">注：连肖评分只跟生肖维度（冷热/遗漏/缺席/庄家）相关，不引入波色因素。</div>';
 
   // ===== 传统生肖五行历史对照分析 =====
@@ -15606,6 +15606,7 @@ function renderZ3(){
      '<div style="font-size:9px;color:#666;margin-top:5px">结果严格执行号码、尾数、生肖、属性、五行及候选池限制；生肖可选1—12肖，只限定号码范围。</div>'+
      (top3.length===3?copyBox('copy-z3-fast','📋 当前主方案',lotLabel()+'三中三主推 '+_fastNums(top3)+'；复式6码 '+_fastNums(top6),'三中三'):'')+
      '</div>';
+  h+=window.NormalEvidence121?.panel('z3',_applyNineBasis((usingUserPool?userPool:sc.map(x=>x.n)).filter(n=>!zm3HardExcluded(n)&&zm3SelAllowed(n))))||'';
   if(!window._z3Full){
     h+='<button class="btn btn-blue" onclick="toggleZ3Full()" style="width:100%;margin:6px 0">展开完整分析、公式与回测</button>';
     _renderZ3Cache={k:_zk,h:h};return h;
@@ -19979,15 +19980,16 @@ if(_authed){
 <script src="betting-reader78.js?v=10101120"></script>
 <script src="betting-live85.js?v=10101120"></script>
 <script src="betting-changes79.js?v=10101120"></script>
-<script src="betting-slots82.js?v=10101120"></script>
+<script src="betting-slots82.js?v=10101121"></script>
 <script src="betting-focus88.js?v=10101120"></script>
 <script src="betting-period94.js?v=10101120"></script>
 <script src="betting-match117.js?v=10101120"></script>
-<script src="betting-ui71.js?v=10101120"></script>
+<script src="betting-ui71.js?v=10101121"></script>
+<script src="normal-evidence121.js?v=10101121"></script>
 <script src="chinese-input76.js?v=10101120"></script>
 <script src="required-zodiacs82.js?v=10101120"></script>
 <script src="normal-coverage84.js?v=10101120"></script>
-<script src="forum-attributes114.js?v=10101120"></script><script src="forum-publish86.js?v=10101120"></script>
+<script src="forum-attributes114.js?v=10101120"></script><script src="forum-publish86.js?v=10101121"></script>
 <script src="navigation-state70.js?v=10101120"></script>
 <script>
 document.addEventListener('click',e=>{const b=e.target.closest('[data-zodiac-copy75]');if(b)navigator.clipboard.writeText(b.dataset.zodiacCopy75.split(',').map(n=>String(n).padStart(2,'0')).join('，')).then(()=>showClickFeedback('已复制号码，不含次数')).catch(()=>showClickFeedback('复制失败'));});
