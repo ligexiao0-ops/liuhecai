@@ -113,7 +113,7 @@ function bettingConclusion(report,snapshot){
   return '<section class="card" id="bet-conclusion122"><h3>大数据结论 · '+source+'站</h3><p>'+report.focusLabel+' · 已核对 '+items.length+'期'+(items.length<12?'，样本少，结论供观察':'')+'。</p>'+findings+advice+'</section>';
 }
 function panel(game,pool=[]){
-  return '<details class="card" id="normal-evidence121" data-game="'+game+'" data-pool="'+pool.join(',')+'"><summary>正码／平肖证据评分与再出统计</summary><button type="button" data-evidence121>计算当前彩种</button><div data-evidence-result121></div></details>';
+  return '<details class="card" id="normal-evidence121" data-game="'+game+'" data-pool="'+pool.join(',')+'"><summary>正码／平肖证据评分与再出统计</summary><button type="button" data-evidence121>计算当前彩种</button><div data-evidence-result121></div></details>'+(window.RankStudy125?RankStudy125.panel():'');
 }
 async function show(box){
   if(typeof winCurOff==='function'&&winCurOff()>0){box.querySelector('[data-evidence-result121]').textContent='请回到当前预测期后计算。';return;}
@@ -121,7 +121,7 @@ async function show(box){
   const trend=recurrence(rows,gz,zodWx),out=box.querySelector('[data-evidence-result121]');
   const pool=box.dataset.pool.split(',').filter(Boolean).map(x=>game==='z3'?Number(x):x);
   const last=rows.at(-1),stats=new Map(trend.map(x=>[x.label,x]));
-  const header='<h4>各生肖与生肖五行 · 平肖只按6个正码去重</h4>'+table(['生肖／五行','平肖出现','特肖出现','上期平肖出现→再出','上期平肖没出→补出','上期特肖→本期平肖'],trend.map(x=>[x.label,pct(x.normal,x.n),pct(x.special,x.n),pct(...x.repeat),pct(...x.returning),pct(...x.fromSpecial)]));
+  const header='<h4>各生肖与生肖五行 · 平肖只按6个正码去重</h4><p>基础开奖记录 '+rows.length+'期；生肖映射适用 '+rows.filter(sampleDate).length+'期。单个生肖每期最多计1次，各生肖次数可相加超过总期数。再出／补出仅核对连续期号，各自以条件成立的期数为分母。</p>'+table(['生肖／五行','平肖出现','特肖出现','上期平肖出现→再出','上期平肖没出→补出','上期特肖→本期平肖'],trend.map(x=>[x.label,pct(x.normal,x.n),pct(x.special,x.n),pct(...x.repeat),pct(...x.returning),pct(...x.fromSpecial)]));
   out.innerHTML=header+'<p>正在读取该彩种投注留存…</p>';
   let betting=null,error='';
   if(['xa','gc'].includes(lot))try{betting=await BettingData71.normalEvidence(lot,source,DR.slice(),NEXT);}catch(e){error='投注留存暂时无法读取。';}
@@ -174,14 +174,14 @@ async function show(box){
     return [members.join('、'),ComboLimits.describe(rule),...counts(false),...counts(true)];
   }):[];
   const labels={number:'号码榜',zodiac:'生肖榜',flat:'独立平特榜'};
-  out.innerHTML='<h4>第'+NEXT+'期取舍结论</h4>'+lotteryConclusion(rows,game,pool)
+  out.innerHTML=(window.RankStudy125?RankStudy125.attributes125(rows,n=>({'生肖':gz(n),'单双':gpar(n),'大小':gsz(n),'合数单双':ghe(n),'波色':gwv(n),'五行':gwx(n),'家野':gfam(n),'尾数':n%10}),EvidenceModel80):'')+'<h4>第'+NEXT+'期取舍结论</h4>'+lotteryConclusion(rows,game,pool)
     +'<h4>当前范围内的参考排序</h4><p>按近12期正码热度、遗漏、平肖再出及生肖五行综合评分。遗漏最多加1分。榜单和金额变化有本期留存且同口径达到12期才参与加权。中特表现单列核对。</p>'
     +'<p>'+ (game==='z3'?'按评分最多保留24码':'当前可用生肖')+' 【'+(fit||'无')+'】 '+(fit?'<button type="button" data-copy-evidence121="'+fit+'">复制范围</button>':'')+'。评分供筛选，组合仍按当前限制验证。</p>'
     +table(['候选','生肖','近12期正码出现','当前遗漏期','生肖榜名次','占比变化','参考分'],candidates.map(x=>[x.value,x.z,x.hits,x.gap,x.rank||'—',x.move===null?'—':(100*x.move).toFixed(2)+'个百分点',x.score.toFixed(2)]))
     +(game==='lx'?'<p>若三肖设置最多取2，允许取0、1或2个。排序只供参考，组合生成仍逐组检查上限。</p>':'')
     +(ruleRows.length?'<h4>已设生肖组历史开出情况</h4>'+table(['生肖组','范围','平肖符合','平肖开出分布','七球符合','七球开出分布'],ruleRows):'')
     +'<h4>投注榜单 × 正码／平肖／特肖</h4><p>'+ (betting?source+'站 '+betting.slot+' · 已核对'+items.length+'期 · '+(current?'已有本期准点榜':'本期尚无合格的准点榜'):(error||'该彩种暂无独立投注榜资料。'))+'</p>'
-    +table(['榜单分段','号码／生肖样本数','中正码／平肖','中特／特肖','正码同宽随机'],Object.entries(bands).flatMap(([k,v])=>v.map((a,i)=>[labels[k]+['前段','中段','后段'][i],a.n,pct(a.normal,a.n),pct(a.special,a.n),a.n?(100*a.base/a.n).toFixed(1)+'%':'—'])))
+    +table(['榜单分段','号码／生肖×期样本数','中正码／平肖','中特／特肖','正码同宽随机'],Object.entries(bands).flatMap(([k,v])=>v.map((a,i)=>[labels[k]+['前段','中段','后段'][i],a.n,pct(a.normal,a.n),pct(a.special,a.n),a.n?(100*a.base/a.n).toFixed(1)+'%':'—'])))
     +'<h4>20:30 → 21:00 生肖金额占比变化</h4>'+ (motionConclusion||'<p>暂无可核对的金额配对期。</p>')+'<p>只计两个时点都齐全的同一期；按占比升、平、降分别核对平肖、特肖和七球出现。</p>'
     +table(['榜单','配对期数','占比变化','平肖','特肖','七球未见'],motion.flatMap(m=>m.groups.map((a,i)=>[m.key==='zodiacs'?'生肖榜':'独立平特榜',m.n,['升','近似不变','降'][i],pct(a.normal,a.n),pct(a.special,a.n),pct(a.n-a.seven,a.n)])))+header;
 }
