@@ -75,6 +75,42 @@ function attributesRaw126(rows,attrs,model){
 }
 const attributeCache126=new Map();
 function attributes125(rows,attrs,model){const key=JSON.stringify([rows.slice(-90),balls.map(attrs)]);if(attributeCache126.has(key))return attributeCache126.get(key);const html=attributesRaw126(rows,attrs,model);if(attributeCache126.size>=3)attributeCache126.delete(attributeCache126.keys().next().value);attributeCache126.set(key,html);return html;}
+function migration127(a,b,{zod,target,currentA,currentB}={}){
+ const maps=[a,b].map(rows=>new Map(rows.map(r=>[Number(r.issue),r]))),same=(x,y)=>x&&y&&x.draw.t===y.draw.t&&x.draw.n.slice().sort((a,b)=>a-b).join()===y.draw.n.slice().sort((a,b)=>a-b).join();
+ function move(previous,current,kind){
+  if(!previous||!current||!valid(ns(previous.snapshot),balls)||!valid(ns(current),balls)||!valid(zs(previous.snapshot),animals)||!valid(zs(current),animals))return null;
+  const old=kind==='number'?ns(previous.snapshot):zs(previous.snapshot),next=kind==='number'?ns(current):zs(current),values=previous.draw.n.concat(previous.draw.t).map(n=>kind==='number'?n:zod(n));
+  const positions=[...new Set(values.map(v=>old.indexOf(v)))];if(positions.some(i=>i<0))return null;
+  return {positions:positions.map(i=>i+1),pool:positions.map(i=>next[i])};
+ }
+ const groups=[];
+ for(const kind of ['number','zodiac'])for(const source of ['A','B','intersection','union']){
+  const combine=(x,y)=>source==='A'?x?.pool:source==='B'?y?.pool:!x||!y?null:source==='intersection'?x.pool.filter(v=>y.pool.includes(v)):[...new Set(x.pool.concat(y.pool))];
+  const tests=[];let empty=0;
+  const issues=[...new Set([...maps[0].keys(),...maps[1].keys()])].sort((a,b)=>a-b);
+  for(const issue of issues){
+   if(maps[0].has(issue)&&maps[1].has(issue)&&!same(maps[0].get(issue),maps[1].get(issue)))continue;
+   const prev=maps.map(m=>m.get(issue-1));
+   if(['intersection','union'].includes(source)&&!same(prev[0],prev[1]))continue;
+   const current=maps.map(m=>m.get(issue)),moved=maps.map((m,i)=>move(prev[i],current[i]?.snapshot,kind)),pool=combine(...moved),draw=(source==='B'?current[1]:current[0])?.draw;
+   if(!pool||!draw)continue;if(!pool.length){empty++;continue;}
+   tests.push({...evaluate(pool,draw,zod,kind==='zodiac'),issue});
+  }
+  const previous=maps.map(m=>m.get(2026000+target-1)),moved=[move(previous[0],currentA,kind),move(previous[1],currentB,kind)];
+  const conflict=previous[0]&&previous[1]&&!same(previous[0],previous[1]);
+  const current=conflict||(['intersection','union'].includes(source)&&!same(previous[0],previous[1]))?null:combine(...moved);
+  groups.push({kind,source,current,positions:source==='A'?moved[0]?.positions:source==='B'?moved[1]?.positions:null,...stats(tests),empty});
+ }
+ return {target,groups};
+}
+function migrationHtml127(report){
+ const names={A:'A站迁移',B:'B站迁移',intersection:'两站迁移交集',union:'两站迁移并集'};
+ return '<section class="card"><h3>本期排名迁移候选 · 可选用或排除</h3><p>将上期七球的名次映射到本期同一时点榜单；生肖去重。勾选要操作的项目，再选择玩法。候选池不自动设为必出。</p>'+report.groups.map(r=>{
+  const label=(r.kind==='number'?'号码 · ':'生肖 · ')+names[r.source];
+  const body=r.current===null?'<p>缺少上期或本期同刻榜单，暂不生成。</p>':!r.current?.length?'<p>交集为空，未添加其他项目。</p>':'<p>'+r.current.map(v=>'<label style="display:inline-block;padding:4px"><input type="checkbox" data-migration-value127="'+v+'" checked> '+(typeof v==='number'?String(v).padStart(2,'0'):esc(v))+'</label>').join(' ')+'</p><p><select data-migration-game127><option value="te">特码号码池</option><option value="z3">正码号码池（三中三）</option>'+(r.kind==='zodiac'?'<option value="lx" selected>连肖N选K候选生肖</option>':'')+'</select> <button data-migration-action127="pick">选用勾选项</button> <button data-migration-action127="exclude">排除勾选项</button>'+(r.kind==='zodiac'&&r.current.length>=5?' <button data-migration-action127="max4">本组最多取4肖</button>':'')+'</p>';
+  return '<div style="border:1px solid #d9e3ea;padding:8px;margin:6px 0" data-migration-card127 data-target="'+report.target+'" data-lot="'+esc(CUR_LOT)+'" data-kind="'+r.kind+'" data-label="'+esc(label)+'"><b>'+esc(label)+'</b>'+(r.positions?'<p>上期名次【'+r.positions.join('、')+'】</p>':'')+body+'<p>历史有效 '+r.n+'期；正码全避开 '+rate(r.normalZero,r.n)+'；特码避开 '+rate(r.specialZero,r.n)+'；池内至少3正码 '+rate(r.triple,r.n)+'。'+(r.n?'相同池宽随机正码全避开 '+(100*r.baseNormal/r.n).toFixed(1)+'%。':'')+'空组 '+r.empty+'期未算成功。</p></div>';
+ }).join('')+'</section>';
+}
 function paths126(a,b,zod){
  const bm=new Map(b.map(r=>[Number(r.issue),r])),rows=[],compared=[];
  for(const list of [a,b]){const map=new Map(list.map(r=>[Number(r.issue),r]));for(const r of list){const next=map.get(Number(r.issue)+1);if(next){const before=r.draw.n.concat(r.draw.t).map(n=>zs(r.snapshot).indexOf(zod(n))+1),after=next.draw.n.concat(next.draw.t).map(n=>zs(next.snapshot).indexOf(zod(n))+1);compared.push({same:before.join()===after.join()});}}}
@@ -107,7 +143,8 @@ async function show(box){
   const [a,b]=results.map(r=>r.value),slot=UP.te_betting_analysis88==='slot2030'?'20:30':'21:00';
   const items=x=>x.reports.find(r=>r.slot===slot)?.report.items||[];
   const report=analyze(items(a),items(b),{zod:gz,target,currentA:slot==='20:30'?a.currentEarly:a.currentLate,currentB:slot==='20:30'?b.currentEarly:b.currentLate});
-  out.innerHTML='<p>当前彩种 '+(lot==='xa'?'新澳':'港彩')+' · '+slot+' · 第'+target+'期。20:30与21:00独立计算，其他更新点保留实际采集时间。</p>'+html(report);
+  const migration=migration127(items(a),items(b),{zod:gz,target,currentA:slot==='20:30'?a.currentEarly:a.currentLate,currentB:slot==='20:30'?b.currentEarly:b.currentLate});
+  out.innerHTML=migrationHtml127(migration)+'<p>当前彩种 '+(lot==='xa'?'新澳':'港彩')+' · '+slot+' · 第'+target+'期。20:30与21:00独立计算，其他更新点保留实际采集时间。</p>'+html(report);
   // Other lottery stays a separate dated observation; its issue number is never joined to this lottery.
   const other=lot==='xa'?'gc':'xa';
   const cross=await Promise.allSettled(['A','B'].map(s=>BettingData71.study125(other,s,[],null)));
@@ -119,9 +156,29 @@ async function show(box){
   }else out.innerHTML+='<p>另一彩同刻资料暂缺，保留本彩结果。</p>';
 }
 if(typeof document!=='undefined')document.addEventListener('click',e=>{if(e.target.closest('[data-calc126]')){const box=e.target.closest('#rank-study125'),read=k=>Number(box.querySelector('[data-liability126="'+k+'"]').value),t=read('teTotal'),w=read('teWin'),f=read('flatTotal'),v=read('flatWin'),m=read('multiplier'),out=box.querySelector('[data-profit126]');if([t,w,f,v].some(n=>!Number.isFinite(n)||n<0)||w>t||v>f){out.textContent='金额须非负，中奖投注额不能超过对应总收入。';return;}out.textContent='总收入 '+(t+f).toFixed(2)+'；含本金赔付 '+(m*w+2*v).toFixed(2)+'；此两项假设净额 '+(t+f-m*w-2*v).toFixed(2)+'。未计其他玩法和运营成本。';return;}const nine=e.target.closest('[data-nine125]');if(nine){const list=nine.dataset.nine125.split(',');if(Number(nine.dataset.target125)!==NEXT||winCurOff()>0){showClickFeedback('期号已变化，请重新计算当前期');return;}if(list.length===9&&new Set(list).size===9&&list.every(z=>animals.includes(z))){UP.lx9_seq1=list;UP.lx9_seq1_period=NEXT;saveData();showClickFeedback('已应用本期九肖①，原有必选和排除限制继续保留');}return;}const b=e.target.closest('[data-rank-study125]');if(!b)return;b.disabled=true;show(b.closest('#rank-study125')).catch(()=>{b.parentElement.querySelector('[data-rank-result125]').textContent='本次对照未完成，请重试。';}).finally(()=>b.disabled=false);});
+if(typeof document!=='undefined')document.addEventListener('click',e=>{
+ const button=e.target.closest('[data-migration-action127]');if(!button)return;const card=button.closest('[data-migration-card127]');
+ if(card.dataset.lot!==CUR_LOT||Number(card.dataset.target)!==NEXT||winCurOff()>0){showClickFeedback('请重新计算当前彩种、当前预测期');return;}
+ const kind=card.dataset.kind,chosen=[...card.querySelectorAll('[data-migration-value127]:checked')].map(el=>kind==='number'?Number(el.dataset.migrationValue127):el.dataset.migrationValue127),game=card.querySelector('[data-migration-game127]').value,action=button.dataset.migrationAction127;
+ if(!chosen.length){showClickFeedback('请先勾选项目');return;}
+ if(action==='max4'){
+  if(chosen.length<5){showClickFeedback('最多4肖限制需要至少勾选5肖');return;}
+  const rule={zods:chosen.slice(),min:0,max:4};UP.lx_grp_limits=UP.lx_grp_limits||[];if(!UP.lx_grp_limits.some(r=>JSON.stringify(r)===JSON.stringify(rule)))UP.lx_grp_limits.push(rule);
+ }else{
+  const pool=game==='lx'?chosen:kind==='zodiac'?balls.filter(n=>chosen.includes(gz(n))):chosen,exclude=action==='exclude';
+  const key=game==='lx'?(exclude?'lx_excl_zods':'lx_pick_n_zods'):game==='z3'?(exclude?'zm3_excl_nums':'zm3_pick_pool'):(exclude?'te_excl_nums':'te_pick_pool');
+  if(game==='lx'&&exclude&&chosen.some(z=>(UP.lx_force_zods||[]).includes(z))){showClickFeedback('与必选生肖冲突，请先调整必选');return;}
+  const allowed=game==='lx'?z=>!(UP.lx_excl_zods||[]).includes(z):getPracticeContext()[game==='te'?'teAllowed':'z3Allowed'];
+  const selected=exclude?pool:pool.filter(allowed);if(!selected.length){showClickFeedback('勾选项与已有排除条件冲突');return;}
+  const next=exclude?[...new Set((UP[key]||[]).concat(selected))]:selected;
+  if(game==='lx'&&exclude&&next.length>=12){showClickFeedback('不能排除全部生肖');return;}
+  UP.practical_actions=UP.practical_actions||[];UP.practical_actions.push({lot:CUR_LOT,sourcePeriod:NEXT-1,targetPeriod:NEXT,game,label:card.dataset.label,action:exclude?'exclude':'track',pool:selected.slice(),savedAt:new Date().toISOString(),key,previous:(UP[key]||[]).slice()});UP[key]=next;
+ }
+ saveData();const y=window.scrollY;render();requestAnimationFrame(()=>window.scrollTo(0,y));showClickFeedback(action==='max4'?'已设置本组最多4肖，允许取0肖':game==='lx'&&action==='pick'?'已放入N选K候选，不强制每组全含':'已应用到所选玩法');
+});
 if(typeof document!=='undefined'){
  document.addEventListener('DOMContentLoaded',()=>{const base=window.render;window.render=function(){const result=base.apply(this,arguments);if(activeTab==='te'&&!document.getElementById('attribute-picks125'))document.getElementById('tabContent')?.insertAdjacentHTML('afterbegin','<section class="card" id="attribute-picks125"><h3>正特属性取舍建议</h3><button type="button" data-attribute125>计算当前属性与历史表现</button><div data-attribute-output125></div></section>');requestAnimationFrame(()=>{const box=document.getElementById('rank-study125');if(activeTab==='betting'&&box&&!box.dataset.loading126){box.dataset.loading126='1';show(box).catch(()=>{box.querySelector('[data-rank-result125]').textContent='两站对照暂未完成，请点计算重试。';});}const attr=document.querySelector('[data-attribute125]');if(activeTab==='te'&&attr)attr.click();});return result;};});
  document.addEventListener('click',e=>{if(!e.target.closest('[data-attribute125]'))return;const out=document.querySelector('[data-attribute-output125]'),rows=planClean(DR).rows.filter(r=>{const d=String(r.date||r.d||'').replace('/','-'),date=d.length===5?'2026-'+d:d;return date>='2026-02-17'&&date<='2026-12-31';});out.innerHTML=attributes125(rows,n=>({'生肖':gz(n),'单双':gpar(n),'大小':gsz(n),'合数单双':ghe(n),'波色':gwv(n),'五行':gwx(n),'家野':gfam(n),'尾数':n%10}),EvidenceModel80);});
 }
-root.RankStudy125={analyze,evaluate,html,panel,attributes125,paths126,declining126};if(typeof module!=='undefined')module.exports=root.RankStudy125;
+root.RankStudy125={analyze,evaluate,html,panel,attributes125,paths126,declining126,migration127};if(typeof module!=='undefined')module.exports=root.RankStudy125;
 })(typeof window==='undefined'?globalThis:window);
