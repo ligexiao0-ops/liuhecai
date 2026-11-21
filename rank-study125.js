@@ -85,7 +85,7 @@ function migration127(a,b,{zod,target,currentA,currentB}={}){
  }
  const groups=[];
  for(const kind of ['number','zodiac'])for(const source of ['A','B','intersection','union']){
-  const combine=(x,y)=>source==='A'?x?.pool:source==='B'?y?.pool:!x||!y?null:source==='intersection'?x.pool.filter(v=>y.pool.includes(v)):[...new Set(x.pool.concat(y.pool))];
+  const combine=(x,y)=>source==='A'?(x?.pool??null):source==='B'?(y?.pool??null):!x||!y?null:source==='intersection'?x.pool.filter(v=>y.pool.includes(v)):[...new Set(x.pool.concat(y.pool))];
   const tests=[];let empty=0;
   const issues=[...new Set([...maps[0].keys(),...maps[1].keys()])].sort((a,b)=>a-b);
   for(const issue of issues){
