@@ -119,7 +119,12 @@ document.addEventListener('change',e=>{if(!e.target.matches('[data-bet-source103
   const currentEarly=currentAt('20:30'),currentLate=currentAt('21:00');
   return {reports,slot:currentLate?'21:00':currentEarly?'20:30':slot,current:currentLate||currentEarly,currentEarly,currentLate};
 }
+const studyCache126=new Map();
 async function study125(lot,source,draws,target){
+ const key=lot+source+target+draws.length;const old=studyCache126.get(key);if(old&&Date.now()-old.at<120000)return old.promise;
+ const promise=studyInner126(lot,source,draws,target);studyCache126.set(key,{at:Date.now(),promise});try{return await promise;}catch(e){studyCache126.delete(key);throw e;}
+}
+async function studyInner126(lot,source,draws,target){
   const reader=BettingReader78.create({fetch:window.fetch.bind(window),storage:null,local:false,source:()=>source});
   const data=await reader.read(lot+'/summary.json');
   if(data.lot!==lot||(source==='B'&&data.sourceId!=='B'))throw Error('来源或彩种不符');
@@ -128,7 +133,13 @@ async function study125(lot,source,draws,target){
   const period=target&&periods.find(p=>Number(p.period)===target);
   const currentAt=time=>{const snap=period?.timeSlots?.[time],delay=Date.parse(snap?.collectedAt)-Date.parse(snap?.scheduledAt);
     return snap&&!period.result&&!snap.resultSeenAtCollection&&delay>=0&&delay<=60000&&snap.scheduledAt?.slice(5,10)===pToDate(target).replace('/','-')&&BettingAnalysis71.validRanks(snap)?snap:null;};
-  return {reports,currentEarly:currentAt('20:30'),currentLate:currentAt('21:00')};
+  let changeEarly=null,changeLate=null;
+  if(period&&!period.result)try{const raw=await reader.read(lot+'/'+period.issue+'.json');
+    const observations=(raw.snapshots||[]).filter(s=>!s.resultSeenAtCollection&&s.collectedAt&&new Date(Date.parse(s.collectedAt)+28800000).toISOString().slice(5,10)===pToDate(target).replace('/','-')&&new Date(Date.parse(s.collectedAt)+28800000).toISOString().slice(11,16)>='19:00'&&new Date(Date.parse(s.collectedAt)+28800000).toISOString().slice(11,16)<='21:30').sort((a,b)=>Date.parse(a.collectedAt)-Date.parse(b.collectedAt));
+    const clean=[];for(const snap of observations){const signature=JSON.stringify([snap.zodiacs,snap.flatZodiacs]);if(!clean.length||signature!==clean.at(-1).signature)clean.push({signature,snap});}
+    if(clean.length>=2){changeEarly=clean.at(-2).snap;changeLate=clean.at(-1).snap;}
+  }catch{}
+  return {reports,currentEarly:currentAt('20:30'),currentLate:currentAt('21:00'),changeEarly,changeLate};
 }
 window.BettingData71={refresh:()=>load(true),fetchLatest:loadLive,show,normalEvidence,study125};
 })();
