@@ -78,14 +78,14 @@ function attributes125(rows,attrs,model){const key=JSON.stringify([rows.slice(-9
 function migration127(a,b,{zod,target,currentA,currentB}={}){
  const maps=[a,b].map(rows=>new Map(rows.map(r=>[Number(r.issue),r]))),same=(x,y)=>x&&y&&x.draw.t===y.draw.t&&x.draw.n.slice().sort((a,b)=>a-b).join()===y.draw.n.slice().sort((a,b)=>a-b).join();
  function move(previous,current,kind){
-  if(!previous||!current||!valid(ns(previous.snapshot),balls)||!valid(ns(current),balls)||!valid(zs(previous.snapshot),animals)||!valid(zs(current),animals))return null;
-  const old=kind==='number'?ns(previous.snapshot):zs(previous.snapshot),next=kind==='number'?ns(current):zs(current),values=previous.draw.n.concat(previous.draw.t).map(n=>kind==='number'?n:zod(n));
+  if(!previous||!valid(ns(previous.snapshot),balls)||!valid(zs(previous.snapshot),animals))return null;
+  const old=kind==='number'?ns(previous.snapshot):zs(previous.snapshot),ready=!!current&&valid(ns(current),balls)&&valid(zs(current),animals),next=kind==='number'?ns(current):zs(current),numbers=previous.draw.n.concat(previous.draw.t),values=numbers.map(n=>kind==='number'?n:zod(n));
   const positions=[...new Set(values.map(v=>old.indexOf(v)))];if(positions.some(i=>i<0))return null;
-  return {positions:positions.map(i=>i+1),pool:positions.map(i=>next[i])};
+  return {positions:positions.map(i=>i+1),pool:ready?positions.map(i=>next[i]):null,details:numbers.map((n,i)=>({position:i===6?'特码':'正码'+(i+1),number:n,zodiac:zod(n),rank:old.indexOf(values[i])+1,mapped:ready?next[old.indexOf(values[i])]:null})),sourcePeriod:previous.period??Number(previous.issue)%1000};
  }
  const groups=[];
  for(const kind of ['number','zodiac'])for(const source of ['A','B','intersection','union']){
-  const combine=(x,y)=>source==='A'?(x?.pool??null):source==='B'?(y?.pool??null):!x||!y?null:source==='intersection'?x.pool.filter(v=>y.pool.includes(v)):[...new Set(x.pool.concat(y.pool))];
+  const combine=(x,y)=>source==='A'?(x?.pool??null):source==='B'?(y?.pool??null):!x?.pool||!y?.pool?null:source==='intersection'?x.pool.filter(v=>y.pool.includes(v)):[...new Set(x.pool.concat(y.pool))];
   const tests=[];let empty=0;
   const issues=[...new Set([...maps[0].keys(),...maps[1].keys()])].sort((a,b)=>a-b);
   for(const issue of issues){
@@ -99,16 +99,17 @@ function migration127(a,b,{zod,target,currentA,currentB}={}){
   const previous=maps.map(m=>m.get(2026000+target-1)),moved=[move(previous[0],currentA,kind),move(previous[1],currentB,kind)];
   const conflict=previous[0]&&previous[1]&&!same(previous[0],previous[1]);
   const current=conflict||(['intersection','union'].includes(source)&&!same(previous[0],previous[1]))?null:combine(...moved);
-  groups.push({kind,source,current,positions:source==='A'?moved[0]?.positions:source==='B'?moved[1]?.positions:null,...stats(tests),empty});
+  groups.push({kind,source,current,positions:source==='A'?moved[0]?.positions:source==='B'?moved[1]?.positions:null,details:source==='A'?moved[0]?.details:source==='B'?moved[1]?.details:null,sourcePeriod:source==='A'?moved[0]?.sourcePeriod:source==='B'?moved[1]?.sourcePeriod:null,...stats(tests),empty});
  }
  return {target,groups};
 }
 function migrationHtml127(report){
  const names={A:'A站迁移',B:'B站迁移',intersection:'两站迁移交集',union:'两站迁移并集'};
- return '<section class="card"><h3>本期排名迁移候选 · 可选用或排除</h3><p>将上期七球的名次映射到本期同一时点榜单；生肖去重。勾选要操作的项目，再选择玩法。候选池不自动设为必出。</p>'+report.groups.map(r=>{
+ return '<section class="card"><h3>A／B分站生肖与号码 · 上期名次迁移选择／排除</h3><p>将上期七球的名次映射到本期同一时点榜单；生肖去重。勾选要操作的项目，再选择玩法。候选池不自动设为必出。</p>'+report.groups.map(r=>{
   const label=(r.kind==='number'?'号码 · ':'生肖 · ')+names[r.source];
+  const mapping=r.details?'<p>上期第'+r.sourcePeriod+'期 → 本期第'+report.target+'期，同一来源、同一时点</p>'+table(['上期开奖位置','上期号码','上期生肖','上期'+(r.kind==='number'?'号码投注':'生肖投注')+'排名','本期该名次对应'+(r.kind==='number'?'号码':'生肖')],r.details.map(d=>[d.position,String(d.number).padStart(2,'0'),d.zodiac,'第'+d.rank+'名',d.mapped===null?'待本期同刻榜单':typeof d.mapped==='number'?String(d.mapped).padStart(2,'0'):d.mapped])):'';
   const body=r.current===null?'<p>缺少上期或本期同刻榜单，暂不生成。</p>':!r.current?.length?'<p>交集为空，未添加其他项目。</p>':'<p>'+r.current.map(v=>'<label style="display:inline-block;padding:4px"><input type="checkbox" data-migration-value127="'+v+'" checked> '+(typeof v==='number'?String(v).padStart(2,'0'):esc(v))+'</label>').join(' ')+'</p><p><select data-migration-game127><option value="te">特码号码池</option><option value="z3">正码号码池（三中三）</option>'+(r.kind==='zodiac'?'<option value="lx" selected>连肖N选K候选生肖</option>':'')+'</select> <button data-migration-action127="pick">选用勾选项</button> <button data-migration-action127="exclude">排除勾选项</button>'+(r.kind==='zodiac'&&r.current.length>=5?' <button data-migration-action127="max4">本组最多取4肖</button>':'')+'</p>';
-  return '<div style="border:1px solid #d9e3ea;padding:8px;margin:6px 0" data-migration-card127 data-target="'+report.target+'" data-lot="'+esc(CUR_LOT)+'" data-kind="'+r.kind+'" data-label="'+esc(label)+'"><b>'+esc(label)+'</b>'+(r.positions?'<p>上期名次【'+r.positions.join('、')+'】</p>':'')+body+'<p>历史有效 '+r.n+'期；正码全避开 '+rate(r.normalZero,r.n)+'；特码避开 '+rate(r.specialZero,r.n)+'；池内至少3正码 '+rate(r.triple,r.n)+'。'+(r.n?'相同池宽随机正码全避开 '+(100*r.baseNormal/r.n).toFixed(1)+'%。':'')+'空组 '+r.empty+'期未算成功。</p></div>';
+  return '<div style="border:1px solid #d9e3ea;padding:8px;margin:6px 0" data-migration-card127 data-target="'+report.target+'" data-lot="'+esc(CUR_LOT)+'" data-kind="'+r.kind+'" data-label="'+esc(label)+'"><b>'+esc(label)+'</b>'+(r.positions?'<p>上期名次【'+r.positions.join('、')+'】</p>':'')+mapping+body+'<p>历史有效 '+r.n+'期；正码全避开 '+rate(r.normalZero,r.n)+'；特码避开 '+rate(r.specialZero,r.n)+'；池内至少3正码 '+rate(r.triple,r.n)+'。'+(r.n?'相同池宽随机正码全避开 '+(100*r.baseNormal/r.n).toFixed(1)+'%。':'')+'空组 '+r.empty+'期未算成功。</p></div>';
  }).join('')+'</section>';
 }
 function paths126(a,b,zod){
