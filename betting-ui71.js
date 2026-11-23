@@ -139,7 +139,7 @@ async function studyInner126(lot,source,draws,target){
     const clean=[];for(const snap of observations){const signature=JSON.stringify([snap.zodiacs,snap.flatZodiacs]);if(!clean.length||signature!==clean.at(-1).signature)clean.push({signature,snap});}
     if(clean.length>=2){changeEarly=clean.at(-2).snap;changeLate=clean.at(-1).snap;}
   }catch{}
-  return {reports,currentEarly:currentAt('20:30'),currentLate:currentAt('21:00'),changeEarly,changeLate};
+  return {reports,periods,currentEarly:currentAt('20:30'),currentLate:currentAt('21:00'),changeEarly,changeLate};
 }
 window.BettingData71={refresh:()=>load(true),fetchLatest:loadLive,show,normalEvidence,study125};
 })();
