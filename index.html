@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="app-version" content="10.1011.32">
+<meta name="app-version" content="10.1011.33">
 <script>window.APP_BUILD=Object.freeze({label:"v"+document.querySelector('meta[name="app-version"]').content,id:document.querySelector('meta[name="app-version"]').content.replace(/\./g,"")});</script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -3394,7 +3394,7 @@ function mathEvidenceZod(z){
  return ScoreProjects.zodiac({rows:DR,z:z,size:nums.length,zod:gz,attribute:ap,points:evidencePoints,tests:[[vp.prev,prev.has(z),'上期出现'],[vp.hot,cnt>=4,'近6期出现≥4次'],[vp.cold,cnt<=2,'近6期出现≤2次'],[vp.abs2,om>=2,'当前遗漏≥2期']]});
 }
 
-function currentZ3Prefs(){return {pick_z:UP.zm3_pick_zods||[],excl_z:UP.zm3_excl_zods||[],excl_n:UP.zm3_excl_nums||[],excl_t:UP.zm3_excl_tails||[],pick_tails:UP.zm3_pick_tails||[],excl_wx_multi:UP.zm3_excl_wx_multi||[],pick_pool:UP.zm3_pick_pool||[],pick_attrs:UP.zm3_pick_attrs||{},excl_attrs:UP.zm3_excl_attrs||{},pick_app:UP.zm3_pick_app||'',excl_app:UP.zm3_excl_app||false,same_tail:UP.zm3_same_tail||false,same_zod:UP.zm3_same_zod||false,z100_hot:UP.zm3_z100_hot||false,excl_z100_hot:UP.zm3_excl_z100_hot||false,z100_cold:UP.zm3_z100_cold||false,excl_z100_cold:UP.zm3_excl_z100_cold||false,zm2_om10:UP.zm3_zm2_om10||false,excl_zm2_om10:UP.zm3_excl_zm2_om10||false,one_zod_2:UP.zm3_one_zod_2||false,two_zod_2:UP.zm3_two_zod_2||false,excl_om7:UP.zm3_excl_om7||false,excl_om7_cold:UP.zm3_excl_om7_cold||false,z100_hot7:UP.zm3_z100_hot7||false,excl_z100_hot7:UP.zm3_excl_z100_hot7||false,z100_cold7:UP.zm3_z100_cold7||false,excl_z100_cold7:UP.zm3_excl_z100_cold7||false};}
+function currentZ3Prefs(){return {betting_priority133:UP.zm3_betting_priority133,pick_z:UP.zm3_pick_zods||[],excl_z:UP.zm3_excl_zods||[],excl_n:UP.zm3_excl_nums||[],excl_t:UP.zm3_excl_tails||[],pick_tails:UP.zm3_pick_tails||[],excl_wx_multi:UP.zm3_excl_wx_multi||[],pick_pool:UP.zm3_pick_pool||[],pick_attrs:UP.zm3_pick_attrs||{},excl_attrs:UP.zm3_excl_attrs||{},pick_app:UP.zm3_pick_app||'',excl_app:UP.zm3_excl_app||false,same_tail:UP.zm3_same_tail||false,same_zod:UP.zm3_same_zod||false,z100_hot:UP.zm3_z100_hot||false,excl_z100_hot:UP.zm3_excl_z100_hot||false,z100_cold:UP.zm3_z100_cold||false,excl_z100_cold:UP.zm3_excl_z100_cold||false,zm2_om10:UP.zm3_zm2_om10||false,excl_zm2_om10:UP.zm3_excl_zm2_om10||false,one_zod_2:UP.zm3_one_zod_2||false,two_zod_2:UP.zm3_two_zod_2||false,excl_om7:UP.zm3_excl_om7||false,excl_om7_cold:UP.zm3_excl_om7_cold||false,z100_hot7:UP.zm3_z100_hot7||false,excl_z100_hot7:UP.zm3_excl_z100_hot7||false,z100_cold7:UP.zm3_z100_cold7||false,excl_z100_cold7:UP.zm3_excl_z100_cold7||false};}
 function renderMathDecisionPanel(){
   var tm=calcTmOm(),t100=calcT100(),te=A49.map(function(n){return scoreTE_full(n,tm,t100);}).filter(function(x){return !x.hardExcluded;}).sort(function(a,b){return b.s-a.s||ScoreProjects.tie(a.n,DR.at(-1)?.p,CUR_LOT)-ScoreProjects.tie(b.n,DR.at(-1)?.p,CUR_LOT);}),zm=scoreZheng(currentZ3Prefs()).filter(function(x){return x.s>-500;}),lx=scoreZod(true).filter(function(x){return x.s>-500;}),fmt=function(n){return String(n).padStart(2,'0');};
   var teTop=te.slice(0,6),teAlt=te.slice(6,12),zmTop=[];zm.forEach(function(x){if(zmTop.length>=8)return;var zc=zmTop.filter(function(y){return gz(y.n)===gz(x.n);}).length,tc=zmTop.filter(function(y){return gtl(y.n)===gtl(x.n);}).length;if(zc<2&&tc<2)zmTop.push(x);});zm.forEach(function(x){if(zmTop.length<8&&!zmTop.some(function(y){return y.n===x.n;}))zmTop.push(x);});
@@ -5865,7 +5865,7 @@ function scoreZheng(extraPrefs){
 
     // ===== 返回结果（v10.0730.02：移除属性比majAttr字段）=====
     var isNearTail=hasNearTail,hardBlocked=s<=-500,me=mathEvidenceNumber(n,'zm');
-    s=hardBlocked?-1000000:me.score*10;rs.length=0;Array.prototype.push.apply(rs,hardBlocked?['当前正码排除条件：-1000000']:me.notes.map(function(x){return '计分 '+x;}));rs.push('最终得分 '+s.toFixed(2));
+    s=hardBlocked?-1000000:me.score*10;rs.length=0;Array.prototype.push.apply(rs,hardBlocked?['当前正码排除条件：-1000000']:me.notes.map(function(x){return '计分 '+x;}));var bp133=window.BettingLab133?BettingLab133.priorityPoints(extraPrefs.betting_priority133,CUR_LOT,NEXT,n,hardBlocked):0;if(bp133){s+=bp133;rs.push('手动大数据范围软优先 +3');me=Object.assign({},me,{parts:(me.parts||[]).concat([{label:'手动大数据范围软优先',points:bp133,note:'个人观察条件，不是验证后的概率'}])});}rs.push('最终得分 '+s.toFixed(2));
     return{n:n,s:s,rs:rs,projects:hardBlocked?[{label:"当前正码排除",points:s,note:"明确排除优先"}]:me.parts,nearTail:isNearTail};
   }).sort((a,b)=>b.s-a.s||ScoreProjects.tie(a.n,NEXT,CUR_LOT)-ScoreProjects.tie(b.n,NEXT,CUR_LOT));
 }
@@ -15322,7 +15322,7 @@ function renderZ3(){
   const maxWx=Object.keys(wxC).sort((a,b)=>wxC[b]-wxC[a])[0];
   const zeroWx=Object.keys(wxC).filter(w=>wxC[w]===0);
 
-  const sc=scoreZheng({pick_z:UP.zm3_pick_zods||[],excl_z:UP.zm3_excl_zods||[],excl_n:UP.zm3_excl_nums||[],excl_t:UP.zm3_excl_tails||[],pick_tails:UP.zm3_pick_tails||[],excl_wx_multi:UP.zm3_excl_wx_multi||[],pick_pool:UP.zm3_pick_pool||[],pick_attrs:UP.zm3_pick_attrs||{},excl_attrs:UP.zm3_excl_attrs||{},pick_app:UP.zm3_pick_app||'',excl_app:UP.zm3_excl_app||false,same_tail:UP.zm3_same_tail||false,same_zod:UP.zm3_same_zod||false,z100_hot:UP.zm3_z100_hot||false,excl_z100_hot:UP.zm3_excl_z100_hot||false,z100_cold:UP.zm3_z100_cold||false,excl_z100_cold:UP.zm3_excl_z100_cold||false,zm2_om10:UP.zm3_zm2_om10||false,excl_zm2_om10:UP.zm3_excl_zm2_om10||false,one_zod_2:UP.zm3_one_zod_2||false,two_zod_2:UP.zm3_two_zod_2||false,excl_om7:UP.zm3_excl_om7||false,excl_om7_cold:UP.zm3_excl_om7_cold||false,z100_hot7:UP.zm3_z100_hot7||false,excl_z100_hot7:UP.zm3_excl_z100_hot7||false,z100_cold7:UP.zm3_z100_cold7||false,excl_z100_cold7:UP.zm3_excl_z100_cold7||false});
+  const sc=scoreZheng({betting_priority133:UP.zm3_betting_priority133,pick_z:UP.zm3_pick_zods||[],excl_z:UP.zm3_excl_zods||[],excl_n:UP.zm3_excl_nums||[],excl_t:UP.zm3_excl_tails||[],pick_tails:UP.zm3_pick_tails||[],excl_wx_multi:UP.zm3_excl_wx_multi||[],pick_pool:UP.zm3_pick_pool||[],pick_attrs:UP.zm3_pick_attrs||{},excl_attrs:UP.zm3_excl_attrs||{},pick_app:UP.zm3_pick_app||'',excl_app:UP.zm3_excl_app||false,same_tail:UP.zm3_same_tail||false,same_zod:UP.zm3_same_zod||false,z100_hot:UP.zm3_z100_hot||false,excl_z100_hot:UP.zm3_excl_z100_hot||false,z100_cold:UP.zm3_z100_cold||false,excl_z100_cold:UP.zm3_excl_z100_cold||false,zm2_om10:UP.zm3_zm2_om10||false,excl_zm2_om10:UP.zm3_excl_zm2_om10||false,one_zod_2:UP.zm3_one_zod_2||false,two_zod_2:UP.zm3_two_zod_2||false,excl_om7:UP.zm3_excl_om7||false,excl_om7_cold:UP.zm3_excl_om7_cold||false,z100_hot7:UP.zm3_z100_hot7||false,excl_z100_hot7:UP.zm3_excl_z100_hot7||false,z100_cold7:UP.zm3_z100_cold7||false,excl_z100_cold7:UP.zm3_excl_z100_cold7||false});
   // 【v10.0725.14修复】AI独立评分保留作为参考基准
   const aiSc=z3StaticGet('scoreZhengAI',scoreZhengAI);
   // 【核心修复】poolTop现在使用scoreZheng（用户筛选评分），而非scoreZhengAI
@@ -15503,6 +15503,7 @@ function renderZ3(){
     var exactCtx=getPracticeContext();if(exactCtx){
       var exactLayer=TailPracticeStudy.modes[UP.tailStudyMode]?UP.tailStudyMode:'all',exactPool=TailPracticeStudy.range(DR,exactLayer).filter(exactCtx.z3Allowed);
       var exactPriority=TailPracticeStudy.rank(DR,exactPool,['zodiac','element'].includes(UP.tailStudyModel)?UP.tailStudyModel:'frequency',gz,gwx,CUR_LOT);
+      if(window.BettingLab133)exactPriority=BettingLab133.prefer(exactPriority,UP.zm3_betting_priority133,CUR_LOT,NEXT);
       var exactGroups=ExactCombos.select(DR,exactPool,gz,gwx,{mode:UP.exactTripleMode||'auto',lot:CUR_LOT,priority:exactPriority,valid:function(ns){return exactCtx.poolValid(ns)&&exactCtx.tripleValid(ns);}});
       top3=exactGroups.length?exactGroups[0].pool.slice():[];
     }
@@ -17158,7 +17159,7 @@ function checkCustomZ3(){
   const nums=raw.split(/[^0-9]+/).map(Number).filter(n=>n>=1&&n<=49);
   const resEl=document.getElementById('z3-custom-result');
   if(nums.length<2){resEl.innerHTML='<span style="color:#c0392b">请输入至少2个号码</span>';return;}
-  const sc=scoreZheng({pick_z:UP.zm3_pick_zods||[],excl_z:UP.zm3_excl_zods||[],excl_n:UP.zm3_excl_nums||[],excl_t:UP.zm3_excl_tails||[],pick_tails:UP.zm3_pick_tails||[],excl_wx_multi:UP.zm3_excl_wx_multi||[],pick_pool:UP.zm3_pick_pool||[],pick_attrs:UP.zm3_pick_attrs||{},excl_attrs:UP.zm3_excl_attrs||{},pick_app:UP.zm3_pick_app||'',same_tail:UP.zm3_same_tail||false,same_zod:UP.zm3_same_zod||false,z100_hot:UP.zm3_z100_hot||false,z100_cold:UP.zm3_z100_cold||false,zm2_om10:UP.zm3_zm2_om10||false});
+  const sc=scoreZheng({betting_priority133:UP.zm3_betting_priority133,pick_z:UP.zm3_pick_zods||[],excl_z:UP.zm3_excl_zods||[],excl_n:UP.zm3_excl_nums||[],excl_t:UP.zm3_excl_tails||[],pick_tails:UP.zm3_pick_tails||[],excl_wx_multi:UP.zm3_excl_wx_multi||[],pick_pool:UP.zm3_pick_pool||[],pick_attrs:UP.zm3_pick_attrs||{},excl_attrs:UP.zm3_excl_attrs||{},pick_app:UP.zm3_pick_app||'',same_tail:UP.zm3_same_tail||false,same_zod:UP.zm3_same_zod||false,z100_hot:UP.zm3_z100_hot||false,z100_cold:UP.zm3_z100_cold||false,zm2_om10:UP.zm3_zm2_om10||false});
   const ranked=sc.map((x,i)=>({n:x.n,s:x.s,rank:i+1}));
   let h='<table><tr><th>号码</th><th>生肖</th><th>评分</th><th>排名(共49)</th><th>评价</th></tr>';
   nums.forEach(n=>{
@@ -19985,8 +19986,9 @@ if(_authed){
 <script src="betting-period94.js?v=10101120"></script>
 <script src="betting-match117.js?v=10101120"></script>
 <script src="betting-review123.js?v=10101123"></script>
-<script src="betting-ui71.js?v=10101129"></script>
-<script src="rank-study125.js?v=10101132"></script>
+<script src="betting-ui71.js?v=10101133"></script>
+<script src="betting-lab133.js?v=10101133"></script>
+<script src="rank-study125.js?v=10101133"></script>
 <script src="normal-evidence121.js?v=10101131"></script>
 <script src="chinese-input76.js?v=10101120"></script>
 <script src="required-zodiacs82.js?v=10101120"></script>

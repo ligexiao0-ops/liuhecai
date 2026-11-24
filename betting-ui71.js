@@ -121,8 +121,8 @@ document.addEventListener('change',e=>{if(!e.target.matches('[data-bet-source103
 }
 const studyCache126=new Map();
 async function study125(lot,source,draws,target){
- const key=lot+source+target+draws.length;const old=studyCache126.get(key);if(old&&Date.now()-old.at<120000)return old.promise;
- const promise=studyInner126(lot,source,draws,target);studyCache126.set(key,{at:Date.now(),promise});try{return await promise;}catch(e){studyCache126.delete(key);throw e;}
+ const key=lot+'|'+source+'|'+target+'|'+JSON.stringify(draws.map(r=>[r.p,r.date||r.d,r.n,r.t]));const old=studyCache126.get(key);if(old&&Date.now()-old.at<120000)return old.promise;
+ const promise=studyInner126(lot,source,draws,target);studyCache126.set(key,{at:Date.now(),promise});if(studyCache126.size>8)studyCache126.delete(studyCache126.keys().next().value);try{return await promise;}catch(e){studyCache126.delete(key);throw e;}
 }
 async function studyInner126(lot,source,draws,target){
   const reader=BettingReader78.create({fetch:window.fetch.bind(window),storage:null,local:false,source:()=>source});
