@@ -13,12 +13,12 @@ function recurrence(rows,zod,element){
   return [...zodiac,...'金木水火土'].map(label=>{
     const match=z=>z===label||element(z)===label;
     const normal=r=>r.n.some(n=>match(zod(n))),special=r=>match(zod(r.t));
-    const out={label,repeat:[0,0,0],returning:[0,0,0],fromSpecial:[0,0],normal:0,special:0,n:sample.length};
+    const out={label,repeat:[0,0,0],returning:[0,0,0],fromSpecial:[0,0],fromSpecialPeriods:[],normal:0,special:0,n:sample.length};
     sample.forEach((r,i)=>{
       const hit=normal(r);out.normal+=hit;out.special+=special(r);
       const previous=sample[i-1];if(!previous||previous.p+1!==r.p)return;
       const group=normal(previous)?out.repeat:out.returning;group[0]+=hit;group[1]++;group[2]+=hit||special(r);
-      if(special(previous)){out.fromSpecial[0]+=hit;out.fromSpecial[1]++;}
+      if(special(previous)){out.fromSpecial[0]+=hit;out.fromSpecial[1]++;out.fromSpecialPeriods.push(previous.p+'→'+r.p);}
     });
     return out;
   });
@@ -121,7 +121,7 @@ async function show(box){
   const trend=recurrence(rows,gz,zodWx),out=box.querySelector('[data-evidence-result121]');
   const pool=box.dataset.pool.split(',').filter(Boolean).map(x=>game==='z3'?Number(x):x);
   const last=rows.at(-1),stats=new Map(trend.map(x=>[x.label,x]));
-  const header='<h4>各生肖与生肖五行 · 平肖只按6个正码去重</h4><p>基础开奖记录 '+rows.length+'期；生肖映射适用 '+rows.filter(sampleDate).length+'期。单个生肖每期最多计1次，各生肖次数可相加超过总期数。再出／补出仅核对连续期号，各自以条件成立的期数为分母。</p>'+table(['生肖／五行','平肖出现','特肖出现','上期平肖出现→再出','上期平肖没出→补出','上期特肖→本期平肖'],trend.map(x=>[x.label,pct(x.normal,x.n),pct(x.special,x.n),pct(...x.repeat),pct(...x.returning),pct(...x.fromSpecial)]));
+  const header='<h4>各生肖与生肖五行 · 平肖只按6个正码去重</h4><p>基础开奖记录 '+rows.length+'期；生肖映射适用 '+rows.filter(sampleDate).length+'期。单个生肖每期最多计1次，各生肖次数可相加超过总期数。再出／补出仅核对连续期号，各自以条件成立的期数为分母。如分母为3，表示该生肖的条件只匹配3次，不代表只读取3期开奖；对应期号另列。</p>'+table(['生肖／五行','平肖出现','特肖出现','上期平肖出现→再出','上期平肖没出→补出','上期特肖→本期平肖','该条件的实际期号'],trend.map(x=>[x.label,pct(x.normal,x.n),pct(x.special,x.n),pct(...x.repeat),pct(...x.returning),pct(...x.fromSpecial),x.fromSpecialPeriods.join('、')||'无']));
   out.innerHTML=header+'<p>正在读取该彩种投注留存…</p>';
   let betting=null,error='';
   if(['xa','gc'].includes(lot))try{betting=await BettingData71.normalEvidence(lot,source,DR.slice(),NEXT);}catch(e){error='投注留存暂时无法读取。';}
