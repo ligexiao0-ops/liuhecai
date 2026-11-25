@@ -77,7 +77,7 @@ function pickConclusion(label,rows,key,locked=[]){
   const keep=choices.slice(0,Math.min(3,choices.length-1||1));
   const low=choices.findLast(x=>!keep.includes(x)&&!locked.includes(x.z));
   const show=x=>x.z+' '+percent(x[key]);
-  return '<p><b>'+label+'</b> · 优先保留 '+keep.map(show).join('、')+(low?'。优先考虑排除 '+show(low)+'（估计不出 '+percent(1-low[key])+'）':'')+'。</p>';
+  return '<p><b>'+label+'</b> · 样本内保留观察 '+keep.map(show).join('、')+(low?'。样本内低频观察 '+show(low)+'（估计不出 '+percent(1-low[key])+'）':'')+'。</p>';
 }
 function lotteryConclusion(rows,game,pool){
   const eligible=game==='z3'?[...new Set(pool.map(gz))]:pool;
@@ -85,7 +85,7 @@ function lotteryConclusion(rows,game,pool){
   if(!values.length)return '<p>当前缺少适用生肖映射的开奖记录，暂无法给出生肖结论。</p>';
   const locked=game==='lx'?(UP.lx_force_zods||[]):[];
   return pickConclusion('平肖 · 正码6球',values,'p6',locked)+pickConclusion('连肖参考 · 七球单肖',values,'p7',locked)
-    +'<p>按上期该肖有无开出正码分组。估计值用24期理论基准作平滑；连肖所列是单个生肖出现的估计。</p>'
+    +'<p>按上期该肖有无开出正码分组。估计值用24期理论基准作平滑，是样本内参考比例，未验证为下期概率；连肖所列是单个生肖出现的估计，不能相乘当整组全中概率。</p>'
     +'<details><summary>查看各生肖估计依据</summary>'+table(['生肖','上期平肖','平肖估计','七球估计','匹配样本'],values.map(x=>[x.z,x.seen?'出现':'未见',percent(x.p6),percent(x.p7),x.n+'期']))+'</details>';
 }
 function bettingConclusion(report,snapshot){
@@ -97,7 +97,7 @@ function bettingConclusion(report,snapshot){
     const ranked=groups.map(g=>{const baseline=g.tests.reduce((a,t)=>a+t.baseline[base],0)/g.n;return {g,baseline,delta:(reverse?-1:1)*(g[metric]-baseline)};}).sort((a,b)=>b.delta-a.delta);
     const best=ranked[0];if(!best)return '<p>'+label+' · 暂无可核对样本。</p>';
     const {g,baseline,delta}=best,hit=reverse?g.n-g.h:g.tests.filter(t=>t.normalHits.length).length;
-    return '<p><b>'+label+'</b> · '+(delta>0?'优先观察':'暂作对照')+'「'+g.label+'」，历史 '+pct(hit,g.n)+'，同宽随机 '+percent(reverse?1-baseline:baseline)+'，相差 '+fmtDelta(delta)+'。</p>';
+    return '<p><b>'+label+'</b> · '+(delta>0?'样本内较高，待验证':'暂作对照')+'「'+g.label+'」，历史 '+pct(hit,g.n)+'，同宽随机 '+percent(reverse?1-baseline:baseline)+'，相差 '+fmtDelta(delta)+'。</p>';
   }).join('');
   let advice='<p>本期所选时点暂无可用生肖榜结论。可先参考下方的开奖历史结论。</p>';
   if(snapshot&&items.length){
@@ -108,7 +108,7 @@ function bettingConclusion(report,snapshot){
     const current=list.map((z,i)=>{const a=bands[band(i,12)],size=balls.filter(n=>gz(n)===z).length;
       return {z,n:a.n,p6:(a.normal+24*BettingAnalysis71.any(size,6))/(a.n+24),p7:(a.seven+24*BettingAnalysis71.any(size,7))/(a.n+24)};});
     advice=pickConclusion('本期榜单 · 平肖',current,'p6')+pickConclusion('本期榜单 · 七球单肖',current,'p7')
-      +'<p>依据'+(independent?'独立平特榜':'生肖榜')+'名次段，按同宽基准平滑。同段内优先按本期名次排列。</p>';
+      +'<p>依据'+(independent?'独立平特榜':'生肖榜')+'名次段，按同宽基准平滑。同段内仅按本期名次排列；生肖×期不是独立开奖期，不能据此自动硬排。</p>';
   }
   return '<section class="card" id="bet-conclusion122"><h3>大数据结论 · '+source+'站</h3><p>'+report.focusLabel+' · 已核对 '+items.length+'期'+(items.length<12?'，样本少，结论供观察':'')+'。</p>'+findings+advice+'</section>';
 }
@@ -134,7 +134,7 @@ async function show(box){
   const motionConclusion=motion.filter(x=>x.n).map(x=>{
     const ranked=x.groups.map((group,i)=>({group,label:['占比上升','占比近似不变','占比下降'][i]})).filter(x=>x.group.n).sort((a,b)=>(a.group.normal-a.group.base)/(a.group.n+24)-(b.group.normal-b.group.base)/(b.group.n+24));
     const {label,group}=ranked[0];
-    return '<p><b>'+(x.key==='zodiacs'?'生肖榜':'独立平特榜')+'</b> · '+label+'组的平肖表现相对同宽基准最低。历史 '+pct(group.normal,group.n)+'，同宽随机 '+percent(group.base/group.n)+'。'+(x.n<12?'目前只有'+x.n+'个配对期，先列为观察。':'可优先检查这组中的低分生肖。')+'</p>';
+    return '<p><b>'+(x.key==='zodiacs'?'生肖榜':'独立平特榜')+'</b> · '+label+'组的平肖表现相对同宽基准最低。历史 '+pct(group.normal,group.n)+'，同宽随机 '+percent(group.base/group.n)+'。'+(x.n<12?'目前只有'+x.n+'个配对期，先列为观察。':'可查看这组低分生肖，但未经前向验证，不据此自动排除。')+'</p>';
   }).join('');
   const amountMove=z=>{
     for(const m of motion.slice().reverse()){

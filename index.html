@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="app-version" content="10.1011.34">
+<meta name="app-version" content="10.1011.35">
 <script>window.APP_BUILD=Object.freeze({label:"v"+document.querySelector('meta[name="app-version"]').content,id:document.querySelector('meta[name="app-version"]').content.replace(/\./g,"")});</script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -12362,11 +12362,36 @@ function renderLX(){
   // 用户明确排除的生肖才进入连肖禁区；特肖参考不进入禁区。
   var exclLX=Array.from(new Set(excl));
 
-  function violatesGrp(z,chosen){
-    return grpLimits.some(function(g){
-      if(g.zods.indexOf(z)<0)return false;
-      return chosen.filter(function(c){return g.zods.indexOf(c.z)>=0;}).length>=g.max;
+  function lxPoolFor135(exclList){
+    const excluded=Array.from(new Set((exclList||[]).concat(UP.lx_ban_zods||[])));
+    return zSc.filter(function(x){
+      return excluded.indexOf(x.z)<0&&
+        (!UP.lx_all_hot||x.hot6>=4)&&(!UP.lx_excl_all_hot||x.hot6<4)&&
+        (!UP.lx_all_cold||x.hot6<=2)&&(!UP.lx_excl_all_cold||x.hot6>2)&&
+        (!UP.lx_all_home||!x.wild)&&(!UP.lx_excl_all_home||x.wild)&&
+        (!UP.lx_all_wild||x.wild)&&(!UP.lx_excl_all_wild||!x.wild);
     });
+  }
+  // Main, alternate, derived four-zodiac and seven-pool groups share one gate.
+  function isValidLxCombo135(combo,n,forceList,exclList){
+    if(!Array.isArray(combo)||combo.length!==n)return false;
+    const zs=combo.map(function(x){return x.z;}),allowed=lxPoolFor135(exclList);
+    if(new Set(zs).size!==n||zs.some(function(z){return !allowed.some(function(x){return x.z===z;});}))return false;
+    if(!Array.from(new Set(forceList||[])).every(function(z){return zs.indexOf(z)>=0;}))return false;
+    for(var i=0;i<zs.length;i++)for(var j=i+1;j<zs.length;j++){
+      if(noTog.some(function(pair){return pair.indexOf(zs[i])>=0&&pair.indexOf(zs[j])>=0;}))return false;
+    }
+    if(!ComboLimits.allowed(zs,grpLimits))return false;
+    var hasExplicitFamilyRule=!!(UP.lx_all_home||UP.lx_excl_all_home||UP.lx_all_wild||UP.lx_excl_all_wild||UP.lx_wild_ratio);
+    var wildCount=combo.filter(function(x){return x.wild;}).length,homeCount=n-wildCount;
+    if(n>=4&&!hasExplicitFamilyRule&&(wildCount===n||homeCount===n))return false;
+    if(UP.lx_wild_ratio){
+      var parts=UP.lx_wild_ratio.split(':').map(Number);
+      if(wildCount>parts[0]||homeCount>parts[1])return false;
+    }
+    if(UP.lx_same_zod_cnt>0&&zs.filter(function(z){return cur7Z.includes(z);}).length>UP.lx_same_zod_cnt)return false;
+    if(UP.lx_pick_combos&&UP.lx_pick_combos.length&&!UP.lx_pick_combos.some(function(cb){return Array.isArray(cb)&&cb.length===n&&new Set(cb).size===n&&cb.every(function(z){return zs.indexOf(z)>=0;});}))return false;
+    return true;
   }
   function pickN(n,forceList,exclList,topN){
     forceList=forceList||force;exclList=exclList||exclLX; // 【v10.0812.07-#526】默认排除含特肖
@@ -12378,75 +12403,12 @@ function renderLX(){
       if(res&&res.length>0&&Array.isArray(res[0]))return res;
       return [res];
     }
-    // 禁区生肖：点选后并入排除，包含它们的连肖组合全被剔除
-    if(UP.lx_ban_zods&&UP.lx_ban_zods.length){
-      exclList=Array.from(new Set(exclList.concat(UP.lx_ban_zods)));
-    }
-    let pool=zSc.filter(x=>exclList.indexOf(x.z)<0);
-    // 全热肖/全冷肖
-    if(UP.lx_all_hot){
-      pool=pool.filter(x=>x.hot6>=4);
-    }
-    if(UP.lx_excl_all_hot){
-      pool=pool.filter(x=>x.hot6<4);
-    }
-    if(UP.lx_all_cold){
-      pool=pool.filter(x=>x.hot6<=2);
-    }
-    if(UP.lx_excl_all_cold){
-      pool=pool.filter(x=>x.hot6>2);
-    }
-    // 全家禽/全野兽
-    if(UP.lx_all_home){
-      pool=pool.filter(x=>!x.wild);
-    }
-    if(UP.lx_excl_all_home){
-      pool=pool.filter(x=>x.wild);
-    }
-    if(UP.lx_all_wild){
-      pool=pool.filter(x=>x.wild);
-    }
-    if(UP.lx_excl_all_wild){
-      pool=pool.filter(x=>!x.wild);
-    }
+    let pool=lxPoolFor135(exclList);
     // 必含项与全部筛选条件冲突时直接无解，禁止静默放宽用户限制。
     const forceItems=forceList.map(z=>pool.find(x=>x.z===z)).filter(Boolean);
     if(forceItems.length!==Array.from(new Set(forceList)).length)return wrapTopN([]);
     const rem=pool.filter(x=>!forceItems.find(r=>r.z===x.z));
-    // 验证组合是否满足约束
-    function isValidCombo(combo){
-      // noTog检查
-      for(var i=0;i<combo.length;i++){
-        for(var j=i+1;j<combo.length;j++){
-          if(noTog.some(pair=>pair.indexOf(combo[i].z)>=0&&pair.indexOf(combo[j].z)>=0))return false;
-        }
-      }
-      // grpLimits检查
-      if(!ComboLimits.allowed(combo.map(function(c){return c.z;}),grpLimits))return false;
-      // 家野结构只在用户没有明确指定家野条件时作为默认约束。
-      // 用户选择“全家/全野/排除全家/排除全野/指定比例”时，显式条件优先。
-      var hasExplicitFamilyRule=!!(UP.lx_all_home||UP.lx_excl_all_home||UP.lx_all_wild||UP.lx_excl_all_wild||UP.lx_wild_ratio);
-      if(n>=4&&!hasExplicitFamilyRule){
-        var wc=combo.filter(x=>x.wild).length,hc=combo.length-wc;
-        if(wc>=n&&hc===0)return false;
-        if(hc>=n&&wc===0)return false;
-      }
-      if(UP.lx_wild_ratio){
-        var parts=UP.lx_wild_ratio.split(':').map(Number);
-        var wTarget=parts[0],hTarget=parts[1];
-        var wc2=combo.filter(x=>x.wild).length;
-        if(wc2>wTarget)return false;
-        if(combo.length-wc2>hTarget)return false;
-      }
-      if(UP.lx_same_zod_cnt>0){
-        var sameC=combo.filter(x=>cur7Z.includes(x.z)).length;
-        if(sameC>UP.lx_same_zod_cnt)return false;
-      }
-      // 【v10.0821.01-#562】取消"特肖最多选1个"硬约束：
-      // 用户指出排除11个生肖时，连肖/三中三也被卡死仅选1肖，明显错误。
-      // 特肖生肖既不被过滤也不因特肖预测降权，因为它仍可能作为平码生肖出现。
-      return true;
-    }
+    const isValidCombo=function(combo){return isValidLxCombo135(combo,n,forceList,exclList);};
     var need=n-forceItems.length;
     if(need<=0){const full=forceItems.slice(0,n);return wrapTopN(forceItems.length===n&&isValidCombo(full)?full:[]);}
     // 扩大候选池到全部12生肖（不再只取前10），确保权重变化时组合真正改变
@@ -12468,29 +12430,9 @@ function renderLX(){
       var result=scoreLXCombo(fullCombo,zSc);
       return {combo:fullCombo,s:result.s};
     }).sort(function(a,b){return b.s-a.s;});
-    var bestCombo=scoredCombos.length>0?scoredCombos[0].combo:null;
-    var chosenCombo=bestCombo||forceItems.concat(rem).slice(0,n);
-    // N选K必出连肖组合约束：最终结果必须是lx_pick_combos之一
-    if(UP.lx_pick_combos&&UP.lx_pick_combos.length>0){
-      var matchCombo=UP.lx_pick_combos.find(function(cb){
-        return cb.length===chosenCombo.length&&cb.every(function(z){return chosenCombo.some(function(c){return c.z===z;});});
-      });
-      if(!matchCombo){
-        // 从lx_pick_combos中按scoreLXCombo评分选最佳
-        var bestLxPick=null,bestLxScore=-Infinity;
-        UP.lx_pick_combos.forEach(function(cb){
-          if(cb.length!==chosenCombo.length)return;
-          var items=cb.map(function(z){return pool.find(function(x){return x.z===z;});}).filter(Boolean);
-          if(items.length!==cb.length)return;
-          // 排除lx_excl_zods
-          if(cb.some(function(z){return (UP.lx_excl_zods||[]).indexOf(z)>=0||(UP.lx_ban_zods||[]).indexOf(z)>=0;}))return;
-          if(!forceList.every(function(z){return cb.indexOf(z)>=0;})||!isValidCombo(items))return;
-          var r=scoreLXCombo(items,zSc);
-          if(r.s>bestLxScore){bestLxScore=r.s;bestLxPick=items;}
-        });
-        if(bestLxPick)chosenCombo=bestLxPick;
-      }
-    }
+    var chosenCombo=scoredCombos.length>0?scoredCombos[0].combo:null;
+    if(!chosenCombo)return wrapTopN([]);
+    // lx_pick_combos is already enforced above for every scored candidate.
     // 【v10.0812.04阶段④新增】TOP-N组合优化：请求topN>1时返回排序后的前N个组合数组（主选TOP1+备选TOP2-3）
     if(topN&&topN>1){
       var topList=[chosenCombo];
@@ -12516,7 +12458,7 @@ function renderLX(){
   const lx5list=pickN(5,force,exclLX,3); // 【v10.0812.07-#526】excl→exclLX(含特肖)
   const lx5=lx5list[0]||[],lx5alt1=lx5list[1],lx5alt2=lx5list[2];
   const lxStrictOK=lx5.length===5;
-  var _lxAllowed=zSc.filter(function(x){return exclLX.indexOf(x.z)<0;});
+  var _lxAllowed=lxPoolFor135(exclLX);
   var _lx7=force.map(function(z){return _lxAllowed.find(function(x){return x.z===z;});}).filter(Boolean);
   _lxAllowed.forEach(function(x){if(_lx7.length<7&&!_lx7.some(function(y){return y.z===x.z;}))_lx7.push(x);});
   var _absentRank=_lxAllowed.filter(function(x){return cur7Z.indexOf(x.z)<0;});
@@ -12526,11 +12468,11 @@ function renderLX(){
     var ri=-1;for(var q=_lx7.length-1;q>=0;q--){if(force.indexOf(_lx7[q].z)<0&&cur7Z.indexOf(_lx7[q].z)>=0){ri=q;break;}}
     if(ri>=0){_lx7[ri]=x;_absentHave++;}
   });
-  var _lx7groups=_lx7.length===7?combNK(_lx7,5).filter(function(g){return ComboLimits.allowed(g.map(function(x){return x.z;}),grpLimits);}):[];
+  var _lx7groups=_lx7.length===7?combNK(_lx7,5).filter(function(g){return isValidLxCombo135(g,5,force,exclLX);}):[];
   // 四连肖优化：从主选五连肖中去掉评分最弱生肖（rk值最大者）生成四连肖
-  var lx5Weak=lx5.slice().sort(function(a,b){return b.rk-a.rk;})[0];
+  var lx5Weak=lx5.filter(function(x){return force.indexOf(x.z)<0;}).sort(function(a,b){return b.rk-a.rk;})[0];
   var lx4=lx5Weak?lx5.filter(function(x){return x!==lx5Weak;}):pickN(4);
-  if(!lx4||lx4.length!==4||!ComboLimits.allowed(lx4.map(function(x){return x.z;}),grpLimits))lx4=pickN(4);
+  if(!isValidLxCombo135(lx4,4,force,exclLX))lx4=pickN(4);
   const lx3=pickN(3)||[];
   // 二连肖：独立设定
   const l2force=UP.l2_force_zods||[],l2excl=UP.l2_excl_zods||[];
@@ -12955,13 +12897,13 @@ function renderLX(){
 
   // 五连/四连/三连
   if(_lx7.length===7){
-    h+='<div class="card" style="border:2px solid #6a5acd;background:#f8f7ff"><div class="sec-title" style="color:#6a5acd">7肖覆盖池（自动生成21组五连肖）</div>'+
+    h+='<div class="card" style="border:2px solid #6a5acd;background:#f8f7ff"><div class="sec-title" style="color:#6a5acd">7肖覆盖池（符合当前限制 '+_lx7groups.length+' 组五连肖）</div>'+
       '<div style="font-size:16px;font-weight:bold">'+_lx7.map(function(x){return EMJ[x.z]+x.z;}).join(' ')+'</div>'+
-      '<div style="font-size:10px;color:#555;margin-top:5px">若实际7个开奖号形成7个不同生肖，单押一组五肖容易漏；本池把7肖的 C(7,5)=21 组全部覆盖。至少保留2个上期未出现生肖作为突破位；特码生肖只轻度分散，不再强排。</div>'+
-      copyBox('copy-lx7','📋 7肖五连覆盖',_lx7groups.map(function(g){return lotLabel()+g.map(function(x){return x.z;}).join('')+'五连肖';}).join('，'),'连肖')+'</div>';
+      '<div style="font-size:10px;color:#555;margin-top:5px">7肖共有 C(7,5)=21 种五连组合；这里仅保留通过必含、排除、禁区、不得同选、组上下限、家野和预设组合检查的 '+_lx7groups.length+' 组，不为凑齐21组放宽条件。</div>'+
+      (_lx7groups.length?copyBox('copy-lx7','📋 7肖五连覆盖',_lx7groups.map(function(g){return lotLabel()+g.map(function(x){return x.z;}).join('')+'五连肖';}).join('，'),'连肖'):'<p style="color:#a32020;font-weight:bold">当前七肖池无满足全部限制的五连组合，不提供回退组合。</p>')+'</div>';
   }
   h+='<div style="background:'+(lxStrictOK?'#eef9f0':'#ffebee')+';border:2px dashed '+(lxStrictOK?'#1e8449':'#c0392b')+';border-radius:6px;padding:6px 8px;margin:6px 0;font-size:10px;color:'+(lxStrictOK?'#1e8449':'#c0392b')+';font-weight:bold">'+
-     (lxStrictOK?'方案B｜严格限制方案：已通过必含、排除、家野、分组和不得同选的全部检查。':'方案B｜严格限制后无可用五连肖：系统没有放宽任何条件，请减少互相冲突的必含/排除或结构限制。')+'</div>';
+     (lxStrictOK?'方案B｜严格限制方案：已通过必含、排除、禁区、家野、分组、不得同选和预设组合的全部检查。':'方案B｜严格限制后无可用五连肖：系统没有放宽任何条件，请检查互相冲突的必含/排除、预设组合或结构限制。')+'</div>';
   [[lx5,5,'⭐五连肖','#8B008B','约100倍'],[lx4,4,'四连肖(五连去弱)','#e67e22','约30倍'],[lx3,3,'三连肖','#c0392b','约10倍']].forEach(item=>{
     const items=item[0],n=item[1],lbl=item[2],col=item[3],odds=item[4];
     if(!items||items.length!==n){
@@ -19918,7 +19860,7 @@ if(_authed){
 <script src="reference-system.js?v=10101120"></script>
 <script src="prediction-review.js?v=10101120"></script>
 <script src="candidate-display.js?v=10101120"></script>
-<script src="practical-actions.js?v=10101120"></script>
+<script src="practical-actions.js?v=10101135"></script>
 <script src="practice-evidence.js?v=10101120"></script>
 <script src="exact-combos.js?v=10101120"></script>
 <script src="evidence-model80.js?v=10101124"></script>
@@ -19986,11 +19928,12 @@ if(_authed){
 <script src="betting-period94.js?v=10101120"></script>
 <script src="betting-match117.js?v=10101120"></script>
 <script src="betting-review123.js?v=10101123"></script>
-<script src="betting-timeline134.js?v=10101134"></script>
-<script src="betting-ui71.js?v=10101134"></script>
+<script src="betting-timeline134.js?v=10101135"></script>
+<script src="betting-ui71.js?v=10101135"></script>
 <script src="betting-lab133.js?v=10101134"></script>
 <script src="rank-study125.js?v=10101134"></script>
-<script src="normal-evidence121.js?v=10101131"></script>
+<script src="betting-guide135.js?v=10101135"></script>
+<script src="normal-evidence121.js?v=10101135"></script>
 <script src="chinese-input76.js?v=10101120"></script>
 <script src="required-zodiacs82.js?v=10101120"></script>
 <script src="normal-coverage84.js?v=10101120"></script>
