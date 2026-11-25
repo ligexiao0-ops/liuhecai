@@ -10,7 +10,7 @@ function normalize(numbers,zodiacs,issue,type){
  const times=new Set(ns.concat(zs).map(x=>x.updateTime));
  if(times.size!==1||typeof [...times][0]!=='string'||!/^\d{4}-\d\d-\d\d[ T]\d\d:\d\d:\d\d$/.test([...times][0]))throw Error('号码榜和生肖榜更新时间不一致，请稍后重试');
  n.sort((a,b)=>b.money-a.money||a.n-b.n);z.sort((a,b)=>b.money-a.money||ANIMALS.indexOf(a.z)-ANIMALS.indexOf(b.z));
- const sums=Object.fromEntries(ANIMALS.map(a=>[a,0]));for(const x of n)sums[ANIMALS[(6-(x.n-1)%12)%12]]+=x.money;
+ const sums=Object.fromEntries(ANIMALS.map(a=>[a,0]));for(const x of n)sums[ANIMALS[(6-(x.n-1)%12+12)%12]]+=x.money;
  return {numbers:n,zodiacs:z,websiteUpdatedAt:[...times][0],zodiac2026Verified:String(issue).startsWith('2026')&&z.every(x=>Math.abs(sums[x.z]-x.money)<.01),resultSeenAtCollection:ns.some(x=>x.win!==null&&x.win!==undefined&&Number(x.win)>=0)};
 }
 function create({fetch:request,now=()=>Date.now()}={}){
