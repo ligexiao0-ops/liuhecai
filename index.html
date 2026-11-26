@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="app-version" content="10.1011.35">
+<meta name="app-version" content="10.1011.37">
 <script>window.APP_BUILD=Object.freeze({label:"v"+document.querySelector('meta[name="app-version"]').content,id:document.querySelector('meta[name="app-version"]').content.replace(/\./g,"")});</script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -11919,10 +11919,34 @@ function buildMidNumRefBlock(){
 }
 
 // ===== Tab: 特码预测（含反向思维 + 生肖输入 + 候选池 + 复制框）=====
+function appliedResearchFor137(ctx){
+  if(typeof winCurOff==='function'&&winCurOff()>0)return null;
+  if(typeof BACKFILL_STATE!=='undefined'&&BACKFILL_STATE.running)return null;
+  if(ctx&&ctx.meta&&Number(ctx.meta.targetPeriod)!==Number(NEXT))return null;
+  var api=window.AppliedResearch137;
+  return api&&typeof api.active==='function'&&api.active()?api:null;
+}
+function appliedNormalContext137(ctx){
+  if(!ctx)return ctx;
+  var base=ctx.z3Allowed,layer=window.TailPracticeStudy&&TailPracticeStudy.modes[UP.tailStudyMode]?UP.tailStudyMode:'all';
+  var selected=window.TailPracticeStudy&&(UP.exactTailOnly||layer!=='all')?TailPracticeStudy.range(ctx.rows,layer):null;
+  return Object.assign({},ctx,{z3Allowed:function(n){return (!base||base(n))&&(!selected||selected.indexOf(n)>=0);}});
+}
+function checkedAppliedNormal137(output,ctx){
+  var allowed=function(n){return Number.isInteger(n)&&n>=1&&n<=49&&(!ctx.z3Allowed||ctx.z3Allowed(n));},unique=function(ns){return Array.from(new Set(ns||[]));};
+  var pool=unique(output&&output.pool).filter(allowed).slice(0,8);
+  if(ctx.poolValid&&!ctx.poolValid(pool))pool=[];
+  var triples=(output&&output.triples||[]).map(function(g){return Array.isArray(g)?g:g.pool||[];}).filter(function(g){return g.length===3&&new Set(g).size===3&&g.every(function(n){return pool.indexOf(n)>=0&&allowed(n);})&&(!ctx.poolValid||ctx.poolValid(g))&&(!ctx.tripleValid||ctx.tripleValid(g));}).map(function(g){return g.slice();});
+  var broad=unique(output&&output.broad||pool).filter(allowed),core=unique(output&&output.core||pool.slice(0,6)).filter(function(n){return pool.indexOf(n)>=0;}).slice(0,6);
+  if(ctx.poolValid&&!ctx.poolValid(broad))broad=pool.slice();
+  return Object.assign({},output||{},{pool:pool,triples:triples,broad:broad,core:core});
+}
+
 function renderTE(){
   var LAST=DR[DR.length-1];
   const TM=calcTmOm(),T100=calcT100();
-  const sc=A49.map(n=>scoreTE_full(n,TM,T100)).sort((a,b)=>b.s-a.s);
+  var sc=A49.map(n=>scoreTE_full(n,TM,T100)).sort((a,b)=>b.s-a.s);
+  var applied137=appliedResearchFor137();if(applied137&&typeof applied137.reorder==='function')sc=applied137.reorder('te',sc);
   // 【v10.0803.02】特码预测快照：首次预测某期时锁定全49号评分排名，开奖录入后用于复盘提醒（命中TOP3高亮）
   if(!UP.te_pred_snapshot||UP.te_pred_snapshot.period!==NEXT){
     var teSnapScores={};sc.forEach(function(x){teSnapScores[x.n]=x.s;});
@@ -12329,6 +12353,7 @@ function renderTE(){
 
 // ===== Tab: 连肖（含二连肖、平特一肖、分组限制、复制框）=====
 function renderLX(){
+  var applied137=appliedResearchFor137();
   let zSc=scoreZod(true); // 表格用：包含用户force/excl设定
   let aiZSc=scoreZod(false); // 独立方案：纯统计，不受用户筛选影响
   const aiIndependentZSc=aiZSc.slice();
@@ -12357,7 +12382,7 @@ function renderLX(){
     // 固定“热肖扣分”没有稳定的逐期留出优势，退出主评分；仅在下方面板展示频次观察。
     return arr.map(function(it){return Object.assign({},it,{rs:it.rs.slice()});}).sort(function(a,b){return b.s-a.s;});
   }
-  zSc=applyLxExcl(zSc);zSc.forEach(function(it,idx){it.rk=idx;});
+  zSc=applyLxExcl(zSc);if(applied137&&typeof applied137.reorder==='function')zSc=applied137.reorder('lx',zSc);zSc.forEach(function(it,idx){it.rk=idx;});
   aiZSc=applyLxExcl(aiZSc);aiZSc.forEach(function(it,idx){it.rk=idx;});
   // 用户明确排除的生肖才进入连肖禁区；特肖参考不进入禁区。
   var exclLX=Array.from(new Set(excl));
@@ -12455,7 +12480,14 @@ function renderLX(){
     return wrapTopN(chosenCombo);
   }
   // 【v10.0812.04阶段④】五连肖组合优化：主选TOP1 + 备选TOP2-3 + 四连肖去最弱肖
-  const lx5list=pickN(5,force,exclLX,3); // 【v10.0812.07-#526】excl→exclLX(含特肖)
+  let lx5list=pickN(5,force,exclLX,3);
+  if(typeof applied137!=='undefined'&&applied137&&typeof applied137.linked==='function'&&typeof getPracticeContext==='function'){
+    var appliedLxCtx137=getPracticeContext(),appliedLx137=appliedLxCtx137&&applied137.linked(appliedLxCtx137);
+    if(appliedLx137){
+      lx5list=(appliedLx137.groups||[]).map(function(g){return (Array.isArray(g)?g:g.pool||[]).map(function(z){return zSc.find(function(x){return x.z===(typeof z==='string'?z:z.z);});}).filter(Boolean);}).filter(function(g){return isValidLxCombo135(g,5,force,exclLX);});
+      if(typeof applied137.recordGenerated==='function')applied137.recordGenerated('lx',Object.assign({},appliedLx137,{groups:lx5list.map(function(g){return g.map(function(x){return x.z;});})}),appliedLxCtx137);
+    }
+  }
   const lx5=lx5list[0]||[],lx5alt1=lx5list[1],lx5alt2=lx5list[2];
   const lxStrictOK=lx5.length===5;
   var _lxAllowed=lxPoolFor135(exclLX);
@@ -15182,10 +15214,11 @@ function weightSliders(group,items){
 }
 
 function renderZ3(){
+  var applied137=appliedResearchFor137(),appliedSignature137=applied137&&typeof applied137.signature==='function'?applied137.signature():'legacy';
   // 【v10.0815.01-性能】整体结果缓存：当输入(彩种+当前期+数据指纹+zm3用户设置+复式码数+子tab)不变时直接返回
   // 上次生成的HTML，避免每次render全量重算(scoreZheng 49码×18维 + combNK(18,3)=816组合×scoreZ3Combo 18维
   // + scoreZod/mathPredictEngine/zhengFormulaEngine等)，这是正码栏目卡顿的根因。
-  var _zk=JSON.stringify({lot:CUR_LOT,p:LAST.p,dr:(DR.length>0?(DR[0].p+'~'+DR[DR.length-1].p+'_'+DR[DR.length-1].d+'_'+JSON.stringify(DR[DR.length-1].n)+'_'+DR[DR.length-1].t):'empty'),cx:window._z3ComplexN||6,sub:zm3SubTab,full:!!window._z3Full,weights:SCORE_W,related:(function(){var o={};for(var k in UP){if(String(k).indexOf('zm3')===0||String(k).indexOf('lx')===0)o[k]=UP[k];}return o;})()});
+  var _zk=JSON.stringify({research137:appliedSignature137,lot:CUR_LOT,p:LAST.p,dr:(DR.length>0?(DR[0].p+'~'+DR[DR.length-1].p+'_'+DR[DR.length-1].d+'_'+JSON.stringify(DR[DR.length-1].n)+'_'+DR[DR.length-1].t):'empty'),cx:window._z3ComplexN||6,sub:zm3SubTab,full:!!window._z3Full,weights:SCORE_W,related:(function(){var o={};for(var k in UP){if(String(k).indexOf('zm3')===0||String(k).indexOf('lx')===0)o[k]=UP[k];}return o;})()});
   if(_renderZ3Cache&&_renderZ3Cache.k===_zk)return _renderZ3Cache.h;
   const ZM2=calcZm2Om(),Z100=calcZ100();
   // ===== 【v10.0908.01-#576】三中三排除/选择权威硬过滤 =====
@@ -15264,7 +15297,8 @@ function renderZ3(){
   const maxWx=Object.keys(wxC).sort((a,b)=>wxC[b]-wxC[a])[0];
   const zeroWx=Object.keys(wxC).filter(w=>wxC[w]===0);
 
-  const sc=scoreZheng({betting_priority133:UP.zm3_betting_priority133,pick_z:UP.zm3_pick_zods||[],excl_z:UP.zm3_excl_zods||[],excl_n:UP.zm3_excl_nums||[],excl_t:UP.zm3_excl_tails||[],pick_tails:UP.zm3_pick_tails||[],excl_wx_multi:UP.zm3_excl_wx_multi||[],pick_pool:UP.zm3_pick_pool||[],pick_attrs:UP.zm3_pick_attrs||{},excl_attrs:UP.zm3_excl_attrs||{},pick_app:UP.zm3_pick_app||'',excl_app:UP.zm3_excl_app||false,same_tail:UP.zm3_same_tail||false,same_zod:UP.zm3_same_zod||false,z100_hot:UP.zm3_z100_hot||false,excl_z100_hot:UP.zm3_excl_z100_hot||false,z100_cold:UP.zm3_z100_cold||false,excl_z100_cold:UP.zm3_excl_z100_cold||false,zm2_om10:UP.zm3_zm2_om10||false,excl_zm2_om10:UP.zm3_excl_zm2_om10||false,one_zod_2:UP.zm3_one_zod_2||false,two_zod_2:UP.zm3_two_zod_2||false,excl_om7:UP.zm3_excl_om7||false,excl_om7_cold:UP.zm3_excl_om7_cold||false,z100_hot7:UP.zm3_z100_hot7||false,excl_z100_hot7:UP.zm3_excl_z100_hot7||false,z100_cold7:UP.zm3_z100_cold7||false,excl_z100_cold7:UP.zm3_excl_z100_cold7||false});
+  var sc=scoreZheng({betting_priority133:UP.zm3_betting_priority133,pick_z:UP.zm3_pick_zods||[],excl_z:UP.zm3_excl_zods||[],excl_n:UP.zm3_excl_nums||[],excl_t:UP.zm3_excl_tails||[],pick_tails:UP.zm3_pick_tails||[],excl_wx_multi:UP.zm3_excl_wx_multi||[],pick_pool:UP.zm3_pick_pool||[],pick_attrs:UP.zm3_pick_attrs||{},excl_attrs:UP.zm3_excl_attrs||{},pick_app:UP.zm3_pick_app||'',excl_app:UP.zm3_excl_app||false,same_tail:UP.zm3_same_tail||false,same_zod:UP.zm3_same_zod||false,z100_hot:UP.zm3_z100_hot||false,excl_z100_hot:UP.zm3_excl_z100_hot||false,z100_cold:UP.zm3_z100_cold||false,excl_z100_cold:UP.zm3_excl_z100_cold||false,zm2_om10:UP.zm3_zm2_om10||false,excl_zm2_om10:UP.zm3_excl_zm2_om10||false,one_zod_2:UP.zm3_one_zod_2||false,two_zod_2:UP.zm3_two_zod_2||false,excl_om7:UP.zm3_excl_om7||false,excl_om7_cold:UP.zm3_excl_om7_cold||false,z100_hot7:UP.zm3_z100_hot7||false,excl_z100_hot7:UP.zm3_excl_z100_hot7||false,z100_cold7:UP.zm3_z100_cold7||false,excl_z100_cold7:UP.zm3_excl_z100_cold7||false});
+  if(applied137&&typeof applied137.reorder==='function')sc=applied137.reorder('z3',sc);
   // 【v10.0725.14修复】AI独立评分保留作为参考基准
   const aiSc=z3StaticGet('scoreZhengAI',scoreZhengAI);
   // 【核心修复】poolTop现在使用scoreZheng（用户筛选评分），而非scoreZhengAI
@@ -15440,10 +15474,13 @@ function renderZ3(){
     // 严格模式：没有满足全部硬限制的组合就不推荐，禁止AI绕过用户条件。
     top3=[];
   }
-  // v58: the visible main triple uses the same whole-combination selector as the structured panel.
-  if(window.ExactCombos&&window.TailPracticeStudy&&typeof getPracticeContext==='function'){
+  var appliedNormal137=null,appliedNormalCtx137=null;
+  if(applied137&&typeof applied137.normal==='function'&&typeof getPracticeContext==='function'){
+    appliedNormalCtx137=appliedNormalContext137(getPracticeContext());
+    if(appliedNormalCtx137){appliedNormal137=checkedAppliedNormal137(applied137.normal(appliedNormalCtx137),appliedNormalCtx137);top3=appliedNormal137.triples.length?appliedNormal137.triples[0].slice():[];}
+  }else if(window.ExactCombos&&window.TailPracticeStudy&&typeof getPracticeContext==='function'){
     var exactCtx=getPracticeContext();if(exactCtx){
-      var exactLayer=TailPracticeStudy.modes[UP.tailStudyMode]?UP.tailStudyMode:'all',exactPool=TailPracticeStudy.range(DR,exactLayer).filter(exactCtx.z3Allowed);
+      var exactLayer=TailPracticeStudy.modes[UP.tailStudyMode]?UP.tailStudyMode:'all',exactPool=(UP.exactTailOnly||exactLayer!=='all'?TailPracticeStudy.range(DR,exactLayer):A49.slice()).filter(exactCtx.z3Allowed);
       var exactPriority=TailPracticeStudy.rank(DR,exactPool,['zodiac','element'].includes(UP.tailStudyModel)?UP.tailStudyModel:'frequency',gz,gwx,CUR_LOT);
       if(window.BettingLab133)exactPriority=BettingLab133.prefer(exactPriority,UP.zm3_betting_priority133,CUR_LOT,NEXT);
       var exactGroups=ExactCombos.select(DR,exactPool,gz,gwx,{mode:UP.exactTripleMode||'auto',lot:CUR_LOT,priority:exactPriority,valid:function(ns){return exactCtx.poolValid(ns)&&exactCtx.tripleValid(ns);}});
@@ -15474,6 +15511,10 @@ function renderZ3(){
   var top6=topSet.slice(0,6).sort(function(a,b){return a-b;});
   top3.forEach(function(n){if(top6.indexOf(n)<0)top6.push(n);});
   top6=top6.slice(0,6).sort(function(a,b){return a-b;});
+  if(appliedNormal137){
+    topSet=appliedNormal137.pool.slice();top6=appliedNormal137.core.slice();poolTop=appliedNormal137.broad.slice();
+    if(typeof applied137.recordGenerated==='function')applied137.recordGenerated('z3',appliedNormal137,appliedNormalCtx137);
+  }
   const c3=arr=>{const r=[];for(let i=0;i<arr.length-2;i++)for(let j=i+1;j<arr.length-1;j++)for(let k=j+1;k<arr.length;k++)r.push([arr[i],arr[j],arr[k]]);return r;};
   const topZods=Array.from(new Set(sc.slice(0,12).map(x=>gz(x.n)))).slice(0,4);
 
@@ -16348,7 +16389,7 @@ function renderZ3(){
   h+='</div>'+concl('三中三主推：'+top3.map(n=>n+'('+gz(n)+'-'+gwx(n)+')').join('、')+'。复式'+top6.length+'码：'+top6.join('、')+'。');
 
   // ===== 复式5-8码（可切换）— 与主推3码完全一致 =====
-  const z3ComplexN=window._z3ComplexN||6;
+  const z3ComplexN=window._z3ComplexN||(appliedNormal137?8:6);
   // 【核心修复】复式号码=从 scoreZ3Combo TOP10 组合中按频率统计得到的 topN（与主推3码使用同一评分来源）
   // 【v10.0908.01-#577】改从 topSet 取前 N 个（不再限于 top6），支持 5/6/7/8 码复式
   const topComplex=topSet.slice(0,Math.min(z3ComplexN,topSet.length)).sort((a,b)=>a-b);
@@ -19854,7 +19895,7 @@ if(_authed){
   calcDerived();
 }
 </script>
-<script src="analytics-v1008-01.js?v=10101120"></script>
+<script src="analytics-v1008-01.js?v=10101137"></script>
 <script src="discovery-ui.js?v=10101120"></script>
 <script src="reference-rules.js?v=10101120"></script>
 <script src="reference-system.js?v=10101120"></script>
@@ -19883,7 +19924,7 @@ if(_authed){
 <script src="traditional-audit-ui.js?v=10101120"></script>
 <script src="heat-practice.js?v=10101120"></script>
 <script src="heat-practice-ui.js?v=10101120"></script>
-<script src="prediction-review-ui.js?v=10101120"></script>
+<script src="prediction-review-ui.js?v=10101137"></script>
 <script src="image-batch.js?v=10101120"></script>
 <script src="source-intersection.js?v=10101120"></script>
 <script src="source-slots.js?v=10101120"></script>
@@ -19913,7 +19954,7 @@ if(_authed){
 <script src="data-quality-ui.js?v=10101120"></script>
 <script src="private-sync.js?v=10101120"></script>
 <script src="constraint-tracker.js?v=10101120"></script>
-<script src="exact-combos-ui.js?v=10101120"></script>
+<script src="exact-combos-ui.js?v=10101137"></script>
 <script src="random-triples69.js?v=10101120"></script>
 <script src="draw-frequency69.js?v=10101120"></script>
 <script src="zodiac-single70.js?v=10101120"></script>
@@ -19929,7 +19970,7 @@ if(_authed){
 <script src="betting-match117.js?v=10101120"></script>
 <script src="betting-review123.js?v=10101123"></script>
 <script src="betting-timeline134.js?v=10101135"></script>
-<script src="betting-ui71.js?v=10101135"></script>
+<script src="betting-ui71.js?v=10101137"></script>
 <script src="betting-lab133.js?v=10101134"></script>
 <script src="rank-study125.js?v=10101134"></script>
 <script src="betting-guide135.js?v=10101135"></script>
@@ -19942,7 +19983,10 @@ if(_authed){
 <script>
 document.addEventListener('click',e=>{const b=e.target.closest('[data-zodiac-copy75]');if(b)navigator.clipboard.writeText(b.dataset.zodiacCopy75.split(',').map(n=>String(n).padStart(2,'0')).join('，')).then(()=>showClickFeedback('已复制号码，不含次数')).catch(()=>showClickFeedback('复制失败'));});
 document.addEventListener('DOMContentLoaded',()=>{const base=window.render;window.render=function(){const result=base.apply(this,arguments);if(['lx','pt'].includes(activeTab)&&!document.getElementById('zodiac-copy75'))document.getElementById('tabContent')?.insertAdjacentHTML('beforeend','<section id="zodiac-copy75" class="card"><h3>各生肖近期常见号码 · 正码／特码分开</h3><p>正码 '+commonZodiacNumbers('zm')+'</p><p>特码 '+commonZodiacNumbers('te')+'</p><small>括号为次数，📋仅复制所列号码。平肖仅指6正码生肖；连肖仍按7球去重。</small></section>');return result;};});
-</script></body>
+</script>
+<script src="applied-model137.js?v=10101137"></script>
+<script src="applied-research137.js?v=10101137"></script>
+</body>
 </html>
 <!-- GitHub Pages deploy trigger: v10.1010.72 -->
 

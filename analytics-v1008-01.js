@@ -118,8 +118,21 @@
     ['balance','frequency','rebound'].forEach(function(m){special[m]=numberRank(rows,m,'t').list.filter(function(n){return typeof planTeAllowed!=='function'||planTeAllowed(n);});});
     var lx=typeof planReasonLx==='function'?planReasonLx(rows,5,{window:60}):null;
     var lxRules=JSON.parse(JSON.stringify(UP.lx_grp_limits||[])),lxForce=(UP.lx_force_zods||[]).slice(),lxExcl=(UP.lx_excl_zods||[]).concat(UP.lx_ban_zods||[]),lxNo=(UP.lx_no_together||[]).map(x=>x.slice());
-    var lxValid=function(zs){return ComboLimits.allowed(zs,lxRules)&&lxForce.every(z=>zs.includes(z))&&!zs.some(z=>lxExcl.includes(z))&&!lxNo.some(pair=>pair.filter(z=>zs.includes(z)).length>1);};
-    return {lot:CUR_LOT,meta:targetMeta(rows),rows:rows.map(function(r){return {p:r.p,d:r.d,n:r.n.slice(),t:r.t};}),normal:normal,special:special,lx:lx?[lx.best].concat(lx.alts||[]).filter(Boolean).map(function(x){return x.zs;}):[],
+    var lxPrefs={allHot:!!UP.lx_all_hot,exclHot:!!UP.lx_excl_all_hot,allCold:!!UP.lx_all_cold,exclCold:!!UP.lx_excl_all_cold,allHome:!!UP.lx_all_home,exclHome:!!UP.lx_excl_all_home,allWild:!!UP.lx_all_wild,exclWild:!!UP.lx_excl_all_wild,ratio:UP.lx_wild_ratio||'',same:UP.lx_same_zod_cnt||0,presets:(UP.lx_pick_combos||[]).map(x=>Array.isArray(x)?x.slice():x)};
+    var lxHot={},lxPrevious=new Set(rows.at(-1).n.concat(rows.at(-1).t).map(zod));ZODS.forEach(z=>lxHot[z]=0);rows.slice(-6).forEach(r=>r.n.concat(r.t).forEach(n=>lxHot[zod(n)]++));
+    var lxValid=function(zs){
+      if(!Array.isArray(zs)||!zs.length||new Set(zs).size!==zs.length||zs.some(z=>!ZODS.includes(z)))return false;
+      if(!ComboLimits.allowed(zs,lxRules)||!lxForce.every(z=>zs.includes(z))||zs.some(z=>lxExcl.includes(z))||lxNo.some(pair=>pair.filter(z=>zs.includes(z)).length>1))return false;
+      if(zs.some(z=>lxPrefs.allHot&&lxHot[z]<4||lxPrefs.exclHot&&lxHot[z]>=4||lxPrefs.allCold&&lxHot[z]>2||lxPrefs.exclCold&&lxHot[z]<=2))return false;
+      if(zs.some(z=>lxPrefs.allHome&&WILD.includes(z)||lxPrefs.exclHome&&!WILD.includes(z)||lxPrefs.allWild&&!WILD.includes(z)||lxPrefs.exclWild&&WILD.includes(z)))return false;
+      var wc=zs.filter(z=>WILD.includes(z)).length,hc=zs.length-wc,explicit=lxPrefs.allHome||lxPrefs.exclHome||lxPrefs.allWild||lxPrefs.exclWild||lxPrefs.ratio;
+      if(zs.length>=4&&!explicit&&(wc===zs.length||hc===zs.length))return false;
+      if(lxPrefs.ratio){var limits=lxPrefs.ratio.split(':').map(Number);if(wc>limits[0]||hc>limits[1])return false;}
+      if(lxPrefs.same>0&&zs.filter(z=>lxPrevious.has(z)).length>lxPrefs.same)return false;
+      if(lxPrefs.presets.length&&!lxPrefs.presets.some(cb=>Array.isArray(cb)&&cb.length===zs.length&&new Set(cb).size===zs.length&&cb.every(z=>zs.includes(z))))return false;
+      return true;
+    };
+    return {lot:CUR_LOT,meta:targetMeta(rows),rows:rows.map(function(r){return {p:r.p,d:r.d,n:r.n.slice(),t:r.t};}),normal:normal,special:special,lx:lx?[lx.best].concat(lx.alts||[]).filter(Boolean).map(function(x){return x.zs;}).filter(lxValid):[],
       lxValid:lxValid,blockedTe:A49.filter(function(n){return typeof planTeAllowed==='function'&&!planTeAllowed(n);}),blockedZ3:A49.filter(function(n){return !practicalAllowed(n);}),blockedLx:uniq((UP.lx_excl_zods||[]).concat(UP.lx_ban_zods||[])),noTogether:UP.zm3_no_together||[],
       attrs:function(n){return {生肖:gz(n),大小:gsz(n),单双:gpar(n),合数单双:ghe(n),家野:gfam(n),波色:gwv(n),五行:gwx(n),尾数:String(n%10),头数:String(Math.floor(n/10))};},zod:zod,zodElement:typeof zodWx==='function'?zodWx:null,
       teAllowed:function(n){return typeof planTeAllowed!=='function'||planTeAllowed(n);},z3Allowed:practicalAllowed,poolValid:pairsValid,tripleValid:trioValid};
