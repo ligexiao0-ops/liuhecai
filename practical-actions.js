@@ -29,10 +29,32 @@ function buttons(pool,game,label,action='track',context=null){
 }
 // Timeline controls share the existing handler and bind source plus target metadata.
 function excludeButtons(pool,label,context){
- const reason=!pool?.length?'缺少完整同刻映射，暂不可排除':contextError(context);
+ const reason=contextError(context)||(!pool?.length?'缺少完整同刻映射，暂不可排除':'');
  const disabled=reason?' disabled aria-disabled="true"':'',c=reason?{...context,blockedReason:reason}:context;
  const title=context.referenceMode==='retrospective'?'作为第'+context.targetPeriod+'期人工参考':'应用到第'+context.targetPeriod+'期';
  return '<div class="practical-exclude135"><div class="practical-target135">'+esc(title)+'</div>'+[['z3','排除正码'],['te','排除特码']].map(([game,text])=>'<span class="practical-actions" data-action-payload="'+payload(pool||[],game,label,'exclude',c)+'"><button class="practical-exclude-button135" data-practical="exclude"'+disabled+'>'+text+'</button></span>').join(' ')+(reason?'<div class="practical-reason135" role="status">'+esc(reason)+'</div>':'')+'</div>';
+}
+// A redraw can replace the whole betting page. Preserve open panels and nested grids too.
+function viewKey(el,index){
+ if(el.id)return 'id:'+el.id;if(el.getAttribute?.('data-scroll-key138'))return 'scroll:'+el.getAttribute('data-scroll-key138');if(el.getAttribute?.('data-bet-map-key138'))return 'map:'+el.getAttribute('data-bet-map-key138');
+ const summary=el.querySelector?.('summary')?.textContent?.trim();if(!summary)return 'index:'+index;
+ const owner=el.parentElement?.closest?.('[data-bet-map-key138],[data-scroll-key138],[id]'),scope=owner?.getAttribute?.('data-bet-map-key138')||owner?.getAttribute?.('data-scroll-key138')||owner?.id||'page',same=owner?.querySelectorAll?[...owner.querySelectorAll('details')].filter(d=>d.querySelector?.('summary')?.textContent?.trim()===summary):null,part=same?same.indexOf(el):index;
+ return 'summary:'+scope+'|'+summary+'|'+part;
+}
+function captureView(target){
+ const box=typeof document.getElementById==='function'?document.getElementById('tabContent'):null,query=selector=>box&&typeof box.querySelectorAll==='function'?[...box.querySelectorAll(selector)]:[];
+ const details=query('details').map((el,i)=>({key:viewKey(el,i),open:!!el.open})),grids=query('[data-scroll-key138],.bet-grid134').map((el,i)=>({key:viewKey(el,i),x:el.scrollLeft||0,y:el.scrollTop||0}));
+ let anchor=target?.closest?.('[data-bet-map-key138],[data-scroll-key138],[id]');
+ if(!anchor||anchor===box){const eligible=query('[data-bet-map-key138],[id]').filter(el=>typeof el.getBoundingClientRect==='function').map(el=>({el,r:el.getBoundingClientRect()})).filter(x=>x.r.bottom>0);anchor=eligible.find(x=>x.r.top<=0)?.el||eligible[0]?.el;}
+ const rect=anchor?.getBoundingClientRect?.();return {scope:box?.querySelector?.('[data-bet-scope138]')?.getAttribute?.('data-bet-scope138')||null,x:window.scrollX||0,y:window.scrollY||0,details,grids,anchor:anchor&&rect?{key:viewKey(anchor,0),top:rect.top}:null};
+}
+function restoreView(state){
+ if(!state)return;const apply=()=>{const box=typeof document.getElementById==='function'?document.getElementById('tabContent'):null,query=selector=>box&&typeof box.querySelectorAll==='function'?[...box.querySelectorAll(selector)]:[];
+  const scope=box?.querySelector?.('[data-bet-scope138]')?.getAttribute?.('data-bet-scope138')||null;if(state.scope&&state.scope!==scope)return;
+  const details=new Map(state.details.map(x=>[x.key,x.open]));query('details').forEach((el,i)=>{const k=viewKey(el,i);if(details.has(k))el.open=details.get(k);});const grids=new Map(state.grids.map(x=>[x.key,x]));query('[data-scroll-key138],.bet-grid134').forEach((el,i)=>{const old=grids.get(viewKey(el,i));if(old){el.scrollLeft=old.x;el.scrollTop=old.y;}});
+  const anchor=state.anchor&&query('[data-bet-map-key138],[data-scroll-key138],[id]').find((el,i)=>viewKey(el,i)===state.anchor.key),r=anchor?.getBoundingClientRect?.(),y=r?(window.scrollY||0)+r.top-state.anchor.top:state.y;
+  if(typeof window.scrollTo==='function')window.scrollTo(state.x,Math.max(0,y));
+ };if(typeof requestAnimationFrame==='function')requestAnimationFrame(apply);else apply();
 }
 function sourceFields(x){const c=x.context;if(!c)return {};return {sourcePeriod:c.sourcePeriod,sourceId:c.sourceId,slot:c.slot,sourceKind:c.kind,originDrawPeriod:c.originDrawPeriod,sourceMode:c.sourceMode,referenceMode:c.referenceMode,retrospective:c.referenceMode==='retrospective',manualReference:c.referenceMode==='retrospective'};}
 document.addEventListener('click',function(e){
@@ -40,7 +62,7 @@ document.addEventListener('click',function(e){
  let x;try{x=JSON.parse(b.closest('[data-action-payload]').dataset.actionPayload);}catch{return;}
  if(!x)return;
  const contextFailure=contextError(x.context);if(contextFailure){showClickFeedback(contextFailure);return;}
- const scrollY=window.scrollY,simulation=/随机实验/.test(x.label),redraw=()=>{render();if(typeof requestAnimationFrame==='function')requestAnimationFrame(()=>window.scrollTo(0,scrollY));};
+ const view=captureView(b),simulation=/随机实验/.test(x.label),redraw=()=>{render();restoreView(view);};
  const record=(extra={})=>({lot:CUR_LOT,targetPeriod:NEXT,sourcePeriod:DR.at(-1)?.p,game:x.game,arm:simulation?'simulation':/系统固定|系统独立/.test(x.label)?'fixed':'manual',label:x.label,retrospective:/事后核对/.test(x.label),action:x.action,pool:x.pool.slice(),savedAt:new Date().toISOString(),...extra,...sourceFields(x)});
  if(b.dataset.practical==='save'){
   if(typeof winCurOff==='function'&&winCurOff()>0){showClickFeedback('历史回看不保存为新预测');return;}
@@ -67,6 +89,6 @@ document.addEventListener('click',function(e){
  UP.practical_actions=UP.practical_actions||[];UP.practical_actions.push(record({action:exclude?'exclude':'track',pool:ns,key,previous:old}));UP[key]=exclude||simulation?[...new Set(old.concat(ns))]:ns;saveData();redraw();showClickFeedback((exclude?'✅ 已排除 ':'✅ 已选用 ')+ns.length+'项（当前筛选已更新）');
 });
 function upload(){const box=document.getElementById('tabContent');if(!box||document.getElementById('direct-image-upload'))return;const el=document.createElement('div');el.id='direct-image-upload';el.innerHTML='<button type="button" id="visible-image-upload">📝 人工录入资料／网址交集</button><small> 核对彩种、期数、玩法后保存集合或应用。</small>';el.querySelector('button').onclick=()=>{activeTab='img';render();};box.prepend(el);}
-window.PracticalActions={buttons,excludeButtons};
+window.PracticalActions={buttons,excludeButtons,captureView,restoreView};
 document.addEventListener('DOMContentLoaded',()=>{const base=window.render;window.render=function(){const r=base.apply(this,arguments);upload();return r;};upload();});
 })();
