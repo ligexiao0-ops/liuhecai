@@ -41,8 +41,19 @@ function generate(input,game,market={},zodOrContext){
   if(game==='lx'){const b=sourceMarket('B'),nowFlat=marketRank(b.now,'flatZodiacs',animals),oldFlat=marketRank(b.previous,'flatZodiacs',animals),oldAny=oldFlat||marketRank(b.previous,'zodiacs',animals);if(nowFlat&&(oldFlat||!oldAny))rankKinds.B='flatZodiacs';}
   const ranked=Object.fromEntries(sources.map(source=>{const m=sourceMarket(source),key=rankKinds[source];return [source,{now:marketRank(m.now,key,domain),previous:marketRank(m.previous,key,domain),early:marketRank(m.early,key,domain)}];})),bettingPools=sources.map(source=>migrate(ranked[source].previous,ranked[source].now,previousValues));
   quality.missingCurrent=sources.filter(source=>!ranked[source].now);quality.missingPrevious=sources.filter(source=>!ranked[source].previous);quality.missingEarly=sources.filter(source=>!ranked[source].early);
-  const facts=domain.map(value=>{const historyMap=mean(historyPools.map(pool=>Number(pool.includes(value)))),bettingBySource=sources.map((source,i)=>bettingPools[i]===null?.5:Number(bettingPools[i].includes(value))),coldBySource=sources.map(source=>{const r=ranked[source];return r.now?r.now.indexOf(value)/(domain.length-1):.5;}),declineBySource=sources.map(source=>{const r=ranked[source];return r.now&&r.early?.includes(value)? .5+(r.now.indexOf(value)-r.early.indexOf(value))/(2*(domain.length-1)):.5;}),bettingMap=mean(bettingBySource),marketCold=mean(coldBySource.concat(declineBySource)),base=current.base.get(value),f=current.facts.get(value);
-   return {value,base,historyMap,bettingMap,marketCold,frequency:f.frequency,omission:f.omission,omissionLowerBound:f.omissionLowerBound,bettingBySource,coldBySource,declineBySource,scoreH:base,scoreF:.5*base+historyMap/6+bettingMap/6+(1-marketCold)/6,scoreR:.5*base+(1-historyMap)/6+(1-bettingMap)/6+marketCold/6};});
+  const facts=domain.map(value=>{
+   const historyMap=mean(historyPools.map(pool=>Number(pool.includes(value))));
+   const bettingBySource=sources.map((source,i)=>bettingPools[i]===null?.5:Number(bettingPools[i].includes(value)));
+   const coldBySource=sources.map(source=>{const r=ranked[source];return r.now?r.now.indexOf(value)/(domain.length-1):.5;});
+   const declineBySource=sources.map(source=>{const r=ranked[source];return r.now&&r.early?.includes(value)? .5+(r.now.indexOf(value)-r.early.indexOf(value))/(2*(domain.length-1)):.5;});
+   const bettingMap=mean(bettingBySource),marketCold=mean(coldBySource.concat(declineBySource)),base=current.base.get(value),f=current.facts.get(value);
+   const marketRanks=sources.map(source=>ranked[source].now?ranked[source].now.indexOf(value)+1:null);
+   const historyRanks=current.ranks.map(rank=>rank.indexOf(value)+1);
+   const marketMatch=marketRanks.every(rank=>rank!==null&&rank<=10);
+   const historyMatch=historyRanks.some(rank=>rank<=10)||historyMap>0;
+   const overlapPriority=game==='z3'&&marketMatch&&historyMatch;
+   const scoreF=.5*base+historyMap/6+bettingMap/6+(1-marketCold)/6+(overlapPriority?1/24:0);
+   return {value,base,historyMap,bettingMap,marketCold,frequency:f.frequency,omission:f.omission,omissionLowerBound:f.omissionLowerBound,bettingBySource,coldBySource,declineBySource,marketRanks,historyRanks,overlapPriority,scoreH:base,scoreF,scoreR:.5*base+(1-historyMap)/6+(1-bettingMap)/6+marketCold/6};});
   const arm=key=>facts.slice().sort((a,b)=>b[key]-a[key]||domain.indexOf(a.value)-domain.indexOf(b.value)).map(r=>r.value);
   return {available:true,reason:null,H:arm('scoreH'),F:arm('scoreF'),R:arm('scoreR'),facts,historyPools,bettingPools,rankKinds,quality};
  }catch(error){return unavailable('calculationUnavailable',{message:String(error?.message||error)});}

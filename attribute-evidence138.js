@@ -2,7 +2,7 @@
 'use strict';
 // Predeclared exclusion observations. No fitted weights and no automatic hard exclusion.
 const balls=Array.from({length:49},(_,i)=>i+1),animals=[...'鼠牛虎兔龙蛇马羊猴鸡狗猪'];
-const slots=['19:00','19:30','20:00','20:30','21:00','21:30','21:35'];
+const slots=['19:00','19:30','20:00','20:30','21:00'];
 const keys={tail:'尾数',sum:'具体合数',element:'五行',zodiac:'生肖'},spans={head3:'前3名',head5:'前5名',tail3:'后3名',tail5:'后5名'};
 const modes={numbers:'按前／后3或5个号码的属性',distinct:'按号码榜首次出现顺序取3或5种属性'};
 const unique=a=>[...new Set(a)],esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),fmt=n=>String(n).padStart(2,'0');

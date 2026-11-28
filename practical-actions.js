@@ -5,6 +5,7 @@ function payload(pool,game,label,action,context){return esc(JSON.stringify({pool
 function contextError(c){
  if(!c)return '';
  if(c.blockedReason)return c.blockedReason;
+ if(c.observer||/^\d\d:\d\d$/.test(c.slot||'')&&c.slot>'21:00')return '该时点仅供开奖核对';
  if(c.lot!==CUR_LOT||Number(c.targetPeriod)!==Number(NEXT))return '彩种或目标期已变化，请重新读取后操作';
  if(typeof winCurOff==='function'&&winCurOff()>0)return '当前是历史回看，请回到当前预测期操作';
  if(!Number.isInteger(c.sourcePeriod)||c.sourcePeriod>Number(NEXT))return '来源期不正确，请重新读取';
@@ -24,7 +25,7 @@ function buttons(pool,game,label,action='track',context=null){
   '<button data-practical="save" title="保存待开奖核对" aria-label="保存待开奖核对"'+attr+'>🗂</button> '+
   '<button data-practical="copy" title="仅复制文字" aria-label="仅复制文字"'+attr+'>📋</button> '+
   '<button data-practical="pick" title="选用到筛选池并记录" aria-label="选用到筛选池并记录"'+attr+'>✅</button> '+
-  '<button data-practical="exclude" title="排除此集合（连肖为排除整组）" aria-label="排除此集合"'+attr+'>🚫</button>'+
+  '<button type="button" data-practical="exclude" title="排除此集合（连肖为排除整组）" aria-label="排除此集合"'+attr+'>🚫</button>'+
   (game==='z3'?'<button data-practical="exclude-combination" title="排除复式：该范围最多中2个正码"'+attr+'>🚫复式</button>':'')+'</span>';
 }
 // Timeline controls share the existing handler and bind source plus target metadata.
@@ -32,7 +33,14 @@ function excludeButtons(pool,label,context){
  const reason=contextError(context)||(!pool?.length?'缺少完整同刻映射，暂不可排除':'');
  const disabled=reason?' disabled aria-disabled="true"':'',c=reason?{...context,blockedReason:reason}:context;
  const title=context.referenceMode==='retrospective'?'作为第'+context.targetPeriod+'期人工参考':'应用到第'+context.targetPeriod+'期';
- return '<div class="practical-exclude135"><div class="practical-target135">'+esc(title)+'</div>'+[['z3','排除正码'],['te','排除特码']].map(([game,text])=>'<span class="practical-actions" data-action-payload="'+payload(pool||[],game,label,'exclude',c)+'"><button class="practical-exclude-button135" data-practical="exclude"'+disabled+'>'+text+'</button></span>').join(' ')+(reason?'<div class="practical-reason135" role="status">'+esc(reason)+'</div>':'')+'</div>';
+ return '<div class="practical-exclude135"><div class="practical-target135">'+esc(title)+'</div>'+[['z3','排除正码'],['te','排除特码']].map(([game,text])=>'<span class="practical-actions" data-action-payload="'+payload(pool||[],game,label,'exclude',c)+'"><button type="button" class="practical-exclude-button135" data-practical="exclude"'+disabled+'>'+text+'</button></span>').join(' ')+'<small data-practical-result139 role="status" style="display:block;min-height:1.4em;line-height:1.4;white-space:nowrap;overflow-x:auto">'+esc(reason)+'</small></div>';
+}
+function refreshExclusions(root=document){
+ for(const el of root.querySelectorAll('[data-bet-exclusions139]')){
+  const normal=(UP.zm3_excl_nums||[]).slice().sort((a,b)=>a-b),special=(UP.te_excl_nums||[]).slice().sort((a,b)=>a-b);
+  const show=list=>list.map(n=>String(n).padStart(2,'0')).join('、')||'未设置';
+  el.textContent='已排正码 '+normal.length+' 个 · '+show(normal)+' ｜ 已排特码 '+special.length+' 个 · '+show(special);
+ }
 }
 // A redraw can replace the whole betting page. Preserve open panels and nested grids too.
 function viewKey(el,index){
@@ -53,16 +61,20 @@ function restoreView(state){
   const scope=box?.querySelector?.('[data-bet-scope138]')?.getAttribute?.('data-bet-scope138')||null;if(state.scope&&state.scope!==scope)return;
   const details=new Map(state.details.map(x=>[x.key,x.open]));query('details').forEach((el,i)=>{const k=viewKey(el,i);if(details.has(k))el.open=details.get(k);});const grids=new Map(state.grids.map(x=>[x.key,x]));query('[data-scroll-key138],.bet-grid134').forEach((el,i)=>{const old=grids.get(viewKey(el,i));if(old){el.scrollLeft=old.x;el.scrollTop=old.y;}});
   const anchor=state.anchor&&query('[data-bet-map-key138],[data-scroll-key138],[id]').find((el,i)=>viewKey(el,i)===state.anchor.key),r=anchor?.getBoundingClientRect?.(),y=r?(window.scrollY||0)+r.top-state.anchor.top:state.y;
-  if(typeof window.scrollTo==='function')window.scrollTo(state.x,Math.max(0,y));
- };if(typeof requestAnimationFrame==='function')requestAnimationFrame(apply);else apply();
+  if(typeof window.scrollTo==='function')window.scrollTo({left:state.x,top:Math.max(0,y),behavior:'instant'});
+ };apply();
 }
 function sourceFields(x){const c=x.context;if(!c)return {};return {sourcePeriod:c.sourcePeriod,sourceId:c.sourceId,slot:c.slot,sourceKind:c.kind,originDrawPeriod:c.originDrawPeriod,sourceMode:c.sourceMode,referenceMode:c.referenceMode,retrospective:c.referenceMode==='retrospective',manualReference:c.referenceMode==='retrospective'};}
 document.addEventListener('click',function(e){
  const b=e.target.closest('[data-practical]');if(!b)return;
+ e.preventDefault?.();
  let x;try{x=JSON.parse(b.closest('[data-action-payload]').dataset.actionPayload);}catch{return;}
  if(!x)return;
  const contextFailure=contextError(x.context);if(contextFailure){showClickFeedback(contextFailure);return;}
- const view=captureView(b),simulation=/随机实验/.test(x.label),redraw=()=>{render();restoreView(view);};
+ const simulation=/随机实验/.test(x.label),redraw=()=>{
+  if(typeof activeTab!=='undefined'&&activeTab==='betting'){refreshExclusions();return;}
+  const view=captureView(b);render();restoreView(view);
+ };
  const record=(extra={})=>({lot:CUR_LOT,targetPeriod:NEXT,sourcePeriod:DR.at(-1)?.p,game:x.game,arm:simulation?'simulation':/系统固定|系统独立/.test(x.label)?'fixed':'manual',label:x.label,retrospective:/事后核对/.test(x.label),action:x.action,pool:x.pool.slice(),savedAt:new Date().toISOString(),...extra,...sourceFields(x)});
  if(b.dataset.practical==='save'){
   if(typeof winCurOff==='function'&&winCurOff()>0){showClickFeedback('历史回看不保存为新预测');return;}
@@ -86,9 +98,17 @@ document.addEventListener('click',function(e){
   const opposite=UP[x.game==='pt'?(exclude?'pt_force_zods':'pt_excl_zods'):(exclude?'lx_force_zods':'lx_excl_zods')]||[];
   if(ns.some(z=>opposite.includes(z))||exclude&&new Set(old.concat(ns)).size>=12){alert('与连肖已有条件冲突，或会排除全部生肖；请先调整条件。');return;}
  }
- UP.practical_actions=UP.practical_actions||[];UP.practical_actions.push(record({action:exclude?'exclude':'track',pool:ns,key,previous:old}));UP[key]=exclude||simulation?[...new Set(old.concat(ns))]:ns;saveData();redraw();showClickFeedback((exclude?'✅ 已排除 ':'✅ 已选用 ')+ns.length+'项（当前筛选已更新）');
+ const added=exclude?ns.filter(n=>!old.includes(n)):ns;
+ const actionLabel=key==='zm3_excl_nums'?'正码':key==='te_excl_nums'?'特码':'';
+ const note=exclude?(added.length?'已新增排除 '+actionLabel+' '+added.length+' 项':'这组'+actionLabel+'已在排除清单内'):'已选用 '+ns.length+' 项';
+ const feedback=b.closest('.practical-exclude135')?.querySelector('[data-practical-result139]');
+ if(feedback)feedback.textContent=note;
+ if(!added.length){showClickFeedback(note);return;}
+ UP.practical_actions=UP.practical_actions||[];UP.practical_actions.push(record({action:exclude?'exclude':'track',pool:added,key,previous:old}));UP[key]=exclude||simulation?[...new Set(old.concat(ns))]:ns;
+ if(typeof activeTab!=='undefined'&&activeTab==='betting')saveData({preferencesOnly:true});else saveData();
+ redraw();showClickFeedback(note);
 });
 function upload(){const box=document.getElementById('tabContent');if(!box||document.getElementById('direct-image-upload'))return;const el=document.createElement('div');el.id='direct-image-upload';el.innerHTML='<button type="button" id="visible-image-upload">📝 人工录入资料／网址交集</button><small> 核对彩种、期数、玩法后保存集合或应用。</small>';el.querySelector('button').onclick=()=>{activeTab='img';render();};box.prepend(el);}
-window.PracticalActions={buttons,excludeButtons,captureView,restoreView};
+window.PracticalActions={buttons,excludeButtons,captureView,restoreView,refreshExclusions};
 document.addEventListener('DOMContentLoaded',()=>{const base=window.render;window.render=function(){const r=base.apply(this,arguments);upload();return r;};upload();});
 })();

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="app-version" content="10.1011.38">
+<meta name="app-version" content="10.1011.39">
 <script>window.APP_BUILD=Object.freeze({label:"v"+document.querySelector('meta[name="app-version"]').content,id:document.querySelector('meta[name="app-version"]').content.replace(/\./g,"")});</script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -2661,7 +2661,7 @@ function parseRecordDate(v){
 }
 function periodForRecordDate(v){
   var dt=parseRecordDate(v),cfg=LOTTERIES[CUR_LOT];if(!dt)return null;
-  if(CUR_LOT==='gc'){var rows=knownHongKongDates(),canonical=String(dt.getMonth()+1).padStart(2,'0')+'/'+String(dt.getDate()).padStart(2,'0'),exact=rows.filter(function(r){return r.d===canonical;});if(exact.length===1)return exact[0].p;var anchor=rows.at(-1),date=anchor&&parseRecordDate(anchor.d);if(!date||dt<=date)return null;var period=anchor.p;while(date<dt){date.setDate(date.getDate()+1);if(cfg.draw_days.includes(date.getDay()))period++;}return cfg.draw_days.includes(dt.getDay())?period:null;}
+  if(CUR_LOT==='gc'){var rows=knownHongKongDates(),canonical=String(dt.getMonth()+1).padStart(2,'0')+'/'+String(dt.getDate()).padStart(2,'0'),iso=dt.getFullYear()+'-'+canonical.replace('/','-'),confirmed=window.BettingSlots82?.confirmedHongKongPeriod(iso),exact=rows.filter(function(r){return r.d===canonical;});if(confirmed)return confirmed;if(exact.length===1)return exact[0].p;var anchor=rows.at(-1),date=anchor&&parseRecordDate(anchor.d);if(!date||dt<=date)return null;var period=anchor.p;while(date<dt){date.setDate(date.getDate()+1);if(cfg.draw_days.includes(date.getDay()))period++;}return cfg.draw_days.includes(dt.getDay())&&!window.BettingSlots82?.confirmedHongKongDay(period)?period:null;}
 
   var base=new Date(cfg.base_date);base=new Date(base.getFullYear(),base.getMonth(),base.getDate());
   if(!cfg.draw_days)return cfg.base_p+Math.round((dt-base)/86400000);
@@ -2717,6 +2717,8 @@ function validateGcDates(){
 // 基于base_date精确计算港彩日期（不依赖DR中已有日期）
 function pToDateByBase(p){
   if(CUR_LOT==='gc'){
+    var confirmed=window.BettingSlots82?.confirmedHongKongDay(p);
+    if(confirmed)return confirmed.slice(5).replace('-','/');
     var dates=knownHongKongDates(),known=dates.find(function(r){return r.p===Number(p);});if(known)return known.d;
     var anchor=dates.filter(function(r){return r.p<Number(p);}).sort(function(a,b){return b.p-a.p;})[0];
     if(!anchor)return '';
@@ -2964,18 +2966,20 @@ function scoreZhengAI(){
 }
 // NOTE: loadData() is sync now (defined earlier), refreshFromServer() runs in background
 
-function saveData(){
+function saveData({preferencesOnly=false}={}){
   // 【v10.0814.05-#557】数据录入与权限解耦：所有者（含访问码登录的日常使用）的录入/排除/修改
   // 必须始终落盘并同步云端，不再被 _isAdmin 会话门控。否则访问码登录或会话过期时 saveData 静默
   // 返回，导致开奖录入、排除设定全部丢失，数据只剩 INIT_DR 基期（表现为"只剩221期/改了不变/刷新即丢"）。
   if(__winActive){console.warn('[窗口回退模式] 已跳过saveData，防止截断后的DR覆盖真实数据');return;}
   const cfg=LOTTERIES[CUR_LOT];
-  queueRecordChanges(CUR_LOT,DR);
+  if(!preferencesOnly)queueRecordChanges(CUR_LOT,DR);
   if(window.RecordVault){RecordVault.compact(UP);RecordVault.persist(CUR_LOT,UP);}
   UP._syncedAt=Date.now();
   try{var prefsText=JSON.stringify(window.RecordVault?RecordVault.preferences(CUR_LOT,UP):UP),oldPrefs=localStorage.getItem(cfg.up_key);if(oldPrefs&&oldPrefs!==prefsText){try{JSON.parse(oldPrefs);localStorage.setItem(cfg.up_key+'_safe',oldPrefs);}catch(backupError){console.warn('筛选备份未写入',backupError);}}localStorage.setItem(cfg.up_key,prefsText);}catch(e){console.error('筛选保存失败',e);if(typeof showClickFeedback==='function')showClickFeedback('⚠ 筛选未保存：浏览器空间不足，请导出备份');}
-  try{localStorage.setItem(cfg.dr_key,JSON.stringify(DR));}catch(e){}
-  try{localStorage.setItem(cfg.dr_key+'_safe',JSON.stringify(DR));}catch(e){}
+  if(!preferencesOnly){
+    try{localStorage.setItem(cfg.dr_key,JSON.stringify(DR));}catch(e){}
+    try{localStorage.setItem(cfg.dr_key+'_safe',JSON.stringify(DR));}catch(e){}
+  }
   scheduleCloudSync(700);
 }
 function resetData(){if(!requireAdmin())return;if(!confirm('确认恢复'+LOTTERIES[CUR_LOT].name+'初始数据？'))return;const cfg=LOTTERIES[CUR_LOT];localStorage.removeItem(cfg.dr_key);localStorage.removeItem(cfg.up_key);localStorage.removeItem(cfg.up_key+'_safe');loadData();calcDerived();render();}
@@ -19901,7 +19905,7 @@ if(_authed){
 <script src="reference-system.js?v=10101120"></script>
 <script src="prediction-review.js?v=10101120"></script>
 <script src="candidate-display.js?v=10101120"></script>
-<script src="practical-actions.js?v=10101138"></script>
+<script src="practical-actions.js?v=10101139"></script>
 <script src="practice-evidence.js?v=10101120"></script>
 <script src="exact-combos.js?v=10101120"></script>
 <script src="evidence-model80.js?v=10101124"></script>
@@ -19964,16 +19968,16 @@ if(_authed){
 <script src="betting-reader78.js?v=10101120"></script>
 <script src="betting-live85.js?v=10101134"></script>
 <script src="betting-changes79.js?v=10101120"></script>
-<script src="betting-slots82.js?v=10101129"></script>
-<script src="betting-focus88.js?v=10101134"></script>
+<script src="betting-slots82.js?v=10101139"></script>
+<script src="betting-focus88.js?v=10101139"></script>
 <script src="betting-period94.js?v=10101120"></script>
 <script src="betting-match117.js?v=10101120"></script>
-<script src="betting-review123.js?v=10101123"></script>
-<script src="betting-timeline134.js?v=10101138"></script>
-<script src="betting-ui71.js?v=10101138"></script>
-<script src="betting-lab133.js?v=10101134"></script>
+<script src="betting-review123.js?v=10101139"></script>
+<script src="betting-timeline134.js?v=10101139"></script>
+<script src="betting-ui71.js?v=10101139"></script>
+<script src="betting-lab133.js?v=10101139"></script>
 <script src="rank-study125.js?v=10101134"></script>
-<script src="betting-guide135.js?v=10101135"></script>
+<script src="betting-guide135.js?v=10101139"></script>
 <script src="normal-evidence121.js?v=10101135"></script>
 <script src="chinese-input76.js?v=10101120"></script>
 <script src="required-zodiacs82.js?v=10101120"></script>
@@ -19984,11 +19988,11 @@ if(_authed){
 document.addEventListener('click',e=>{const b=e.target.closest('[data-zodiac-copy75]');if(b)navigator.clipboard.writeText(b.dataset.zodiacCopy75.split(',').map(n=>String(n).padStart(2,'0')).join('，')).then(()=>showClickFeedback('已复制号码，不含次数')).catch(()=>showClickFeedback('复制失败'));});
 document.addEventListener('DOMContentLoaded',()=>{const base=window.render;window.render=function(){const result=base.apply(this,arguments);if(['lx','pt'].includes(activeTab)&&!document.getElementById('zodiac-copy75'))document.getElementById('tabContent')?.insertAdjacentHTML('beforeend','<section id="zodiac-copy75" class="card"><h3>各生肖近期常见号码 · 正码／特码分开</h3><p>正码 '+commonZodiacNumbers('zm')+'</p><p>特码 '+commonZodiacNumbers('te')+'</p><small>括号为次数，📋仅复制所列号码。平肖仅指6正码生肖；连肖仍按7球去重。</small></section>');return result;};});
 </script>
-<script src="applied-model137.js?v=10101137"></script>
-<script src="applied-research137.js?v=10101137"></script>
-<script src="history-mapping138.js?v=10101138"></script>
-<script src="attribute-evidence138.js?v=10101138"></script>
-<script src="research-tools138.js?v=10101138"></script>
+<script src="applied-model137.js?v=10101139"></script>
+<script src="applied-research137.js?v=10101139"></script>
+<script src="history-mapping138.js?v=10101139"></script>
+<script src="attribute-evidence138.js?v=10101139"></script>
+<script src="research-tools138.js?v=10101139"></script>
 </body>
 </html>
 <!-- GitHub Pages deploy trigger: v10.1010.72 -->

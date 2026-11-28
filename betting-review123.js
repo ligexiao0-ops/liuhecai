@@ -78,15 +78,15 @@ function panel({lot,prefs,periods,manual,reports,slot}){
   const low=candidate&&candidate.estimate<candidate.base?candidate:null;
   const totals=rows.reduce((a,x)=>({ranked:a.ranked+x.ranked,top:a.top+x.top,topSeven:a.topSeven+x.topSeven}),{ranked:0,top:0,topSeven:0});
   return '<section id="bet-review123" class="card"><h3>上期七球 · 同刻生肖排名、三网交集与九肖</h3>'
-    +'<label>核对时点 <select data-bet-mode88>'+BettingFocus88.modes.filter(x=>['20:00','20:30','21:00','21:35'].includes(x.slot)).map(x=>'<option value="'+x.id+'"'+(x.slot===slot?' selected':'')+'>'+x.label+'</option>').join('')+'</select></label>'
+    +'<label>核对时点 <select data-bet-mode88>'+BettingFocus88.modes.filter(x=>x.slot<='21:00').map(x=>'<option value="'+x.id+'"'+(x.slot===slot?' selected':'')+'>'+x.label+'</option>').join('')+'</select></label>'
     +'<p>'+(latest?'最近已核对第'+latest.p+'期 · '+esc(slot)+' · '+(snapshot?'同期榜单':'缺少同刻有效榜单')+'。':'暂无已核对开奖。')+(zTe&&typeof zTe[3]==='number'?'特肖 '+esc(zTe[2])+' 排第'+zTe[3]+'名。':'')+'</p>'
     +(lines.length?table(['开奖位置','号码','生肖','生肖榜排名','独立平特榜排名','九肖序位','交集'],lines):'')
     +'<p>'+ (seq?'自动应用'+esc(seq.label)+'【'+seq.z.join('、')+'】，覆盖 '+seqHits+'/7 球。':'本期暂无对应的九肖留档。')+(nextSeq?' 下期已读取九肖【'+nextSeq.z.join('、')+'】。':'')+' 排名按同一期、同一来源和时点匹配。</p>'
     +'<h4>我的三网交集</h4><p>'+ (checked.length?'已核对 '+checked.length+'期，合计中 '+matched+'个正码，平均每期 '+(matched/checked.length).toFixed(2)+'个；中特 '+rate(teHits,checked.length)+'；正码至少中3个 '+rate(checked.filter(x=>x.normal.length>=3).length,checked.length)+'。':'暂无可和开奖配对的三网交集记录。')+' 同期多份取最后保存的一份。</p>'
     +(checked.length?'<details><summary>逐期查看交集号码和命中位置</summary>'+table(['期号','交集号码','中正码','中特'],checked.slice(-30).reverse().map(x=>[x.d.p,x.r.pool.map(ball).join('、')||'空集',x.normal.length+'个 '+x.normal.map(ball).join('、'),x.te?'1个 '+ball(x.d.t):'0个']))+'</details>':'')
-    +'<h4>42码整肖未出 · 反向观察</h4><p>'+(!study.missing?'连续六期记录不齐，暂无法判断。':study.missing.length?'第'+target+'期观察【'+study.missing.join('、')+'】。':'最近六期每个生肖都至少出现过一次。')+(low?' 可优先观察排除 '+low.z+'，历史七球出现 '+rate(low.seven,low.n)+'，平滑估计 '+pct(low.estimate)+'，同宽随机 '+pct(low.base)+'。':study.missing?.length?' 目前未找到样本足够且低于同宽基准的排除候选。':'')+'</p>'
+    +'<details><summary>42码整肖未出 · 同刻追热核对</summary><p>'+(!study.missing?'连续六期记录不齐，暂无法判断。':study.missing.length?'第'+target+'期观察【'+study.missing.join('、')+'】。':'最近六期每个生肖都至少出现过一次。')+(low?' 可优先观察排除 '+low.z+'，历史七球出现 '+rate(low.seven,low.n)+'，平滑估计 '+pct(low.estimate)+'，同宽随机 '+pct(low.base)+'。':study.missing?.length?' 目前未找到样本足够且低于同宽基准的排除候选。':'')+'</p>'
     +'<p>以连续六期共42球为观察窗口。以该期开奖前同刻生肖榜前4名作为「追热」指标。21:35用于开奖核对。'+(totals.ranked?' 有同刻榜单的整肖未出样本中，进前4 '+rate(totals.top,totals.ranked)+'；进前4后七球未见 '+rate(totals.top-totals.topSeven,totals.top)+'。分母按期×生肖计。':' 暂无匹配的开奖前榜单可核对追热。')+'</p>'
-    +table(['生肖','整肖未出后开平肖','开特肖','七球出现／随机','同期进前4／有榜期','进前4后七球出现'],rows.map(x=>[x.z,rate(x.normal,x.n),rate(x.special,x.n),rate(x.seven,x.n)+' / '+pct(x.base),rate(x.top,x.ranked),rate(x.topSeven,x.top)]))+'</section>';
+    +table(['生肖','整肖未出后开平肖','开特肖','七球出现／随机','同期进前4／有榜期','进前4后七球出现'],rows.map(x=>[x.z,rate(x.normal,x.n),rate(x.special,x.n),rate(x.seven,x.n)+' / '+pct(x.base),rate(x.top,x.ranked),rate(x.topSeven,x.top)]))+'</details></section>';
 }
 window.BettingReview123={panel};
 })();

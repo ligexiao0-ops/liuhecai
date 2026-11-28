@@ -46,6 +46,8 @@ def main():
   u='https://info.cld.hkjc.com/graphql/base-get/?'+urllib.parse.urlencode({'query':compact,'operationName':'marksixResult','variables':json.dumps({'lastNDraw':10,'startDate':None,'endDate':None,'drawType':'All'},separators=(',',':'))})
   result=request(u,headers={'Content-Type':'application/json','Origin':'https://bet.hkjc.com','Referer':'https://bet.hkjc.com/'})
   if result.get('errors'):raise ValueError('Official source returned GraphQL errors')
+  status['drawDates']={str(int(row['year'])*1000+int(row['no'])):date.fromisoformat(row['drawDate'][:10]).isoformat()
+                       for row in result['data']['lotteryDraws'] if row.get('drawDate') and row.get('status')=='Result'}
   html=(ROOT/'index.html').read_text(encoding='utf-8');base=re.search(r"const SUPABASE_URL='([^']+)'",html)[1];key=re.search(r"const SUPABASE_KEY='([^']+)'",html)[1]
   headers={'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json'};endpoint=base+'/rest/v1/lottery_records'
   rows=request(endpoint+'?select=lot_type,period,date,n1,n2,n3,n4,n5,n6,t&lot_type=eq.gc&order=period',headers=headers) or []
